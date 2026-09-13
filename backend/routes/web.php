@@ -9,6 +9,10 @@ use App\Http\Controllers\WebAuthController;
 use App\Http\Controllers\WebRideController;
 use Illuminate\Support\Facades\Route;
 
+// Note: /storage/{path} is served by Laravel's own built-in route (the
+// 'public' disk's `serve` => true in config/filesystems.php) — no symlink
+// needed, works on hosts that block them. See that file for details.
+
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/clinics', [PageController::class, 'clinics'])->name('clinics.index');
 Route::get('/doctors', [PageController::class, 'doctors'])->name('doctors.index');

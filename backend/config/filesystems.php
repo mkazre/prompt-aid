@@ -33,7 +33,12 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Not the disk we serve publicly — 'public' below owns the
+            // /storage/{path} URI. Leaving this on too would collide with
+            // it (both default to /storage) and lose every time, since the
+            // 'local' disk has no 'visibility' => 'public', so Laravel's
+            // built-in ServeFile 403s it without a signed URL.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
@@ -43,6 +48,13 @@ return [
             'root' => storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
+            // Lets Laravel serve files at /storage/{path} directly from
+            // storage/app/public even with no symlink — works identically
+            // whether or not `php artisan storage:link` was ever run, and
+            // works in production (public visibility needs no signed URL).
+            // This is what backs prescription uploads, lab results, and
+            // clinic/product images on hosts that block symlinks.
+            'serve' => true,
             'throw' => false,
             'report' => false,
         ],
