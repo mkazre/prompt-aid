@@ -20,7 +20,7 @@ class LabRequestsTable
                 TextColumn::make('doctor.user.name')->label('Doctor')->searchable(),
                 TextColumn::make('patient.user.name')->label('Patient')->searchable(),
                 TextColumn::make('thirdParty.company_name')->label('Lab Partner')->placeholder('Unassigned'),
-                TextColumn::make('priority')->badge()->color(fn (string $s) => $s === 'urgent' ? 'danger' : 'gray'),
+                TextColumn::make('priority')->badge()->color(fn (string $state) => $state === 'urgent' ? 'danger' : 'gray'),
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {

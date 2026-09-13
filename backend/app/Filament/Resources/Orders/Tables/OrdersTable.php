@@ -22,7 +22,7 @@ class OrdersTable
                 TextColumn::make('total')->money('ZAR')->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $s): string => match ($s) {
+                    ->color(fn (string $state): string => match ($state) {
                         'delivered', 'confirmed' => 'success',
                         'pending_payment', 'awaiting_prescription_review', 'preparing', 'out_for_delivery' => 'warning',
                         'cancelled' => 'danger',
@@ -30,7 +30,7 @@ class OrdersTable
                     }),
                 TextColumn::make('payment_status')
                     ->badge()
-                    ->color(fn (string $s): string => $s === 'paid' ? 'success' : ($s === 'refunded' ? 'gray' : 'warning')),
+                    ->color(fn (string $state): string => $state === 'paid' ? 'success' : ($state === 'refunded' ? 'gray' : 'warning')),
                 TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->filters([

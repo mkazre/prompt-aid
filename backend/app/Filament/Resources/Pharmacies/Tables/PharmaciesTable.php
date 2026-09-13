@@ -23,7 +23,7 @@ class PharmaciesTable
                 TextColumn::make('commission_rate')->suffix('%')->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $s): string => match ($s) {
+                    ->color(fn (string $state): string => match ($state) {
                         'active' => 'success',
                         'pending_approval' => 'warning',
                         'suspended' => 'danger',
