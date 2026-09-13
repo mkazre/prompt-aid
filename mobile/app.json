@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Prompt Aid",
+    "slug": "prompt-aid",
+    "scheme": "promptaid",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F8F9FA",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "health.promptaid.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Prompt Aid uses your location to find nearby clinics and, for drivers, to share your live position with patients during an active ride."
+      }
+    },
+    "android": {
+      "package": "health.promptaid.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#001F4D",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#F8F9FA"
+        }
+      ]
+    ]
+  }
+}
