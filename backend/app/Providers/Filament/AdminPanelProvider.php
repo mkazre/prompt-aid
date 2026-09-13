@@ -26,7 +26,11 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            // Deliberately not "admin" — some hosts run a server-wide WAF
+            // (e.g. Imunify360) that blocks any path containing "admin"
+            // with a 403 before PHP even runs, regardless of ModSecurity/
+            // .htaccess settings within cPanel's own control.
+            ->path('staff')
             ->brandName('Prompt Aid')
             ->brandLogo(asset('images/logo.png'))
             ->favicon(asset('images/favicon.ico'))
