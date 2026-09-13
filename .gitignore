@@ -1,3 +1,7 @@
+# ── Deployment packages (contain real secrets — never commit) ─────
+deploy-package/
+*.zip
+
 # ── Backend (Laravel) ─────────────────────────────────────────────
 backend/vendor/
 backend/node_modules/
