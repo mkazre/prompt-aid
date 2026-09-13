@@ -30,6 +30,17 @@ class WebAuthController extends Controller
 
         $request->session()->regenerate();
 
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Staff accounts (super admin, clinic admin, doctor) don't have a
+        // patient dashboard — send them to the Filament panel instead of
+        // crashing on a null patientProfile. This is the website's public
+        // login form; staff should normally use /staff/login directly.
+        if (! $user->isPatient()) {
+            return redirect('/staff');
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 

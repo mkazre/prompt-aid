@@ -11,6 +11,14 @@ class DashboardController extends Controller
     {
         $patient = $request->user()->patientProfile;
 
+        // Defense in depth: staff accounts (super admin/clinic admin/doctor)
+        // have no patient profile. WebAuthController already redirects them
+        // to /staff on login, but guard here too in case this route is hit
+        // any other way, so it degrades to a redirect instead of a crash.
+        if (! $patient) {
+            return redirect('/staff');
+        }
+
         return view('dashboard.index', [
             'appointments' => $patient->appointments()->with(['doctor.user', 'clinic'])->orderByDesc('date')->limit(5)->get(),
             'invoices' => $patient->invoices()->latest()->limit(5)->get(),
