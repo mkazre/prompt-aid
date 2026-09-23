@@ -42,6 +42,7 @@ class PartnerPanelProvider extends PanelProvider
             ->darkMode(false)
             ->databaseNotifications()
             ->databaseNotificationsPolling('15s')
+            ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => '<link rel="stylesheet" href="'.asset('assets/css/filament-theme.css').'">')
             ->renderHook(PanelsRenderHook::BODY_END, fn (): string => view('filament.notification-sound')->render())
             ->colors([
                 'primary' => Color::hex('#D0211C'),

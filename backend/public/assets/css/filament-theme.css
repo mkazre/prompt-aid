@@ -1,0 +1,126 @@
+/* Prompt Aid — Filament admin theme overrides.
+   Filament renders its own DOM (fi-* classes), so this can't be a literal
+   markup port like the website — it reshapes Filament's real components
+   toward the promptaid-admin mockups: near-square corners, hairline
+   borders instead of shadows, Lato, and the ink/signal/beacon palette
+   (colors already come from each PanelProvider's ->colors(); this file
+   covers shape, spacing and border language ->colors() can't touch).
+   Loaded after Filament's own CSS via a panel renderHook. */
+
+:root {
+  --pa-ink: #101012;
+  --pa-ink-soft: #3A3A3E;
+  --pa-paper: #F5F2EC;
+  --pa-surface: #FFFFFF;
+  --pa-line: #E0DACB;
+  --pa-line-soft: #F0EBE0;
+  --pa-muted: #6E6A62;
+  --pa-signal: #D0211C;
+  --pa-beacon: #F2C200;
+  --pa-beacon-wash: #FEF6DA;
+  --pa-go: #1F7A4C;
+  --pa-radius: 2px;
+}
+
+.fi-body { font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }
+
+/* Flatten Filament's default shadow-heavy look to the hairline-border,
+   near-square-corner language the mockups use throughout. */
+.fi-main .fi-section,
+.fi-main .fi-card,
+.fi-modal-window,
+.fi-dropdown-panel,
+.fi-ta-ctn,
+.fi-fo-component-ctn,
+.fi-wi-stats-overview-stat {
+  border-radius: var(--pa-radius) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--pa-line) !important;
+}
+
+/* Sidebar: dark ink background matching the admin mockup's nav, not
+   Filament's default white/gray. */
+.fi-sidebar {
+  background: var(--pa-ink) !important;
+  border-inline-end: 1px solid #2A2A2E !important;
+}
+.fi-sidebar-nav-groups .fi-sidebar-group-label,
+.fi-sidebar-item-label {
+  color: #B8B3A8 !important;
+}
+.fi-sidebar-item.fi-active .fi-sidebar-item-button,
+.fi-sidebar-item-button:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: var(--pa-radius) !important;
+}
+.fi-sidebar-item.fi-active .fi-sidebar-item-label {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+
+/* Topbar: hairline instead of shadow, matches .pa-header on the site. */
+.fi-topbar {
+  box-shadow: none !important;
+  border-bottom: 1px solid var(--pa-line) !important;
+}
+
+/* Buttons: square-ish corners, no shadow, heavier weight — matches
+   .pa-btn / .pa-btn-ghost on the public site. */
+.fi-btn {
+  border-radius: var(--pa-radius) !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+}
+.fi-btn.fi-color-primary {
+  background: var(--pa-signal) !important;
+}
+
+/* Inputs: hairline border, square corners, no focus glow — matches
+   .pa-field. */
+.fi-input,
+.fi-select-input,
+.fi-textarea {
+  border-radius: var(--pa-radius) !important;
+  border-color: var(--pa-line) !important;
+  box-shadow: none !important;
+}
+.fi-input:focus,
+.fi-select-input:focus,
+.fi-textarea:focus {
+  box-shadow: 0 0 0 1px var(--pa-signal) !important;
+  border-color: var(--pa-signal) !important;
+}
+
+/* Badges: square, matches .pa-badge. */
+.fi-badge {
+  border-radius: var(--pa-radius) !important;
+}
+
+/* Tables: hairline row dividers instead of zebra/shadow, matches
+   .pa-table / .pa-tablewrap. */
+.fi-ta-table {
+  border-collapse: collapse !important;
+}
+.fi-ta-row {
+  border-bottom: 1px solid var(--pa-line-soft) !important;
+}
+.fi-ta-header-cell {
+  background: var(--pa-paper) !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+}
+
+/* Stat widgets: square corners, hairline, matches .pa-stat. */
+.fi-wi-stats-overview-stat {
+  padding: 1.25rem !important;
+}
+.fi-wi-stats-overview-stat-value {
+  font-weight: 900 !important;
+}
+
+/* Tabs: underline style matching .pa-tabs rather than Filament's pill
+   default. */
+.fi-tabs-item.fi-active {
+  border-bottom: 2px solid var(--pa-signal) !important;
+  font-weight: 700 !important;
+}
