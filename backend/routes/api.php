@@ -10,10 +10,14 @@ use App\Http\Controllers\Api\PharmacyController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\RideController;
+use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\TriageSubmissionController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', fn () => response()->json(['ok' => true, 'app' => 'Prompt Aid API']));
+
+Route::post('/triage/submit', [TriageSubmissionController::class, 'store']);
 
 // --- Public ---
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -102,4 +106,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- Shared ride detail/cancel (patient or driver, ownership-checked in controller) ---
     Route::get('/rides/{ride}', [RideController::class, 'show']);
     Route::post('/rides/{ride}/cancel', [RideController::class, 'cancel']);
+
+    // --- Pharmacy vendor only ---
+    Route::middleware('role:'.User::ROLE_PHARMACY_ADMIN)->prefix('vendor')->group(function () {
+        Route::get('/orders', [VendorController::class, 'orders']);
+        Route::get('/orders/{order}', [VendorController::class, 'showOrder']);
+        Route::post('/orders/{order}/advance', [VendorController::class, 'advanceOrder']);
+        Route::get('/prescriptions/pending', [VendorController::class, 'pendingPrescriptions']);
+        Route::post('/prescriptions/{prescriptionUpload}/approve', [VendorController::class, 'approvePrescription']);
+        Route::post('/prescriptions/{prescriptionUpload}/reject', [VendorController::class, 'rejectPrescription']);
+        Route::get('/products', [VendorController::class, 'products']);
+        Route::post('/products/{product}/stock', [VendorController::class, 'updateStock']);
+    });
 });
