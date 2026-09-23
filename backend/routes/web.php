@@ -37,6 +37,7 @@ Route::post('/for-providers', [StaticPageController::class, 'forProvidersSubmit'
 
 Route::get('/emergency', [StaticPageController::class, 'emergency'])->name('emergency');
 Route::get('/emergency-results', [StaticPageController::class, 'emergencyResults'])->name('emergency.results');
+Route::post('/emergency/submit', [\App\Http\Controllers\TriageSubmissionController::class, 'store'])->name('emergency.submit');
 
 // About, How It Works, FAQ, Privacy, Terms and the POPIA notice are pure
 // content — real page-builder pages (see SeedSitePages), editable from

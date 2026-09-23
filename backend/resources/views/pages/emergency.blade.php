@@ -301,9 +301,29 @@
   });
 
   /* --- verdict --- */
+  function submitTriageResult(res) {
+    var token = document.querySelector('meta[name="csrf-token"]');
+    if (!token) return;
+    fetch('{{ route('emergency.submit') }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token.content, Accept: 'application/json' },
+      body: JSON.stringify({
+        level: res.level,
+        age_band: state.ageBand,
+        pregnant: !!state.pregnant,
+        symptoms: state.symptoms,
+        discriminators: state.discriminators,
+        observations: state.observations,
+        reasons: res.reasons,
+        facility_types: res.facilityTypes,
+      }),
+    }).catch(function () { /* fire-and-forget: never blocks or interrupts the patient */ });
+  }
+
   function render() {
     var res = T.assess(state);
     var m = res.meta;
+    submitTriageResult(res);
     document.querySelectorAll('#pa-satsbar span').forEach(function (s) {
       s.classList.toggle('on', s.className.indexOf('s-' + res.level) > -1);
     });

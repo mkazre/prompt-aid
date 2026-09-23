@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Filament\Resources\TriageSubmissions;
+
+use App\Filament\Resources\TriageSubmissions\Pages\ListTriageSubmissions;
+use App\Filament\Resources\TriageSubmissions\Pages\ViewTriageSubmission;
+use App\Filament\Resources\TriageSubmissions\Schemas\TriageSubmissionInfolist;
+use App\Filament\Resources\TriageSubmissions\Tables\TriageSubmissionsTable;
+use App\Models\TriageSubmission;
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
+use UnitEnum;
+
+/**
+ * Read-only monitor over every pre-triage result the public tool has
+ * produced (see TriageSubmissionController — the tool itself never
+ * dispatches anything, it only ever tells the patient to call 10177/112;
+ * this is purely so staff can see who assessed themselves as urgent).
+ */
+class TriageSubmissionResource extends Resource
+{
+    protected static ?string $model = TriageSubmission::class;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedExclamationTriangle;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Overview';
+
+    protected static ?string $navigationLabel = 'Triage Monitor';
+
+    public static function canViewAny(): bool
+    {
+        return (bool) auth()->user()?->isSuperAdmin();
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return TriageSubmissionInfolist::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return TriageSubmissionsTable::configure($table);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListTriageSubmissions::route('/'),
+            'view' => ViewTriageSubmission::route('/{record}'),
+        ];
+    }
+}

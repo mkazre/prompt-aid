@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{{ $title ?? 'Prompt Aid — Find a doctor, fill a script, get a lift' }}</title>
+<meta name="csrf-token" content="{{ csrf_token() }}">
 @php
     $themeColors = \App\Models\ThemeSetting::get('colors', []);
     $themeShape = \App\Models\ThemeSetting::get('shape', []);
