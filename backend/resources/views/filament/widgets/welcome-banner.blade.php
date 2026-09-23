@@ -12,7 +12,7 @@
         so this widget can't rely on Tailwind utilities the way our public
         site's Vite-built CSS can. Inline styles always work regardless.
     --}}
-    <div style="position: relative; overflow: hidden; border-radius: 0.75rem; padding: 2rem 1.5rem; background: linear-gradient(135deg, #2f46ba 0%, #3a57e8 55%, #079aa2 100%);">
+    <div style="position: relative; overflow: hidden; border-radius: 0.75rem; padding: 2rem 1.5rem; background: linear-gradient(135deg, #101012 0%, #9E1813 55%, #D0211C 100%);">
         <div style="pointer-events: none; position: absolute; top: -2.5rem; right: -2.5rem; height: 14rem; width: 14rem; border-radius: 9999px; background: rgba(255,255,255,0.1);"></div>
         <div style="pointer-events: none; position: absolute; bottom: -4rem; right: 6rem; height: 10rem; width: 10rem; border-radius: 9999px; background: rgba(255,255,255,0.1);"></div>
 
@@ -31,7 +31,7 @@
                             <a
                                 href="{{ $action['url'] }}"
                                 style="display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 0.5rem; padding: 0.625rem 1rem; font-size: 0.875rem; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.08); white-space: nowrap;
-                                    {{ $isPrimary ? 'background: #fff; color: #2f46ba;' : 'background: rgba(255,255,255,0.15); color: #fff;' }}"
+                                    {{ $isPrimary ? 'background: #fff; color: #D0211C;' : 'background: rgba(255,255,255,0.15); color: #fff;' }}"
                             >
                                 <x-filament::icon :icon="$action['icon']" style="width: 1rem; height: 1rem; flex-shrink: 0;" />
                                 <span>{{ $action['label'] }}</span>

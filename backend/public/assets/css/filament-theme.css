@@ -81,6 +81,24 @@
   background: var(--pa-signal) !important;
 }
 
+/* Any solid red/black/gray button needs white text — overriding the
+   background above broke Filament's own text/background contrast pairing. */
+.fi-btn.fi-color-primary,
+.fi-btn.fi-color-danger,
+.fi-btn.fi-color-gray:not(.fi-btn-outlined),
+.fi-btn[class*="fi-color-"]:not(.fi-btn-outlined) {
+  color: #FFFFFF !important;
+}
+.fi-btn.fi-color-primary .fi-btn-label,
+.fi-btn.fi-color-danger .fi-btn-label,
+.fi-btn.fi-color-gray:not(.fi-btn-outlined) .fi-btn-label,
+.fi-btn[class*="fi-color-"]:not(.fi-btn-outlined) .fi-btn-label {
+  color: #FFFFFF !important;
+}
+.fi-btn.fi-color-danger {
+  background: #C8102E !important;
+}
+
 /* Inputs: hairline border, square corners, no focus glow — matches
    .pa-field. */
 .fi-input,
@@ -97,9 +115,14 @@
   border-color: var(--pa-signal) !important;
 }
 
-/* Badges: square, matches .pa-badge. */
+/* Badges: square, matches .pa-badge. Solid danger/gray badges need white
+   text for the same contrast reason as the buttons above. */
 .fi-badge {
   border-radius: var(--pa-radius) !important;
+}
+.fi-badge.fi-color-danger,
+.fi-badge.fi-color-gray {
+  color: #FFFFFF !important;
 }
 
 /* Tables: hairline row dividers instead of zebra/shadow, matches
