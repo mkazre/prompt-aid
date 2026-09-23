@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>18 · Track shuttle · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>18 · Track shuttle</span><span class="m-stack">patient</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<main class="m-body flush">
+ <div class="pa-map" style="height:430px"><span class="pin" style="left:24%;top:70%;width:14px;height:14px;background:#F2C200"></span><span class="pin" style="left:70%;top:22%;width:14px;height:14px;background:#D0211C"></span>
+ <div style="position:absolute;left:38%;top:46%;background:var(--pa-paper);padding:8px 11px;font-size:12px;font-weight:700">4 min away</div></div>
+ <div class="m-sheet" style="position:relative">
+  <div class="pa-spread" style="margin-bottom:12px"><div class="pa-row" style="gap:12px"><div class="pa-avatar round" style="width:46px;height:46px;background:var(--pa-ink);color:var(--pa-beacon)">SN</div><div><b>Sipho Ndlovu</b><div style="font-size:12px;color:var(--pa-muted)">Toyota Quantum · GP 82 194</div></div></div><span class="pa-num">4.9</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px"><a class="pa-btn-ghost pa-btn-sm" href="tel:0827761140">Call</a><a class="pa-btn-ghost pa-btn-sm" href="./ride-track.html">Message</a><a class="pa-btn-ghost pa-btn-sm" href="./ride-track.html">Share trip</a></div>
+  <div class="pa-steps"><div class="pa-step done"><span class="dot"></span>Driver assigned<span class="t">09:03</span></div><div class="pa-step now"><span class="dot"></span>On the way to you<span class="t">now</span></div><div class="pa-step todo"><span class="dot"></span>Return leg 11:30<span class="t">booked</span></div></div>
+ </div></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(5,1fr)"><a href="./home.html"><span></span>Home</a><a href="./find-care.html"><span></span>Care</a><a href="./shuttle-request.html"><span></span>Shuttle</a><a href="./shop.html"><span></span>Pharmacy</a><a href="./record.html"><span></span>Record</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> Driver position via Laravel Reverb / Pusher channel ride.{id}; fall back to polling /api/rides/{id}/track every 5 s. Share trip sends a public tracking link by SMS.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

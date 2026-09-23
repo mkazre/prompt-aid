@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>01 · Log in · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>01 · Log in</span><span class="m-stack">shared</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<main class="m-body">
+ <img src="./assets/img/logo.png" alt="" style="height:38px;width:auto;margin:14px 0 26px" />
+ <h2 style="font-size:28px;margin-bottom:8px">Log in</h2>
+ <p class="pa-muted" style="font-size:14px">One account for the app and the website. Your roles decide which tabs you see.</p>
+ <label class="pa-label" style="margin-top:18px">Email or mobile</label><input class="pa-field" placeholder="082 000 0000" />
+ <label class="pa-label" style="margin-top:14px">Password</label><input class="pa-field" type="password" placeholder="••••••••" />
+ <div style="margin:18px 0 10px"><a class="pa-btn pa-btn-block" href="./home.html">Log in</a></div>
+ <a class="pa-btn-ghost pa-btn-block" href="./home.html">Use fingerprint or Face ID</a>
+ <div class="pa-label" style="margin:18px 0 8px">Demo: open a role</div>
+ <div class="m-chips" style="flex-wrap:wrap">
+  <a href="./home.html">Patient</a><a href="./doctor-today.html">Doctor</a><a href="./pharmacy-orders.html">Pharmacy</a><a href="./partner-queue.html">Lab / partner</a><a href="./driver-home.html">Driver</a></div>
+ <p style="font-size:13px;text-align:center;margin-top:18px">New here? <a href="./register.html">Create an account</a></p></main>
+
+</div>
+<div class="m-note"><strong>Expo notes.</strong> POST /api/login (Sanctum). Store token in expo-secure-store. Biometric via expo-local-authentication after first password login. Role from /api/me routes to the matching tab stack.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

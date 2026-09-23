@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Live dispatch · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html" selected>Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Overview</div><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a><a class="pa-navlink is-on" href="./dispatch.html"><span class="d"></span><span class="l">Live dispatch</span><span class="b">3</span></a><a class="pa-navlink" href="./triage.html"><span class="d"></span><span class="l">Triage monitor</span><span class="b">5</span></a></div><div class="pa-navgroup"><div class="t">Site</div><a class="pa-navlink" href="./pages.html"><span class="d"></span><span class="l">Pages</span></a><a class="pa-navlink" href="./page-builder.html"><span class="d"></span><span class="l">Page builder</span></a><a class="pa-navlink" href="./templates.html"><span class="d"></span><span class="l">Templates</span></a><a class="pa-navlink" href="./menus.html"><span class="d"></span><span class="l">Menus</span></a><a class="pa-navlink" href="./theme.html"><span class="d"></span><span class="l">Theme</span></a><a class="pa-navlink" href="./media.html"><span class="d"></span><span class="l">Media library</span></a></div><div class="pa-navgroup"><div class="t">Clinical</div><a class="pa-navlink" href="./appointments.html"><span class="d"></span><span class="l">Appointments</span><span class="b">48</span></a><a class="pa-navlink" href="./encounters.html"><span class="d"></span><span class="l">Encounters</span></a><a class="pa-navlink" href="./prescriptions.html"><span class="d"></span><span class="l">Prescriptions</span></a><a class="pa-navlink" href="./lab-requests.html"><span class="d"></span><span class="l">Lab requests</span><span class="b">12</span></a></div><div class="pa-navgroup"><div class="t">Directory</div><a class="pa-navlink" href="./clinics.html"><span class="d"></span><span class="l">Clinics</span></a><a class="pa-navlink" href="./doctors.html"><span class="d"></span><span class="l">Doctors</span></a><a class="pa-navlink" href="./patients.html"><span class="d"></span><span class="l">Patients</span></a><a class="pa-navlink" href="./pharmacies.html"><span class="d"></span><span class="l">Pharmacies</span></a><a class="pa-navlink" href="./partners.html"><span class="d"></span><span class="l">Partners</span></a><a class="pa-navlink" href="./drivers.html"><span class="d"></span><span class="l">Drivers</span></a></div><div class="pa-navgroup"><div class="t">Ride service</div><a class="pa-navlink" href="./rides.html"><span class="d"></span><span class="l">Rides</span></a><a class="pa-navlink" href="./ride-series.html"><span class="d"></span><span class="l">Recurring series</span></a><a class="pa-navlink" href="./rate-cards.html"><span class="d"></span><span class="l">Rate cards</span></a></div><div class="pa-navgroup"><div class="t">Commerce</div><a class="pa-navlink" href="./orders.html"><span class="d"></span><span class="l">Orders</span><span class="b">31</span></a><a class="pa-navlink" href="./products.html"><span class="d"></span><span class="l">Products</span></a><a class="pa-navlink" href="./categories.html"><span class="d"></span><span class="l">Categories</span></a></div><div class="pa-navgroup"><div class="t">Billing</div><a class="pa-navlink" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./payments.html"><span class="d"></span><span class="l">Payments</span></a><a class="pa-navlink" href="./claims.html"><span class="d"></span><span class="l">Claims</span><span class="b">9</span></a><a class="pa-navlink" href="./schemes.html"><span class="d"></span><span class="l">Medical schemes</span></a></div><div class="pa-navgroup"><div class="t">System</div><a class="pa-navlink" href="./users.html"><span class="d"></span><span class="l">Users</span></a><a class="pa-navlink" href="./roles.html"><span class="d"></span><span class="l">Roles &amp; permissions</span></a><a class="pa-navlink" href="./settings.html"><span class="d"></span><span class="l">Settings</span></a><a class="pa-navlink" href="./notifications.html"><span class="d"></span><span class="l">Notification log</span></a><a class="pa-navlink" href="./audit.html"><span class="d"></span><span class="l">Audit trail</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">MK</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Marcus Kazre</div>    <div style="font-size:11px;color:var(--pa-muted)">Super admin</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Ride operations · Gauteng</div><div class="title">Live dispatch</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./rate-cards.html">Rate cards</a>
+    </div>
+  </div></div>
+  <div class="pa-page">
+<div style="display:grid;grid-template-columns:340px minmax(0,1fr);border:1px solid var(--pa-line);background:var(--pa-surface);min-height:640px">
+  <div style="border-right:1px solid var(--pa-line);overflow-y:auto;max-height:720px">
+    <div class="pa-spread" style="padding:14px 18px;border-bottom:1px solid var(--pa-line);position:sticky;top:0;background:var(--pa-surface)">
+      <span class="pa-label" style="margin:0">Ride queue</span>
+      <span class="pa-badge" style="background:var(--pa-signal);color:#fff">3 unassigned</span></div>
+    <div style="padding:15px 18px;border-bottom:1px solid var(--pa-line-soft);border-left:3px solid var(--pa-signal);background:var(--pa-beacon-wash)">
+  <div class="pa-spread" style="margin-bottom:9px"><span class="pa-badge is-stop">Unassigned</span><span style="font-size:11px;color:var(--pa-muted)">4 min</span></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px">Lerato Mahlangu</div>
+  <div style="font-size:12px;color:var(--pa-ink-soft);line-height:1.5;margin-bottom:9px">14 Waterford Dr, Fourways<br /><span style="color:var(--pa-muted)">→ Sunninghill Emergency</span></div>
+  <div class="pa-spread"><span style="font-size:11px;color:var(--pa-muted)">Wheelchair · triage orange</span><span class="pa-num" style="font-size:16px">R 428</span></div></div><div style="padding:15px 18px;border-bottom:1px solid var(--pa-line-soft);border-left:3px solid transparent">
+  <div class="pa-spread" style="margin-bottom:9px"><span class="pa-badge is-stop">Unassigned</span><span style="font-size:11px;color:var(--pa-muted)">2 min</span></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px">Sipho Dlamini</div>
+  <div style="font-size:12px;color:var(--pa-ink-soft);line-height:1.5;margin-bottom:9px">88 Rivonia Rd, Sandton<br /><span style="color:var(--pa-muted)">→ Sunninghill Family Clinic</span></div>
+  <div class="pa-spread"><span style="font-size:11px;color:var(--pa-muted)">Standard</span><span class="pa-num" style="font-size:16px">R 164</span></div></div><div style="padding:15px 18px;border-bottom:1px solid var(--pa-line-soft);border-left:3px solid transparent">
+  <div class="pa-spread" style="margin-bottom:9px"><span class="pa-badge is-stop">Unassigned</span><span style="font-size:11px;color:var(--pa-muted)">1 min</span></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px">Ayesha Patel</div>
+  <div style="font-size:12px;color:var(--pa-ink-soft);line-height:1.5;margin-bottom:9px">3 Long St, Randburg<br /><span style="color:var(--pa-muted)">→ Lancet Diagnostics Rosebank</span></div>
+  <div class="pa-spread"><span style="font-size:11px;color:var(--pa-muted)">Standard</span><span class="pa-num" style="font-size:16px">R 198</span></div></div><div style="padding:15px 18px;border-bottom:1px solid var(--pa-line-soft);border-left:3px solid transparent">
+  <div class="pa-spread" style="margin-bottom:9px"><span class="pa-badge is-wait">Driver en route</span><span style="font-size:11px;color:var(--pa-muted)">6 min</span></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px">Nomsa Khumalo</div>
+  <div style="font-size:12px;color:var(--pa-ink-soft);line-height:1.5;margin-bottom:9px">21 Beyers Naude, Northcliff<br /><span style="color:var(--pa-muted)">→ Rosebank Pharmacy</span></div>
+  <div class="pa-spread"><span style="font-size:11px;color:var(--pa-muted)">Comfort</span><span class="pa-num" style="font-size:16px">R 246</span></div></div><div style="padding:15px 18px;border-bottom:1px solid var(--pa-line-soft);border-left:3px solid transparent">
+  <div class="pa-spread" style="margin-bottom:9px"><span class="pa-badge is-go">On trip</span><span style="font-size:11px;color:var(--pa-muted)">11 min</span></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px">Johan Pretorius</div>
+  <div style="font-size:12px;color:var(--pa-ink-soft);line-height:1.5;margin-bottom:9px">Midrand Gardens<br /><span style="color:var(--pa-muted)">→ Sunninghill Family Clinic</span></div>
+  <div class="pa-spread"><span style="font-size:11px;color:var(--pa-muted)">Standard</span><span class="pa-num" style="font-size:16px">R 212</span></div></div><div style="padding:15px 18px;border-bottom:1px solid var(--pa-line-soft);border-left:3px solid transparent">
+  <div class="pa-spread" style="margin-bottom:9px"><span class="pa-badge is-go">On trip</span><span style="font-size:11px;color:var(--pa-muted)">18 min</span></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px">Tebogo Mabaso</div>
+  <div style="font-size:12px;color:var(--pa-ink-soft);line-height:1.5;margin-bottom:9px">Orlando West, Soweto<br /><span style="color:var(--pa-muted)">→ Chris Hani Baragwanath</span></div>
+  <div class="pa-spread"><span style="font-size:11px;color:var(--pa-muted)">Stretcher</span><span class="pa-num" style="font-size:16px">R 620</span></div></div><div style="padding:15px 18px;border-bottom:1px solid var(--pa-line-soft);border-left:3px solid transparent">
+  <div class="pa-spread" style="margin-bottom:9px"><span class="pa-badge ">Scheduled 11:30</span><span style="font-size:11px;color:var(--pa-muted)">return</span></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px">Lerato Mahlangu</div>
+  <div style="font-size:12px;color:var(--pa-ink-soft);line-height:1.5;margin-bottom:9px">Sunninghill Emergency<br /><span style="color:var(--pa-muted)">→ 14 Waterford Dr, Fourways</span></div>
+  <div class="pa-spread"><span style="font-size:11px;color:var(--pa-muted)">Wheelchair · return leg</span><span class="pa-num" style="font-size:16px">R 0</span></div></div>
+  </div>
+  <div class="pa-map" style="position:relative;min-height:640px">
+    <span class="pin" style="left:18%;top:64%;width:14px;height:14px;background:#F2C200"></span><span class="pin" style="left:70%;top:26%;width:14px;height:14px;background:#D0211C"></span><span class="pin" style="left:42%;top:48%;width:10px;height:10px;background:#F5F2EC"></span><span class="pin" style="left:28%;top:32%;width:10px;height:10px;background:#F5F2EC"></span><span class="pin" style="left:58%;top:70%;width:10px;height:10px;background:#F5F2EC"></span><span class="pin" style="left:80%;top:56%;width:12px;height:12px;background:#1F7A4C"></span><span class="pin" style="left:34%;top:80%;width:12px;height:12px;background:#1F7A4C"></span><span class="pin" style="left:64%;top:14%;width:10px;height:10px;background:#F5F2EC"></span>
+    <div style="position:absolute;left:24px;top:24px;background:var(--pa-paper);padding:16px 18px;min-width:230px">
+      <div class="pa-label" style="margin-bottom:12px">Fleet status</div>
+      <div class="pa-row" style="font-size:13px;padding:4px 0"><span style="width:9px;height:9px;background:var(--pa-go);display:block"></span><span style="flex:1;color:var(--pa-ink-soft)">On a trip</span><strong>14</strong></div><div class="pa-row" style="font-size:13px;padding:4px 0"><span style="width:9px;height:9px;background:#CFC8B8;display:block"></span><span style="flex:1;color:var(--pa-ink-soft)">Idle, available</span><strong>22</strong></div><div class="pa-row" style="font-size:13px;padding:4px 0"><span style="width:9px;height:9px;background:var(--pa-signal);display:block"></span><span style="flex:1;color:var(--pa-ink-soft)">Unassigned rides</span><strong>3</strong></div><div class="pa-row" style="font-size:13px;padding:4px 0"><span style="width:9px;height:9px;background:var(--pa-beacon);display:block"></span><span style="flex:1;color:var(--pa-ink-soft)">Scheduled today</span><strong>61</strong></div>
+    </div>
+    <div style="position:absolute;right:24px;bottom:24px;left:24px;background:var(--pa-paper);padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap">
+      <div>
+        <div class="pa-label" style="margin-bottom:5px">Selected · RIDE-8841 · triage orange</div>
+        <div style="font-size:15px;font-weight:700">Lerato Mahlangu · Fourways → Sunninghill Emergency</div>
+        <div style="font-size:13px;color:var(--pa-muted);margin-top:3px">Wheelchair vehicle · burn, left forearm · return leg booked 11:30</div>
+      </div>
+      <div class="pa-row" style="gap:8px">
+        <select class="pa-field" style="width:auto;background:#fff"><option>Assign: Sipho N. (4 min)</option><option>Thabo M. (9 min)</option><option>Ayesha D. (13 min)</option></select>
+        <a class="pa-btn" href="./rides.html">Dispatch</a>
+      </div>
+    </div>
+  </div>
+</div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

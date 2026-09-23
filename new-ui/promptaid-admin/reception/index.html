@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Front desk · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html" selected>Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Front desk</div><a class="pa-navlink is-on" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a><a class="pa-navlink" href="./appointments.html"><span class="d"></span><span class="l">Diary</span><span class="b">24</span></a><a class="pa-navlink" href="./triage.html"><span class="d"></span><span class="l">Triage arrivals</span><span class="b">3</span></a><a class="pa-navlink" href="./patients.html"><span class="d"></span><span class="l">Patients</span></a></div><div class="pa-navgroup"><div class="t">Money</div><a class="pa-navlink" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./payments.html"><span class="d"></span><span class="l">Payments</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">BD</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bongi Dube</div>    <div style="font-size:11px;color:var(--pa-muted)">Receptionist</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Sunninghill Family Clinic</div><div class="title">Front desk</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./appointments.html">Book appointment</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px"><div class="pa-stat"><div class="k">Booked today</div><div class="v">24</div><div class="d flat">7 doctors on duty</div></div><div class="pa-stat"><div class="k">Waiting now</div><div class="v">6</div><div class="d stop">Longest 22 min</div></div><div class="pa-stat"><div class="k">Triage arrivals</div><div class="v">3</div><div class="d stop">1 orange</div></div><div class="pa-stat"><div class="k">Taken today</div><div class="v">R 8 420</div><div class="d go">14 payments</div></div><div class="pa-stat"><div class="k">Unpaid at desk</div><div class="v">4</div><div class="d wait">R 1 640</div></div></div>
+<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start">
+<div>
+  <div class="pa-card" style="margin-bottom:22px"><div class="pa-card-head"><h3>Waiting room</h3><a class="pa-btn-ghost pa-btn-sm" href="./appointments.html">Full diary</a></div>
+  <div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">Willem Botha</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Walk-in · Dr P. Nkosi</div></div>
+      <div class="pa-row"><span class="pa-badge is-stop">22 min</span><a class="pa-btn-quiet pa-btn-sm" href="./appointments.html">Check in</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">Johan Pretorius</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">09:40 · Dr N. Mokoena</div></div>
+      <div class="pa-row"><span class="pa-badge is-wait">4 min</span><a class="pa-btn-quiet pa-btn-sm" href="./appointments.html">Check in</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">Lerato Mahlangu</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Triage orange · Dr N. Mokoena</div></div>
+      <div class="pa-row"><span class="pa-badge is-go">In with doctor</span><a class="pa-btn-quiet pa-btn-sm" href="./appointments.html">Check in</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">Ayesha Patel</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">10:20 · Sr T. Mokoena</div></div>
+      <div class="pa-row"><span class="pa-badge is-go">Arriving</span><a class="pa-btn-quiet pa-btn-sm" href="./appointments.html">Check in</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">Sipho Dlamini</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">10:00 · Dr K. Reddy</div></div>
+      <div class="pa-row"><span class="pa-badge is-go">Arriving</span><a class="pa-btn-quiet pa-btn-sm" href="./appointments.html">Check in</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">Marie Louw</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Walk-in · any GP</div></div>
+      <div class="pa-row"><span class="pa-badge is-wait">9 min</span><a class="pa-btn-quiet pa-btn-sm" href="./appointments.html">Check in</a></div></div></div>
+  <div class="pa-card"><div class="pa-card-head"><h3>Needs doing</h3></div>
+  <div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">4 patients to take payment from</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">R 1 640 outstanding at the desk</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./payments.html">Take payment</a></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">3 triage arrivals to log</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">1 orange, 2 yellow</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./triage.html">Log</a></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">2 medical aid cards to verify</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Discovery, GEMS</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./patients.html">Verify</a></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">6 appointment reminders bouncing</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Invalid mobile numbers</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./patients.html">Fix</a></div></div>
+</div>
+<div>
+  <div class="pa-card" style="margin-bottom:22px"><div class="pa-card-head"><h3>Quick actions</h3></div>
+    <div class="pa-card-body pa-stack">
+      <a class="pa-btn pa-btn-block" href="./appointments.html">Book an appointment</a>
+      <a class="pa-btn-quiet pa-btn-block" href="./patients.html">Register a patient</a>
+      <a class="pa-btn-ghost pa-btn-block" href="./payments.html">Take a payment</a>
+      <a class="pa-btn-ghost pa-btn-block" href="./triage.html">Log a triage arrival</a></div></div>
+  <div class="pa-card pa-card-pad"><div class="pa-label" style="margin-bottom:12px">Today</div>
+  <div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Checked in</span><strong>9</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Completed</span><strong>2</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">No-shows</span><strong>1</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Walk-ins</span><strong>6</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Cash taken</span><strong>R 2 180</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Card taken</span><strong>R 6 240</strong></div></div>
+</div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

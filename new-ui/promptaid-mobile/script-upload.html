@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14 · Upload a script · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>14 · Upload a script</span><span class="m-stack">patient</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<header class="m-head"><a class="m-back" href="./shop.html">&larr;</a><div class="m-htitle">Upload a script</div><span></span></header><main class="m-body">
+ <div class="pa-slot" style="height:210px;border-style:dashed;margin-bottom:12px">Take a photo or choose a PDF</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px"><a class="pa-btn-quiet pa-btn-block" href="./script-upload.html">Camera</a><a class="pa-btn-ghost pa-btn-block" href="./script-upload.html">Files</a></div>
+ <label class="pa-label">Dispense at</label><select class="pa-field"><option>Rosebank Pharmacy · 3.5 km</option><option>Fourways Chemist · 1.2 km</option></select>
+ <label class="pa-label" style="margin-top:12px">Fulfilment</label>
+ <div class="m-chips"><span class="on">Deliver</span><span>Collect</span><span>Collect by shuttle</span></div>
+ <div class="pa-note" style="margin:10px 0 14px">Schedule 6 medicines must be collected in person with ID.</div>
+ <a class="pa-btn pa-btn-block" href="./orders.html">Send for review</a></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(5,1fr)"><a href="./home.html"><span></span>Home</a><a href="./find-care.html"><span></span>Care</a><a href="./shuttle-request.html"><span></span>Shuttle</a><a href="./shop.html"><span></span>Pharmacy</a><a href="./record.html"><span></span>Record</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> expo-image-picker (camera) / expo-document-picker (PDF). Multipart POST to /api/prescriptions/upload; order stays "script_review" until the pharmacist approves.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

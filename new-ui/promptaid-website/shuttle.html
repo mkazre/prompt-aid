@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Medical shuttle · Prompt Aid</title>
+<link rel="icon" href="./assets/img/favicon.ico" />
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+</head>
+<body>
+<div class="pa-alertbar"><div class="inner">
+  <span class="pa-row"><span class="pa-blip"></span>24-hour emergency line <strong style="color:var(--pa-beacon)">0800 776 678</strong></span>
+  <span class="pa-row" style="gap:22px;color:#A9A49A"><span>Claims submitted to your scheme for you</span><a href="./for-providers.html">List your practice</a></span>
+</div></div>
+<header class="pa-header"><div class="inner">
+  <a class="logo" href="./index.html"><img src="./assets/img/logo.png" alt="Prompt Aid" /></a>
+  <nav class="pa-nav"><a href="./doctors.html">Find care</a><a href="./shop.html">Pharmacy &amp; tests</a><a href="./shuttle.html" class="is-on">Shuttle</a><a href="./how-it-works.html">How it works</a><a href="./about.html">About</a></nav>
+  <div class="actions"><a class="pa-btn-ghost" href="./login.html">Log in</a><a class="pa-btn" href="./doctors.html">Book care</a></div>
+</div></header>
+<section class="pa-dark">
+  <div class="pa-container" style="padding-top:72px;padding-bottom:72px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:center">
+    <div>
+      <div class="pa-row" style="margin-bottom:22px"><span class="pa-tick-beacon"></span><span class="pa-eyebrow" style="color:var(--pa-beacon)">Medical shuttle</span></div>
+      <h1 style="font-size:54px;margin-bottom:20px">Door to doctor.<br />And back again.</h1>
+      <p style="font-size:17px;color:#B8B3A8;max-width:480px;margin-bottom:32px">Vetted drivers, medical-grade vehicles, fares quoted before you confirm. Book a one-off trip, a return leg, or a standing weekly booking for dialysis and chemotherapy.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><a class="pa-btn-beacon pa-btn-lg" href="#request">Get a fare estimate</a><a class="pa-btn-lg" style="background:transparent;border:1px solid #4A4A4E;color:var(--pa-paper);padding:15px 26px;font-weight:700;display:inline-flex;align-items:center" href="./for-providers.html">Drive with us</a></div>
+    </div>
+    <div id="request" style="background:var(--pa-paper);color:var(--pa-ink);padding:28px">
+      <div class="pa-label" style="margin-bottom:18px">Request a trip</div>
+      <div class="pa-formrow"><label class="pa-label">Pick up</label><input class="pa-field" value="14 Waterford Drive, Fourways" /></div>
+      <div class="pa-formrow"><label class="pa-label">Drop off</label><input class="pa-field" value="Rosebank Medical Suites" /></div>
+      <div class="pa-formgrid" style="margin-bottom:18px">
+        <div><label class="pa-label">Date</label><input class="pa-field" value="Thu 24 September" /></div>
+        <div><label class="pa-label">Pick-up time</label><input class="pa-field" value="09:15" /></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:18px">
+        <label class="pa-check is-on" style="flex:1;border:1px solid var(--pa-ink);background:var(--pa-beacon-wash);padding:11px 12px;font-weight:700;font-size:13px"><span class="box"></span>Return leg</label>
+        <label class="pa-check" style="flex:1;border:1px solid var(--pa-line);background:#fff;padding:11px 12px;font-weight:700;font-size:13px"><span class="box"></span>Repeat weekly</label>
+      </div>
+      <div style="display:grid;gap:2px;margin-bottom:18px"><a href="./ride-track.html" class="pa-spread" style="border:1px solid var(--pa-line);background:#fff;padding:13px 14px;color:inherit;text-decoration:none">
+   <span><span style="display:block;font-size:14px;font-weight:700">Standard</span><span style="display:block;font-size:12px;color:var(--pa-muted)">Sedan, 1–3 seats</span></span>
+   <span style="text-align:right"><span class="pa-num" style="display:block;font-size:18px">R 214</span><span style="display:block;font-size:11px;color:var(--pa-muted)">4 min away</span></span></a><a href="./ride-track.html" class="pa-spread" style="border:1px solid var(--pa-line);background:#fff;padding:13px 14px;color:inherit;text-decoration:none">
+   <span><span style="display:block;font-size:14px;font-weight:700">Comfort</span><span style="display:block;font-size:12px;color:var(--pa-muted)">SUV, extra legroom</span></span>
+   <span style="text-align:right"><span class="pa-num" style="display:block;font-size:18px">R 286</span><span style="display:block;font-size:11px;color:var(--pa-muted)">7 min away</span></span></a><a href="./ride-track.html" class="pa-spread" style="border:1px solid var(--pa-ink);background:var(--pa-beacon-wash);padding:13px 14px;color:inherit;text-decoration:none">
+   <span><span style="display:block;font-size:14px;font-weight:700">Wheelchair</span><span style="display:block;font-size:12px;color:var(--pa-muted)">Ramp and restraints</span></span>
+   <span style="text-align:right"><span class="pa-num" style="display:block;font-size:18px">R 381</span><span style="display:block;font-size:11px;color:var(--pa-muted)">12 min away</span></span></a><a href="./ride-track.html" class="pa-spread" style="border:1px solid var(--pa-line);background:#fff;padding:13px 14px;color:inherit;text-decoration:none">
+   <span><span style="display:block;font-size:14px;font-weight:700">Stretcher</span><span style="display:block;font-size:12px;color:var(--pa-muted)">Non-emergency transfer</span></span>
+   <span style="text-align:right"><span class="pa-num" style="display:block;font-size:18px">R 548</span><span style="display:block;font-size:11px;color:var(--pa-muted)">26 min away</span></span></a></div>
+      <a class="pa-btn pa-btn-block pa-btn-lg" href="./ride-track.html">Confirm · R 381 return</a>
+    </div>
+  </div>
+</section>
+<section class="pa-section pa-section-last">
+  <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-bottom:40px">
+    <div style="padding:28px 24px"><div class="pa-num" style="font-size:40px;margin-bottom:12px">9 min</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Median pickup</div><div style="font-size:13px;color:var(--pa-muted)">Across Johannesburg, Cape Town and Durban metros.</div></div><div style="padding:28px 24px"><div class="pa-num" style="font-size:40px;margin-bottom:12px">4</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Vehicle classes</div><div style="font-size:13px;color:var(--pa-muted)">Standard, comfort, wheelchair-accessible and stretcher.</div></div><div style="padding:28px 24px"><div class="pa-num" style="font-size:40px;margin-bottom:12px">100%</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Drivers vetted</div><div style="font-size:13px;color:var(--pa-muted)">PrDP, criminal check, first-aid certificate, annual re-screen.</div></div><div style="padding:28px 24px"><div class="pa-num" style="font-size:40px;margin-bottom:12px">R 0</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Cancellation, 10 min</div><div style="font-size:13px;color:var(--pa-muted)">Cancel free up to ten minutes after booking.</div></div>
+  </div>
+  <div class="pa-card">
+    <div class="pa-card-head"><h3>Recurring bookings</h3><a class="pa-btn-ghost pa-btn-sm" href="./account/patient/rides.html">Manage my trips</a></div>
+    <div class="pa-card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px">
+      <div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Dialysis</div><div style="font-size:13px;color:var(--pa-ink-soft)">Three times a week, same driver where possible, standing return leg.</div></div><div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Chemotherapy</div><div style="font-size:13px;color:var(--pa-ink-soft)">Cycle-aware scheduling with a wait-and-return option for short infusions.</div></div><div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Physiotherapy blocks</div><div style="font-size:13px;color:var(--pa-ink-soft)">One booking covers all six sessions in a treatment block.</div></div><div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Antenatal visits</div><div style="font-size:13px;color:var(--pa-ink-soft)">Scheduled against your clinic card, adjusted as visits get closer together.</div></div>
+    </div>
+  </div>
+</section>
+<footer class="pa-footer"><div class="inner">
+  <div><img src="./assets/img/logo.png" alt="Prompt Aid" />
+  <p style="font-size:14px;color:var(--pa-muted);max-width:300px">Doctors, pharmacies, labs and specialists — with a medical shuttle to get you there and home.</p>
+  <div style="font-size:13px;color:var(--pa-muted)">0800 776 678 · help@promptaid.health</div></div>
+  <div><div class="ft">Patients</div><div class="fl"><a href="./doctors.html">Find a doctor</a><a href="./shop.html">Pharmacy &amp; tests</a><a href="./shuttle.html">Book a shuttle</a><a href="./account/patient/prescriptions.html">Upload a script</a><a href="./account/patient/index.html">My record</a></div></div>
+  <div><div class="ft">Providers</div><div class="fl"><a href="./for-providers.html">List your practice</a><a href="./account/pharmacy/index.html">Sell in the store</a><a href="./account/partner/index.html">Partner as a lab</a><a href="./account/driver/index.html">Drive with us</a><a href="./login.html">Provider login</a></div></div>
+  <div><div class="ft">Company</div><div class="fl"><a href="./about.html">About</a><a href="./how-it-works.html">How it works</a><a href="./faq.html">FAQ</a><a href="./contact.html">Contact</a><a href="./legal-popia.html">POPIA notice</a></div></div>
+</div>
+<div class="legal"><div class="inner2"><span>© 2026 Prompt Aid (Pty) Ltd. Registered with the HPCSA and SAPC.</span><span><a href="./legal-popia.html">POPIA</a> · <a href="./terms.html">Terms</a> · <a href="./privacy.html">Privacy</a></span></div></div>
+</footer>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

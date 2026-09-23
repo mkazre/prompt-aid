@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Partner overview · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html" selected>Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Overview</div><a class="pa-navlink is-on" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a></div><div class="pa-navgroup"><div class="t">Queue</div><a class="pa-navlink" href="./queue.html"><span class="d"></span><span class="l">Available requests</span><span class="b">12</span></a><a class="pa-navlink" href="./requests.html"><span class="d"></span><span class="l">My requests</span><span class="b">7</span></a><a class="pa-navlink" href="./results.html"><span class="d"></span><span class="l">Results</span><span class="b">3</span></a></div><div class="pa-navgroup"><div class="t">Business</div><a class="pa-navlink" href="./catalogue.html"><span class="d"></span><span class="l">Test catalogue</span></a><a class="pa-navlink" href="./sites.html"><span class="d"></span><span class="l">Collection sites</span></a><a class="pa-navlink" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./settings.html"><span class="d"></span><span class="l">Partner settings</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">LD</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Lancet Diagnostics</div>    <div style="font-size:11px;color:var(--pa-muted)">Lab / imaging partner</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Partner panel</div><div class="title">Partner overview</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./queue.html">Accept next</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px"><div class="pa-stat"><div class="k">New requests</div><div class="v">12</div><div class="d stop">3 urgent</div></div><div class="pa-stat"><div class="k">In progress</div><div class="v">14</div><div class="d wait"></div></div><div class="pa-stat"><div class="k">Results due today</div><div class="v">3</div><div class="d wait"></div></div><div class="pa-stat"><div class="k">Released this week</div><div class="v">188</div><div class="d go">Median 31 hrs</div></div><div class="pa-stat"><div class="k">Billed this month</div><div class="v">R 412 800</div><div class="d go">842 requests</div></div></div>
+<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start">
+<div>
+  <div class="pa-card" style="margin-bottom:22px"><div class="pa-card-head"><h3>Urgent requests</h3><a class="pa-btn-ghost pa-btn-sm" href="./queue.html">Full queue</a></div>
+  <div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">LAB-2209 · Abdominal ultrasound</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Tebogo Mabaso · Dr R. van Wyk</div></div>
+      <div class="pa-row"><span class="pa-badge is-stop">Unaccepted 3 hrs</span><a class="pa-btn-quiet pa-btn-sm" href="./queue.html">Accept</a></div></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">LAB-2214 · FBC + iron studies</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Lerato Mahlangu · Dr N. Mokoena</div></div>
+      <div class="pa-row"><span class="pa-badge is-wait">Processing</span><a class="pa-btn-quiet pa-btn-sm" href="./queue.html">Accept</a></div></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:15px;font-weight:700">LAB-2216 · Troponin</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Walk-in · Sunninghill ED</div></div>
+      <div class="pa-row"><span class="pa-badge is-stop">Unaccepted 12 min</span><a class="pa-btn-quiet pa-btn-sm" href="./queue.html">Accept</a></div></div></div>
+  <div class="pa-card"><div class="pa-card-head"><h3>Home draws today</h3><a class="pa-btn-ghost pa-btn-sm" href="./requests.html">All requests</a></div>
+  <div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">10:30</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Willem Botha</span><span style="display:block;font-size:13px;color:var(--pa-muted)">U&amp;E + creatinine recollect · Rosebank</span></span></div>
+      <span style="font-size:12px;color:var(--pa-muted)">Nurse: Sr P. Naidoo</span></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">13:00</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Nomsa Khumalo</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Lipogram · Northcliff</span></span></div>
+      <span style="font-size:12px;color:var(--pa-muted)">Nurse: Sr P. Naidoo</span></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">16:00</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Zanele Sithole</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Thyroid panel · Randburg</span></span></div>
+      <span style="font-size:12px;color:var(--pa-muted)">Nurse: Sr L. Moloi</span></div></div>
+</div>
+<div>
+  <div class="pa-card" style="margin-bottom:22px"><div class="pa-card-head"><h3>Needs attention</h3></div>
+  <div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">3 results due today</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">Released by 17:00 to meet turnaround</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./results.html">Upload</a></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">1 haemolysed sample</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">LAB-2205 · recollect booked 10:30</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./requests.html">View</a></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">2 critical values to phone through</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">Potassium 6.4, glucose 2.1</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./results.html">Call</a></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">Accreditation renews in 58 days</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">SANAS M0412</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./settings.html">Review</a></div></div>
+  <div class="pa-card pa-card-pad"><div class="pa-label" style="margin-bottom:12px">This month</div>
+  <div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Requests</span><strong>842</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Accepted within 15 min</span><strong>91%</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Median turnaround</span><strong>31 hrs</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Recollections</span><strong>1.4%</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Billed</span><strong>R 412 800</strong></div></div>
+</div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

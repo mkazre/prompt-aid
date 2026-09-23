@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rate cards · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html" selected>Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Live</div><a class="pa-navlink" href="./dispatch.html"><span class="d"></span><span class="l">Dispatch board</span><span class="b">3</span></a><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a></div><div class="pa-navgroup"><div class="t">Rides</div><a class="pa-navlink" href="./rides.html"><span class="d"></span><span class="l">All rides</span></a><a class="pa-navlink" href="./ride-series.html"><span class="d"></span><span class="l">Recurring series</span></a><a class="pa-navlink is-on" href="./rate-cards.html"><span class="d"></span><span class="l">Rate cards</span></a></div><div class="pa-navgroup"><div class="t">Fleet</div><a class="pa-navlink" href="./drivers.html"><span class="d"></span><span class="l">Drivers</span></a><a class="pa-navlink" href="./vehicles.html"><span class="d"></span><span class="l">Vehicles</span></a><a class="pa-navlink" href="./incidents.html"><span class="d"></span><span class="l">Incidents</span><span class="b">1</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">SC</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sibusiso Cele</div>    <div style="font-size:11px;color:var(--pa-muted)">Ride dispatch</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Dispatch · Gauteng</div><div class="title">Rate cards</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./rate-cards.html">New rate card</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-tabs" style="margin-bottom:18px"><button class="pa-tab is-on">All <span class="n">9</span></button><button class="pa-tab">Active <span class="n">6</span></button><button class="pa-tab">Scheduled <span class="n">2</span></button><button class="pa-tab">Archived <span class="n">1</span></button></div><div class="pa-filterbar"><input class="pa-field" placeholder="Search rate card…" /><select class="pa-field"><option>All provinces</option><option>Gauteng</option><option>Western Cape</option><option>KwaZulu-Natal</option></select><select class="pa-field"><option>All classes</option><option>Standard</option><option>Comfort</option><option>Wheelchair</option><option>Stretcher</option></select><button class="pa-btn-ghost pa-btn-sm">Export CSV</button></div><div class="pa-tablewrap"><table class="pa-table"><thead><tr><th>Rate card</th><th>Class</th><th>Base + per km</th><th>Waiting</th><th>Priority premium</th><th></th></tr></thead><tbody><tr><td><div class="t-main">Gauteng standard</div><div class="t-sub">Active since 1 Jul 2026</div></td><td>Standard</td><td>R 42 + R 18 / km</td><td>R 3.20 / min after 15</td><td>+ 20%</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./rate-cards.html">Edit</a></td></tr><tr><td><div class="t-main">Gauteng comfort</div><div class="t-sub">Active since 1 Jul 2026</div></td><td>Comfort</td><td>R 58 + R 24 / km</td><td>R 4.10 / min after 15</td><td>+ 20%</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./rate-cards.html">Edit</a></td></tr><tr><td><div class="t-main">Gauteng wheelchair</div><div class="t-sub">Active since 1 Jul 2026</div></td><td>Wheelchair</td><td>R 74 + R 32 / km</td><td>R 4.80 / min after 20</td><td>+ 20%</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./rate-cards.html">Edit</a></td></tr><tr><td><div class="t-main">Gauteng stretcher</div><div class="t-sub">Active since 1 Jul 2026</div></td><td>Stretcher</td><td>R 120 + R 46 / km</td><td>R 6.40 / min after 30</td><td>+ 15%</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./rate-cards.html">Edit</a></td></tr><tr><td><div class="t-main">Western Cape standard</div><div class="t-sub">Active since 1 Aug 2026</div></td><td>Standard</td><td>R 40 + R 17 / km</td><td>R 3.00 / min after 15</td><td>+ 20%</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./rate-cards.html">Edit</a></td></tr><tr><td><div class="t-main">Summer surge, Dec</div><div class="t-sub">Scheduled 1 Dec 2026</div></td><td>All classes</td><td>+ 12% on base</td><td>Unchanged</td><td>+ 20%</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./rate-cards.html">Edit</a></td></tr></tbody></table><div class="pa-tablefoot"><span>Showing 6 of 9</span><div class="pa-tabs"><button class="pa-tab">Previous</button><button class="pa-tab is-on">1</button><button class="pa-tab">2</button><button class="pa-tab">Next</button></div></div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

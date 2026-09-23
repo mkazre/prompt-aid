@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Find a doctor, fill a script, get a lift · Prompt Aid</title>
+<link rel="icon" href="./assets/img/favicon.ico" />
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+</head>
+<body>
+<div class="pa-alertbar">
+  <div class="inner">
+    <span class="pa-row"><span class="pa-blip"></span>24-hour emergency line <strong style="color:var(--pa-beacon)">0800 776 678</strong></span>
+    <span class="pa-row" style="gap:22px;color:#A9A49A">
+      <span>Claims submitted to your scheme for you</span>
+      <a href="./for-providers.html">List your practice</a>
+    </span>
+  </div>
+</div>
+
+<header class="pa-header">
+  <div class="inner">
+    <a class="logo" href="./index.html"><img src="./assets/img/logo.png" alt="Prompt Aid" /></a>
+    <nav class="pa-nav">
+        <a href="./doctors.html" class="is-on">Find care</a>
+        <a href="./shop.html">Pharmacy &amp; tests</a>
+        <a href="./shuttle.html">Shuttle</a>
+        <a href="./how-it-works.html">How it works</a>
+        <a href="./about.html">About</a>
+    </nav>
+    <div class="actions">
+      <a class="pa-btn-ghost" href="./login.html">Log in</a>
+      <a class="pa-btn" href="./doctors.html">Book care</a>
+    </div>
+  </div>
+</header>
+<section class="pa-hero">
+  <div class="pa-container" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:56px;align-items:center">
+    <div style="padding:76px 0;animation:pa-rise .5s ease both">
+      <div class="pa-row" style="margin-bottom:24px"><span class="pa-tick"></span><span class="pa-eyebrow">Care, medicine and transport · South Africa</span></div>
+      <h1 style="font-size:clamp(36px,4.6vw,64px);margin-bottom:22px">Find a doctor, fill a script,<br />and get a lift there.</h1>
+      <p style="font-size:17px;color:var(--pa-ink-soft);max-width:540px;margin-bottom:32px">One account for clinics, pharmacies, labs and specialists — plus a medical shuttle that fetches you from home and brings you back.</p>
+      <div style="display:flex;gap:28px;flex-wrap:wrap">
+        <div><div class="pa-num" style="font-size:30px">1 240</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">providers listed</div></div>
+        <div style="width:1px;background:var(--pa-line)"></div>
+        <div><div class="pa-num" style="font-size:30px">11 min</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">median shuttle pickup</div></div>
+        <div style="width:1px;background:var(--pa-line)"></div>
+        <div><div class="pa-num" style="font-size:30px">6</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">schemes billed direct</div></div>
+      </div>
+    </div>
+    <div style="padding:40px 0">
+      <div class="pa-pop" data-pa-tabs>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--pa-line)">
+          <button class="pa-tab is-on" data-pa-target="care" style="border:0;border-radius:0;padding:15px 8px">Book care</button>
+          <button class="pa-tab" data-pa-target="meds" style="border:0;border-left:1px solid var(--pa-line);border-radius:0;padding:15px 8px">Order meds</button>
+          <button class="pa-tab" data-pa-target="ride" style="border:0;border-left:1px solid var(--pa-line);border-radius:0;padding:15px 8px">Shuttle</button>
+        </div>
+        <div style="padding:26px">
+          <div data-pa-panel="care">
+            <div class="pa-formrow"><label class="pa-label">Symptom, speciality or name</label><input class="pa-field" placeholder="e.g. persistent cough, cardiologist" /></div>
+            <div class="pa-formrow"><label class="pa-label">Where</label><input class="pa-field" placeholder="Suburb or postal code" /></div>
+          </div>
+          <div data-pa-panel="meds" class="pa-hide">
+            <div class="pa-formrow"><label class="pa-label">Medicine or product</label><input class="pa-field" placeholder="e.g. Panado, blood pressure monitor" /></div>
+            <div class="pa-formrow"><label class="pa-label">Deliver to</label><input class="pa-field" placeholder="Street address" /></div>
+          </div>
+          <div data-pa-panel="ride" class="pa-hide">
+            <div class="pa-formrow"><label class="pa-label">Pick up</label><input class="pa-field" placeholder="Home address" /></div>
+            <div class="pa-formrow"><label class="pa-label">Drop off</label><input class="pa-field" placeholder="Clinic, pharmacy or lab" /></div>
+          </div>
+          <div class="pa-formgrid" style="margin-bottom:22px">
+            <div><label class="pa-label">When</label><input class="pa-field" value="Today" /></div>
+            <div><label class="pa-label">Paying with</label><input class="pa-field" value="Discovery Health" /></div>
+          </div>
+          <a class="pa-btn pa-btn-block pa-btn-lg" href="./doctors.html">Search 1 240 providers</a>
+          <div class="pa-row" style="margin-top:16px;font-size:12px;color:var(--pa-muted)"><span style="width:6px;height:6px;background:var(--pa-go);display:block"></span>86 doctors have openings today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pa-dark">
+  <div class="pa-container" style="padding-top:18px;padding-bottom:18px;display:flex;gap:40px;align-items:center;flex-wrap:wrap;font-size:13px">
+    <span class="pa-row" style="font-weight:700"><span class="pa-tick-beacon" style="width:7px;height:7px;animation:pa-blip 1.6s ease-in-out infinite"></span>Live now</span>
+    <span style="color:#A9A49A"><strong style="color:var(--pa-paper)">412</strong> trips today</span>
+    <span style="color:#A9A49A"><strong style="color:var(--pa-paper)">9 min</strong> median pickup</span>
+    <span style="color:#A9A49A"><strong style="color:var(--pa-paper)">96%</strong> on time</span>
+    <span style="color:#A9A49A"><strong style="color:var(--pa-paper)">1 108</strong> scripts dispensed this week</span>
+  </div>
+</section>
+
+<section class="pa-section">
+  <div class="pa-spread" style="align-items:baseline;margin-bottom:28px">
+    <div><div class="pa-eyebrow" style="margin-bottom:10px">What do you need</div><h2>Six services, one account</h2></div>
+    <a class="pa-btn-ghost" href="./doctors.html">Browse everything</a>
+  </div>
+  <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))"><a href="./doctors.html" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
+      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">01</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Doctors</div>
+      <div style="font-size:13px;color:var(--pa-muted)">GPs and specialists, in person or by video</div></a><a href="./clinics.html" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
+      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">02</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Clinics</div>
+      <div style="font-size:13px;color:var(--pa-muted)">Day hospitals, family practices, walk-in rooms</div></a><a href="./pharmacies.html" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
+      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">03</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Pharmacy</div>
+      <div style="font-size:13px;color:var(--pa-muted)">Repeat scripts, OTC, devices, delivered</div></a><a href="./labs.html" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
+      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">04</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Labs &amp; imaging</div>
+      <div style="font-size:13px;color:var(--pa-muted)">Blood work, X-ray, ultrasound, CT</div></a><a href="./specialists.html" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
+      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">05</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Physio &amp; specialists</div>
+      <div style="font-size:13px;color:var(--pa-muted)">Rehab, optometry, dietetics, audiology</div></a><a href="./shuttle.html" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
+      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">06</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Shuttle</div>
+      <div style="font-size:13px;color:var(--pa-muted)">Wheelchair and stretcher vehicles, return legs</div></a></div>
+</section>
+
+<section class="pa-section">
+  <div class="pa-dark" style="padding:56px 56px 0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:end">
+    <div style="padding-bottom:56px">
+      <div class="pa-row" style="margin-bottom:20px"><span class="pa-tick-beacon"></span><span class="pa-eyebrow" style="color:var(--pa-beacon)">The shuttle</span></div>
+      <h2 style="font-size:44px;margin-bottom:18px">Missing the appointment<br />is the appointment problem.</h2>
+      <p style="font-size:16px;color:#B8B3A8;max-width:460px;margin-bottom:30px">Request a vehicle from home, watch it arrive, and book the return leg at the same time. Wheelchair and stretcher vehicles on the same map.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#2A2A2E;border:1px solid #2A2A2E;margin-bottom:30px"><div style="background:var(--pa-ink);padding:18px 20px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:5px">Standard</div>
+        <div style="font-size:12px;color:#8A857C;margin-bottom:10px">Sedan, 1–3 seats</div>
+        <div class="pa-num" style="font-size:20px;color:var(--pa-beacon)">R 18 / km</div></div><div style="background:var(--pa-ink);padding:18px 20px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:5px">Comfort</div>
+        <div style="font-size:12px;color:#8A857C;margin-bottom:10px">SUV, extra legroom</div>
+        <div class="pa-num" style="font-size:20px;color:var(--pa-beacon)">R 24 / km</div></div><div style="background:var(--pa-ink);padding:18px 20px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:5px">Wheelchair</div>
+        <div style="font-size:12px;color:#8A857C;margin-bottom:10px">Ramp and restraints</div>
+        <div class="pa-num" style="font-size:20px;color:var(--pa-beacon)">R 32 / km</div></div><div style="background:var(--pa-ink);padding:18px 20px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:5px">Stretcher</div>
+        <div style="font-size:12px;color:#8A857C;margin-bottom:10px">Non-emergency transfer</div>
+        <div class="pa-num" style="font-size:20px;color:var(--pa-beacon)">R 46 / km</div></div></div>
+      <a class="pa-btn-beacon pa-btn-lg" href="./shuttle.html">Request a shuttle</a>
+    </div>
+    <div class="pa-map" style="height:420px;border-left:1px solid #2A2A2E;border-top:1px solid #2A2A2E">
+      <span class="pin" style="left:14%;top:70%;width:14px;height:14px;background:var(--pa-beacon)"></span>
+      <span class="pin" style="left:70%;top:22%;width:14px;height:14px;background:var(--pa-signal)"></span>
+      <div style="position:absolute;left:40%;top:47%;background:var(--pa-paper);color:var(--pa-ink);padding:10px 13px;font-size:12px;font-weight:700">Sipho · Toyota Quantum<br /><span style="color:var(--pa-muted);font-weight:400">4 min away · GP 82 194</span></div>
+      <div style="position:absolute;left:20px;bottom:20px;right:20px;background:var(--pa-paper);color:var(--pa-ink);padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:16px">
+        <div><div class="pa-eyebrow">Fare estimate</div><div style="font-size:13px;color:var(--pa-ink-soft);margin-top:3px">Fourways → Rosebank Medical Suites</div></div>
+        <div class="pa-num" style="font-size:30px">R 214</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pa-section">
+  <div class="pa-spread" style="align-items:baseline;margin-bottom:28px"><h2>Available today</h2><a class="pa-btn-ghost" href="./doctors.html">All providers</a></div>
+  <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"><a href="./doctor-single.html" style="padding:24px;color:inherit;text-decoration:none;display:block">
+      <div style="display:flex;gap:14px;margin-bottom:16px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">NM</div>
+      <div><div style="font-size:16px;font-weight:700;line-height:1.25">Dr Naledi Mokoena</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">General Practitioner</div></div></div>
+      <div style="font-size:13px;color:var(--pa-ink-soft);margin-bottom:14px">Rosebank Medical Suites, Johannesburg</div>
+      <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span class="pa-badge is-go">09:20 today</span><span class="pa-num" style="font-size:19px">R 520</span></div></a><a href="./doctor-single.html" style="padding:24px;color:inherit;text-decoration:none;display:block">
+      <div style="display:flex;gap:14px;margin-bottom:16px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">RW</div>
+      <div><div style="font-size:16px;font-weight:700;line-height:1.25">Dr Riaan van Wyk</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">Cardiologist</div></div></div>
+      <div style="font-size:13px;color:var(--pa-ink-soft);margin-bottom:14px">Claremont, Cape Town</div>
+      <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span class="pa-badge is-go">Tomorrow 14:00</span><span class="pa-num" style="font-size:19px">R 1 450</span></div></a><a href="./specialist-single.html" style="padding:24px;color:inherit;text-decoration:none;display:block">
+      <div style="display:flex;gap:14px;margin-bottom:16px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">TD</div>
+      <div><div style="font-size:16px;font-weight:700;line-height:1.25">Thandi Dlamini Physio</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">Physiotherapy</div></div></div>
+      <div style="font-size:13px;color:var(--pa-ink-soft);margin-bottom:14px">Durban North, KwaZulu-Natal</div>
+      <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span class="pa-badge is-go">15:30 today</span><span class="pa-num" style="font-size:19px">R 640</span></div></a><a href="./lab-single.html" style="padding:24px;color:inherit;text-decoration:none;display:block">
+      <div style="display:flex;gap:14px;margin-bottom:16px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">LD</div>
+      <div><div style="font-size:16px;font-weight:700;line-height:1.25">Lancet Diagnostics</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">Pathology &amp; imaging</div></div></div>
+      <div style="font-size:13px;color:var(--pa-ink-soft);margin-bottom:14px">Rosebank, Johannesburg</div>
+      <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span class="pa-badge is-go">Walk in</span><span class="pa-num" style="font-size:19px">From R 180</span></div></a></div>
+</section>
+
+<section class="pa-section">
+  <div class="pa-rule-heavy" style="margin-bottom:36px"></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:40px"><div><div style="font-size:13px;font-weight:900;color:var(--pa-signal);margin-bottom:12px">STEP 01</div>
+    <div style="font-size:19px;font-weight:700;margin-bottom:8px">Search and compare</div>
+    <div style="font-size:14px;color:var(--pa-ink-soft)">Filter by speciality, suburb, fee, scheme and who has an opening today.</div></div><div><div style="font-size:13px;font-weight:900;color:var(--pa-signal);margin-bottom:12px">STEP 02</div>
+    <div style="font-size:19px;font-weight:700;margin-bottom:8px">Book and add a lift</div>
+    <div style="font-size:14px;color:var(--pa-ink-soft)">Pick a slot. Tick the shuttle box and the return leg is scheduled with it.</div></div><div><div style="font-size:13px;font-weight:900;color:var(--pa-signal);margin-bottom:12px">STEP 03</div>
+    <div style="font-size:19px;font-weight:700;margin-bottom:8px">Attend or dial in</div>
+    <div style="font-size:14px;color:var(--pa-ink-soft)">The driver tracks to your door, or a Google Meet link opens in the app.</div></div><div><div style="font-size:13px;font-weight:900;color:var(--pa-signal);margin-bottom:12px">STEP 04</div>
+    <div style="font-size:19px;font-weight:700;margin-bottom:8px">Scripts and results follow</div>
+    <div style="font-size:14px;color:var(--pa-ink-soft)">Prescriptions go to your pharmacy, results to your record and your doctor.</div></div></div>
+</section>
+
+<section class="pa-section">
+  <div class="pa-card pa-spread" style="padding:28px 32px">
+    <div class="pa-eyebrow">Billed directly to</div>
+    <div style="display:flex;gap:28px;flex-wrap:wrap;font-size:17px;font-weight:700;color:var(--pa-ink-soft)">
+      <span>Discovery Health</span><span>Bonitas</span><span>Momentum</span><span>Medihelp</span><span>Bestmed</span><span>GEMS</span>
+    </div>
+  </div>
+</section>
+
+<section class="pa-section pa-section-last">
+  <div style="background:var(--pa-signal);color:#fff;padding:52px 48px;display:flex;align-items:center;justify-content:space-between;gap:36px;flex-wrap:wrap">
+    <div><h2 style="font-size:38px;color:#fff;margin-bottom:10px">Your next appointment,<br />lift included.</h2>
+    <p style="font-size:16px;color:#FBD5D3;margin:0">Free to join. No booking fee. Pay the provider directly.</p></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <a class="pa-btn-lg" style="background:#fff;color:var(--pa-ink);border:1px solid #fff;font-weight:700;padding:16px 26px;display:inline-flex;align-items:center" href="./register.html">Create an account</a>
+      <a class="pa-btn-lg" style="background:transparent;color:#fff;border:1px solid #fff;font-weight:700;padding:16px 26px;display:inline-flex;align-items:center" href="./how-it-works.html">How the shuttle works</a>
+    </div>
+  </div>
+</section>
+<footer class="pa-footer">
+  <div class="inner">
+    <div>
+      <img src="./assets/img/logo.png" alt="Prompt Aid" />
+      <p style="font-size:14px;color:var(--pa-muted);max-width:300px">Doctors, pharmacies, labs and specialists — with a medical shuttle to get you there and home.</p>
+      <div style="font-size:13px;color:var(--pa-muted)">0800 776 678 · help@promptaid.health</div>
+    </div>
+      <div>
+        <div class="ft">Patients</div>
+        <div class="fl"><a href="./doctors.html">Find a doctor</a><a href="./shop.html">Pharmacy &amp; tests</a><a href="./shuttle.html">Book a shuttle</a><a href="./account/patient/prescriptions.html">Upload a script</a><a href="./account/patient/index.html">My record</a></div>
+      </div>
+      <div>
+        <div class="ft">Providers</div>
+        <div class="fl"><a href="./for-providers.html">List your practice</a><a href="./account/pharmacy/index.html">Sell in the store</a><a href="./account/partner/index.html">Partner as a lab</a><a href="./account/driver/index.html">Drive with us</a><a href="./login.html">Provider login</a></div>
+      </div>
+      <div>
+        <div class="ft">Company</div>
+        <div class="fl"><a href="./about.html">About</a><a href="./how-it-works.html">How it works</a><a href="./faq.html">FAQ</a><a href="./contact.html">Contact</a><a href="./legal-popia.html">POPIA notice</a></div>
+      </div>
+  </div>
+  <div class="legal"><div class="inner2">
+    <span>© 2026 Prompt Aid (Pty) Ltd. Registered with the HPCSA and SAPC.</span>
+    <span><a href="./legal-popia.html">POPIA</a> · <a href="./terms.html">Terms</a> · <a href="./privacy.html">Privacy</a></span>
+  </div></div>
+</footer>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

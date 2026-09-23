@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07 · Triage · nearest help · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>07 · Triage · nearest help</span><span class="m-stack">patient</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<main class="m-body flush">
+ <div class="pa-verdict orange" style="padding:20px"><div class="lvl">Your triage result · TRI-8K2QM</div><h2 style="font-size:28px">Orange — very urgent</h2><p>Be seen within <strong>10 minutes</strong>. Burn, left forearm.</p></div>
+ <div style="padding:16px">
+  <div class="pa-locrow" style="font-size:12px;margin-bottom:12px"><span class="pa-tick-beacon"></span><span>14 Waterford Dr, Fourways · 12 m accuracy</span></div>
+  <div class="pa-map" style="height:150px;margin-bottom:12px"><span class="pin" style="left:30%;top:60%;width:12px;height:12px;background:#F2C200"></span><span class="pin" style="left:68%;top:30%;width:12px;height:12px;background:#C8102E"></span><span class="pin" style="left:52%;top:72%;width:10px;height:10px;background:#F5F2EC"></span></div>
+  <div class="m-card" style="border-left:4px solid #C8102E"><div class="pa-spread"><div><b style="font-size:15px">Sunninghill Emergency</b> <span class="pa-badge is-ink">Best match</span><div style="font-size:12px;color:var(--pa-muted);margin-top:3px">Burns unit · 6.2 km · wait 14 min</div></div><div class="pa-num" style="font-size:18px">11 min</div></div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px"><a class="pa-btn pa-btn-sm" href="./checkout.html">Alert them</a><a class="pa-btn-beacon pa-btn-sm" href="./shuttle-request.html?to=Sunninghill%20Emergency&priority=emergency">Shuttle</a></div></div><div class="m-card" style=""><div class="pa-spread"><div><b style="font-size:15px">Fourways Life Emergency</b><div style="font-size:12px;color:var(--pa-muted);margin-top:3px">Trauma · 3.1 km · wait 22 min</div></div><div class="pa-num" style="font-size:18px">7 min</div></div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px"><a class="pa-btn pa-btn-sm" href="./checkout.html">Alert them</a><a class="pa-btn-beacon pa-btn-sm" href="./shuttle-request.html?to=Fourways%20Life%20Emergency&priority=emergency">Shuttle</a></div></div><div class="m-card" style=""><div class="pa-spread"><div><b style="font-size:15px">Sunninghill Family Clinic</b><div style="font-size:12px;color:var(--pa-muted);margin-top:3px">Wound care · 8.1 km · wait 25 min</div></div><div class="pa-num" style="font-size:18px">15 min</div></div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px"><a class="pa-btn pa-btn-sm" href="./checkout.html">Alert them</a><a class="pa-btn-beacon pa-btn-sm" href="./shuttle-request.html?to=Sunninghill%20Family%20Clinic&priority=emergency">Shuttle</a></div></div><div class="m-card" style=""><div class="pa-spread"><div><b style="font-size:15px">Rosebank Pharmacy</b><div style="font-size:12px;color:var(--pa-muted);margin-top:3px">Burn dressings · delivery 45 min</div></div><div class="pa-num" style="font-size:18px">8 min</div></div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px"><a class="pa-btn pa-btn-sm" href="./checkout.html">Order</a><a class="pa-btn-beacon pa-btn-sm" href="./shuttle-request.html?to=Rosebank%20Pharmacy&priority=emergency">Shuttle</a></div></div>
+  <a class="pa-emergency-cta" style="padding:14px;font-size:15px;margin-top:6px" href="tel:10177">Getting worse? Call 10177</a>
+  <div class="pa-label" style="margin:18px 0 8px">While you wait · burns</div>
+  <div class="m-card" style="font-size:13px;line-height:1.6">Cool running water 20 minutes. Remove rings. Cover loosely with cling film. No ice, butter or toothpaste.</div>
+  <a class="m-row" href="./profile.html"><span><b>Nomsa Mahlangu notified</b><small>Live tracking link sent</small></span><span class="pa-badge is-go">Sent</span></a>
+  <a class="m-row" href="./triage-start.html"><span><b>Re-triage in 10 minutes</b><small>Tap if anything changes</small></span><span class="pa-badge is-wait">Re-check</span></a>
+ </div></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(5,1fr)"><a href="./home.html"><span></span>Home</a><a href="./find-care.html"><span></span>Care</a><a href="./shuttle-request.html"><span></span>Shuttle</a><a href="./shop.html"><span></span>Pharmacy</a><a href="./record.html"><span></span>Record</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> Results sorted by capability, then ETA. "Alert them" POSTs the pre-arrival packet (colour, complaint, pain, allergies, meds, scheme, photo) to the facility. Cache the last six facilities with AsyncStorage for offline; USSD *134*776# is shown when there is no data.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

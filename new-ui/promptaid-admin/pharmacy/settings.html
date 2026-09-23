@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Store settings · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html" selected>Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Overview</div><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a></div><div class="pa-navgroup"><div class="t">Store</div><a class="pa-navlink" href="./orders.html"><span class="d"></span><span class="l">Orders</span><span class="b">31</span></a><a class="pa-navlink" href="./scripts.html"><span class="d"></span><span class="l">Script approvals</span><span class="b">6</span></a><a class="pa-navlink" href="./products.html"><span class="d"></span><span class="l">Products</span></a><a class="pa-navlink" href="./stock.html"><span class="d"></span><span class="l">Stock</span></a><a class="pa-navlink" href="./deliveries.html"><span class="d"></span><span class="l">Deliveries</span></a></div><div class="pa-navgroup"><div class="t">Business</div><a class="pa-navlink" href="./payouts.html"><span class="d"></span><span class="l">Payouts</span></a><a class="pa-navlink is-on" href="./settings.html"><span class="d"></span><span class="l">Store settings</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">RP</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Rosebank Pharmacy</div>    <div style="font-size:11px;color:var(--pa-muted)">Pharmacy vendor</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Vendor panel</div><div class="title">Store settings</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./settings.html">Save all</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-card" style="margin-bottom:20px"><div class="pa-card-head"><h3>Business details</h3></div><div class="pa-card-body"><div class="pa-formgrid"><div><label class="pa-label">Trading name</label><input class="pa-field" value="Rosebank Pharmacy" /></div><div><label class="pa-label">Registered name</label><input class="pa-field" value="Oxford Dispensary (Pty) Ltd" /></div><div><label class="pa-label">SAPC registration</label><input class="pa-field" value="Y0412885" /></div><div><label class="pa-label">Responsible pharmacist</label><input class="pa-field" value="N. Adams" /></div><div><label class="pa-label">Pharmacist SAPC number</label><input class="pa-field" value="P0221884" /></div><div><label class="pa-label">VAT number</label><input class="pa-field" value="4770221194" /></div><div><label class="pa-label">Telephone</label><input class="pa-field" value="011 447 2210" /></div><div><label class="pa-label">Email</label><input class="pa-field" value="orders@rosebankpharmacy.co.za" /></div></div><div style="margin-top:18px"><a class="pa-btn-ghost" href="../../promptaid-website/pharmacy-single.html">View public page</a> <a class="pa-btn" href="./settings.html">Save</a></div></div></div><div class="pa-card" style="margin-bottom:20px"><div class="pa-card-head"><h3>Delivery rules</h3></div><div class="pa-card-body"><div class="pa-formgrid"><div><label class="pa-label">Same-day delivery</label><select class="pa-field"><option>Yes</option><option>No</option></select></div><div><label class="pa-label">Same-day cut-off</label><input class="pa-field" value="15:00" /></div><div><label class="pa-label">Delivery fee</label><input class="pa-field" value="R 45.00" /></div><div><label class="pa-label">Free delivery over</label><input class="pa-field" value="R 750.00" /></div><div><label class="pa-label">Delivery radius</label><input class="pa-field" value="18 km" /></div><div style="grid-column:1/-1"><label class="pa-label">Areas served</label><input class="pa-field" value="Rosebank, Parktown, Fourways, Sandton, Randburg, Northcliff" /></div><div><label class="pa-label">Shuttle collection</label><select class="pa-field"><option>Enabled</option><option>Disabled</option></select></div><div><label class="pa-label">Schedule 6 handling</label><select class="pa-field"><option>Collection in person with ID only</option><option>Not stocked</option></select></div></div><div style="margin-top:18px"><a class="pa-btn" href="./settings.html">Save</a></div></div></div><div class="pa-card" style="margin-bottom:20px"><div class="pa-card-head"><h3>Hours</h3></div><div class="pa-card-body"><div class="pa-formgrid"><div><label class="pa-label">Monday to Friday</label><input class="pa-field" value="08:00 – 20:00" /></div><div><label class="pa-label">Saturday</label><input class="pa-field" value="08:00 – 17:00" /></div><div><label class="pa-label">Sunday</label><input class="pa-field" value="09:00 – 14:00" /></div><div><label class="pa-label">Public holidays</label><input class="pa-field" value="09:00 – 14:00" /></div><div><label class="pa-label">After-hours orders</label><select class="pa-field"><option>Queue for next morning</option><option>Reject</option></select></div></div><div style="margin-top:18px"><a class="pa-btn" href="./settings.html">Save</a></div></div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

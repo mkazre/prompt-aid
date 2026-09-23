@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>32 · Pharmacy · stock · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>32 · Pharmacy · stock</span><span class="m-stack">pharmacy</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<header class="m-head"><span></span><div class="m-htitle">Stock</div><span></span></header><main class="m-body">
+ <input class="pa-field" placeholder="Scan barcode or search" style="margin-bottom:12px" />
+ <a class="m-row" href="./pharmacy-stock.html"><span><b>Amlodipine 10mg · 30</b><small>Reorder at 25</small></span><span class="pa-badge is-stop">8 left</span></a>
+ <a class="m-row" href="./pharmacy-stock.html"><span><b>Panado 500mg · 24</b><small>Reorder at 40</small></span><span class="pa-badge is-stop">12 left</span></a>
+ <a class="m-row" href="./pharmacy-stock.html"><span><b>Insulin pen refills</b><small>Cold chain</small></span><span class="pa-badge is-stop">0</span></a>
+ <a class="m-row" href="./pharmacy-stock.html"><span><b>Amoxicillin 500mg</b><small>Batch A2214 · Nov 2026</small></span><span class="pa-badge is-wait">Expiring</span></a>
+ <a class="pa-btn pa-btn-block" href="./pharmacy-stock.html">Place supplier order</a></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(3,1fr)"><a href="./pharmacy-orders.html"><span></span>Orders</a><a href="./pharmacy-script.html"><span></span>Scripts</a><a href="./pharmacy-stock.html" class="on"><span></span>Stock</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> Barcode scanning with expo-camera (CameraView onBarcodeScanned) against NAPPI codes.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

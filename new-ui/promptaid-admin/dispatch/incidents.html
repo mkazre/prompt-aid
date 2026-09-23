@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Incidents · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html" selected>Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Live</div><a class="pa-navlink" href="./dispatch.html"><span class="d"></span><span class="l">Dispatch board</span><span class="b">3</span></a><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a></div><div class="pa-navgroup"><div class="t">Rides</div><a class="pa-navlink" href="./rides.html"><span class="d"></span><span class="l">All rides</span></a><a class="pa-navlink" href="./ride-series.html"><span class="d"></span><span class="l">Recurring series</span></a><a class="pa-navlink" href="./rate-cards.html"><span class="d"></span><span class="l">Rate cards</span></a></div><div class="pa-navgroup"><div class="t">Fleet</div><a class="pa-navlink" href="./drivers.html"><span class="d"></span><span class="l">Drivers</span></a><a class="pa-navlink" href="./vehicles.html"><span class="d"></span><span class="l">Vehicles</span></a><a class="pa-navlink is-on" href="./incidents.html"><span class="d"></span><span class="l">Incidents</span><span class="b">1</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">SC</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sibusiso Cele</div>    <div style="font-size:11px;color:var(--pa-muted)">Ride dispatch</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Dispatch · Gauteng</div><div class="title">Incidents</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./incidents.html">Log an incident</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-tabs" style="margin-bottom:18px"><button class="pa-tab is-on">Open <span class="n">1</span></button><button class="pa-tab">This month <span class="n">6</span></button><button class="pa-tab">All <span class="n">48</span></button></div><div class="pa-filterbar"><input class="pa-field" placeholder="Search incident, ride or driver…" /><select class="pa-field"><option>All types</option><option>Complaint</option><option>Accident</option><option>Late pickup</option><option>Patient fall</option><option>Property</option></select><select class="pa-field"><option>All statuses</option><option>Open</option><option>Investigating</option><option>Closed</option></select><button class="pa-btn-ghost pa-btn-sm">Export CSV</button></div><div class="pa-tablewrap"><table class="pa-table"><thead><tr><th>Incident</th><th>Ride</th><th>Driver</th><th>Type</th><th>Status</th><th></th></tr></thead><tbody><tr><td><div class="t-main">INC-0412</div><div class="t-sub">Today 07:14</div></td><td>RIDE-8818</td><td>Lucky Mahlaba</td><td>Complaint · rude to patient</td><td><span class="pa-badge is-stop">Investigating</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./incidents.html">Open</a></td></tr><tr><td><div class="t-main">INC-0408</div><div class="t-sub">17 Sep</div></td><td>RIDE-8702</td><td>Thabo Mokwena</td><td>Late pickup · 24 min</td><td><span class="pa-badge is-go">Closed</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./incidents.html">Open</a></td></tr><tr><td><div class="t-main">INC-0401</div><div class="t-sub">11 Sep</div></td><td>RIDE-8611</td><td>Marie Fourie</td><td>Minor collision, no injury</td><td><span class="pa-badge is-go">Closed</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./incidents.html">Open</a></td></tr></tbody></table><div class="pa-tablefoot"><span>Showing 3 of 48</span><div class="pa-tabs"><button class="pa-tab">Previous</button><button class="pa-tab is-on">1</button><button class="pa-tab">2</button><button class="pa-tab">Next</button></div></div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

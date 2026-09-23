@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02 · Create account · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>02 · Create account</span><span class="m-stack">shared</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<header class="m-head"><a class="m-back" href="./login.html">&larr;</a><div class="m-htitle">Create account</div><span></span></header><main class="m-body">
+ <label class="pa-label">I am a</label><select class="pa-field"><option>Patient</option><option>Doctor</option><option>Pharmacy</option><option>Lab / X-ray / specialist</option><option>Shuttle driver</option></select>
+ <div class="pa-formgrid" style="margin-top:14px"><div><label class="pa-label">First name</label><input class="pa-field" /></div><div><label class="pa-label">Surname</label><input class="pa-field" /></div></div>
+ <label class="pa-label" style="margin-top:14px">Mobile</label><input class="pa-field" placeholder="082 000 0000" />
+ <label class="pa-label" style="margin-top:14px">Medical scheme</label><select class="pa-field"><option>No scheme, paying cash</option><option>Discovery Health</option><option>Bonitas</option><option>GEMS</option></select>
+ <label class="pa-check" style="margin-top:14px"><span class="box"></span>I consent to my health information being processed under POPIA.</label>
+ <div style="margin-top:16px"><a class="pa-btn pa-btn-block" href="./home.html">Send verification code</a></div></main>
+
+</div>
+<div class="m-note"><strong>Expo notes.</strong> OTP by SMS before account creation. Provider roles go to a pending-verification screen until HPCSA/SAPC checks pass.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

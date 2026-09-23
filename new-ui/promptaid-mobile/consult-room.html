@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11 · Video consult (Google Meet) · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>11 · Video consult (Google Meet)</span><span class="m-stack">patient</span></div>
+<div class="m-phone dark">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<header class="m-head"><a class="m-back" href="./appointments.html">&larr;</a><div class="m-htitle">Video consult</div><span></span></header><main class="m-body">
+ <div class="pa-row" style="margin-bottom:14px"><span class="pa-tick-beacon" style="animation:pa-blip 1.6s infinite"></span><span class="pa-eyebrow" style="color:var(--pa-beacon)">Opens in 4 minutes</span></div>
+ <h2 style="font-size:24px;margin-bottom:4px">Dr Naledi Mokoena</h2><div style="font-size:13px;color:#8A857C;margin-bottom:18px">Mon 28 Sep · 11:00 · repeat script review</div>
+ <div style="background:#1C1C20;height:220px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#6E6A62;margin-bottom:14px">Camera preview</div>
+ <div class="pa-spread" style="font-size:13px;padding:10px 0;border-bottom:1px solid #2A2A2E"><span style="color:#8A857C">Camera</span><b style="color:#7FD1A4">Allowed</b></div><div class="pa-spread" style="font-size:13px;padding:10px 0;border-bottom:1px solid #2A2A2E"><span style="color:#8A857C">Microphone</span><b style="color:#7FD1A4">Allowed</b></div><div class="pa-spread" style="font-size:13px;padding:10px 0;border-bottom:1px solid #2A2A2E"><span style="color:#8A857C">Connection</span><b style="color:#7FD1A4">Good · 18 Mbps</b></div>
+ <div style="margin-top:18px"><a class="pa-btn-beacon pa-btn-block" href="https://meet.google.com/">Join on Google Meet</a></div>
+ <p style="font-size:12px;color:#8A857C;text-align:center;margin-top:10px">Opens the Meet app. Your doctor has your BP diary.</p></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(5,1fr)"><a href="./home.html"><span></span>Home</a><a href="./find-care.html"><span></span>Care</a><a href="./shuttle-request.html"><span></span>Shuttle</a><a href="./shop.html"><span></span>Pharmacy</a><a href="./record.html"><span></span>Record</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> Join opens with Linking.openURL(meet_url) — not a WebView, which does not reliably get camera/mic permission for Meet. Button enabled from starts_at − 10 min to ends_at + 30 min. Permission checks via expo-camera / expo-av before handing off.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

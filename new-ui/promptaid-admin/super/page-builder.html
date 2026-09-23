@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page builder — Home · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html" selected>Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Overview</div><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a><a class="pa-navlink" href="./dispatch.html"><span class="d"></span><span class="l">Live dispatch</span><span class="b">3</span></a><a class="pa-navlink" href="./triage.html"><span class="d"></span><span class="l">Triage monitor</span><span class="b">5</span></a></div><div class="pa-navgroup"><div class="t">Site</div><a class="pa-navlink" href="./pages.html"><span class="d"></span><span class="l">Pages</span></a><a class="pa-navlink is-on" href="./page-builder.html"><span class="d"></span><span class="l">Page builder</span></a><a class="pa-navlink" href="./templates.html"><span class="d"></span><span class="l">Templates</span></a><a class="pa-navlink" href="./menus.html"><span class="d"></span><span class="l">Menus</span></a><a class="pa-navlink" href="./theme.html"><span class="d"></span><span class="l">Theme</span></a><a class="pa-navlink" href="./media.html"><span class="d"></span><span class="l">Media library</span></a></div><div class="pa-navgroup"><div class="t">Clinical</div><a class="pa-navlink" href="./appointments.html"><span class="d"></span><span class="l">Appointments</span><span class="b">48</span></a><a class="pa-navlink" href="./encounters.html"><span class="d"></span><span class="l">Encounters</span></a><a class="pa-navlink" href="./prescriptions.html"><span class="d"></span><span class="l">Prescriptions</span></a><a class="pa-navlink" href="./lab-requests.html"><span class="d"></span><span class="l">Lab requests</span><span class="b">12</span></a></div><div class="pa-navgroup"><div class="t">Directory</div><a class="pa-navlink" href="./clinics.html"><span class="d"></span><span class="l">Clinics</span></a><a class="pa-navlink" href="./doctors.html"><span class="d"></span><span class="l">Doctors</span></a><a class="pa-navlink" href="./patients.html"><span class="d"></span><span class="l">Patients</span></a><a class="pa-navlink" href="./pharmacies.html"><span class="d"></span><span class="l">Pharmacies</span></a><a class="pa-navlink" href="./partners.html"><span class="d"></span><span class="l">Partners</span></a><a class="pa-navlink" href="./drivers.html"><span class="d"></span><span class="l">Drivers</span></a></div><div class="pa-navgroup"><div class="t">Ride service</div><a class="pa-navlink" href="./rides.html"><span class="d"></span><span class="l">Rides</span></a><a class="pa-navlink" href="./ride-series.html"><span class="d"></span><span class="l">Recurring series</span></a><a class="pa-navlink" href="./rate-cards.html"><span class="d"></span><span class="l">Rate cards</span></a></div><div class="pa-navgroup"><div class="t">Commerce</div><a class="pa-navlink" href="./orders.html"><span class="d"></span><span class="l">Orders</span><span class="b">31</span></a><a class="pa-navlink" href="./products.html"><span class="d"></span><span class="l">Products</span></a><a class="pa-navlink" href="./categories.html"><span class="d"></span><span class="l">Categories</span></a></div><div class="pa-navgroup"><div class="t">Billing</div><a class="pa-navlink" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./payments.html"><span class="d"></span><span class="l">Payments</span></a><a class="pa-navlink" href="./claims.html"><span class="d"></span><span class="l">Claims</span><span class="b">9</span></a><a class="pa-navlink" href="./schemes.html"><span class="d"></span><span class="l">Medical schemes</span></a></div><div class="pa-navgroup"><div class="t">System</div><a class="pa-navlink" href="./users.html"><span class="d"></span><span class="l">Users</span></a><a class="pa-navlink" href="./roles.html"><span class="d"></span><span class="l">Roles &amp; permissions</span></a><a class="pa-navlink" href="./settings.html"><span class="d"></span><span class="l">Settings</span></a><a class="pa-navlink" href="./notifications.html"><span class="d"></span><span class="l">Notification log</span></a><a class="pa-navlink" href="./audit.html"><span class="d"></span><span class="l">Audit trail</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">MK</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Marcus Kazre</div>    <div style="font-size:11px;color:var(--pa-muted)">Super admin</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Site · Pages · Home</div><div class="title">Page builder — Home</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="../../promptaid-website/index.html">Preview site</a>
+    </div>
+  </div></div>
+  <div class="pa-page">
+<div style="display:grid;grid-template-columns:268px minmax(0,1fr) 330px;border:1px solid var(--pa-line);background:var(--pa-surface);min-height:720px">
+  <div style="border-right:1px solid var(--pa-line);overflow-y:auto;max-height:820px">
+    <div class="pa-spread" style="padding:13px 16px;border-bottom:1px solid var(--pa-line);position:sticky;top:0;background:var(--pa-surface)">
+      <span class="pa-label" style="margin:0">Structure</span>
+      <button class="pa-btn-quiet pa-btn-sm">+ Block</button></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 16px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Page · Home</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">root</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Emergency bar</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">section</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Header</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">section</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid var(--pa-signal);background:var(--pa-signal-wash);font-weight:700;cursor:pointer">
+  <span style="width:6px;height:6px;background:var(--pa-signal);display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hero section</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">section</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 40px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">— Eyebrow</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">text</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 40px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">— Heading</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">heading</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 40px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">— Paragraph</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">text</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 40px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">— Booking widget</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">booking</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 40px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">— Stat row</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">stats</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Live stat strip</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">stats</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Category tiles</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">tiles</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shuttle feature</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">section</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Loop · doctors</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">loop</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 40px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">— Provider card</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">card</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Store strip</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">products</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Scheme logos</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">logos</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">CTA band</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">section</span></div><div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;font-size:13px;border-left:3px solid transparent;color:var(--pa-ink-soft);cursor:pointer">
+  <span style="width:6px;height:6px;background:#CFC8B8;display:block;flex:none"></span>
+  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Footer</span>
+  <span style="font-size:10px;color:var(--pa-muted-2);text-transform:uppercase;letter-spacing:.06em">section</span></div>
+    <div style="padding:14px 16px;border-top:1px solid var(--pa-line);margin-top:8px"><div style="margin-bottom:12px"><div class="pa-label" style="margin-bottom:8px">Layout</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Section</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Columns</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Spacer</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Divider</div></div></div><div style="margin-bottom:12px"><div class="pa-label" style="margin-bottom:8px">Content</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Heading</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Rich text</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Image</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Button</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Accordion</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Tabs</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Stats</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Icon list</div></div></div><div style="margin-bottom:12px"><div class="pa-label" style="margin-bottom:8px">Directory</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Provider grid</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Filters</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Clinic map</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Speciality tiles</div></div></div><div style="margin-bottom:12px"><div class="pa-label" style="margin-bottom:8px">Commerce</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Product grid</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Product filters</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Cart summary</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Pharmacy card</div></div></div><div style="margin-bottom:12px"><div class="pa-label" style="margin-bottom:8px">Booking</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Booking widget</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Slot picker</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Ride quote</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Triage prompt</div></div></div><div style="margin-bottom:12px"><div class="pa-label" style="margin-bottom:8px">Loop</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Loop</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Loop item</div><div style="border:1px dashed #CFC8B8;padding:9px 8px;font-size:11px;font-weight:700;color:var(--pa-ink-soft);text-align:center;background:var(--pa-surface-2);cursor:grab">Field</div></div></div></div>
+  </div>
+
+  <div style="background:#E6E1D5;overflow-y:auto;max-height:820px;padding:20px">
+    <div class="pa-spread" style="margin-bottom:14px">
+      <div class="pa-tabs"><button class="pa-tab is-on">Desktop</button><button class="pa-tab">Tablet</button><button class="pa-tab">Phone</button></div>
+      <div class="pa-tabs"><button class="pa-tab">Revisions</button><button class="pa-tab">Save draft</button><a class="pa-btn pa-btn-sm" href="./pages.html">Publish</a></div>
+    </div>
+    <div style="background:var(--pa-paper);border:1px solid #CFC8B8;min-height:640px">
+      <div style="background:var(--pa-ink);color:var(--pa-paper);padding:8px 18px;font-size:11px">0800 776 678 · Ambulance 10177</div>
+      <div class="pa-spread" style="background:#fff;border-bottom:1px solid var(--pa-line);padding:14px 18px">
+        <img src="../assets/img/logo.png" alt="" style="height:22px;width:auto" />
+        <div style="display:flex;gap:14px;font-size:12px;color:var(--pa-ink-soft)"><span>Find care</span><span>Pharmacy</span><span>Shuttle</span><span>About</span></div>
+      </div>
+      <div style="outline:2px solid var(--pa-signal);outline-offset:-2px;position:relative;padding:44px 32px;background-image:linear-gradient(#EBE5D7 1px,transparent 1px),linear-gradient(90deg,#EBE5D7 1px,transparent 1px);background-size:56px 56px">
+        <div style="position:absolute;top:-1px;left:-2px;background:var(--pa-signal);color:#fff;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px">Hero section · selected</div>
+        <div style="position:absolute;top:-1px;right:-2px;display:flex;gap:1px">
+          <span style="background:var(--pa-ink);color:#fff;font-size:11px;padding:4px 8px;cursor:pointer">&uarr;</span><span style="background:var(--pa-ink);color:#fff;font-size:11px;padding:4px 8px;cursor:pointer">&darr;</span><span style="background:var(--pa-ink);color:#fff;font-size:11px;padding:4px 8px;cursor:pointer">&#9082;</span><span style="background:var(--pa-ink);color:#fff;font-size:11px;padding:4px 8px;cursor:pointer">&times;</span>
+        </div>
+        <div style="font-size:38px;font-weight:900;letter-spacing:-.025em;line-height:1;margin-bottom:12px">Find a doctor, fill a script,<br />and get a lift there.</div>
+        <div style="font-size:14px;color:var(--pa-ink-soft);max-width:420px;margin-bottom:20px">One account for clinics, pharmacies, labs and specialists.</div>
+        <span class="pa-btn pa-btn-sm">Book care</span>
+      </div>
+      <div style="border:1px dashed #B8B1A0;margin:10px;padding:24px 32px;position:relative">
+        <div style="position:absolute;top:-9px;left:14px;background:var(--pa-paper);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--pa-muted);padding:0 6px">Loop · doctor archive · 12 per page</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div style="background:#fff;border:1px solid var(--pa-line);padding:14px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:4px">{{ item.name }}</div>
+              <div style="font-size:11px;color:var(--pa-muted);margin-bottom:10px">{{ item.speciality }}</div>
+              <div class="pa-num" style="font-size:15px">{{ item.fee | money }}</div></div><div style="background:#fff;border:1px solid var(--pa-line);padding:14px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:4px">Dr Naledi Mokoena</div>
+              <div style="font-size:11px;color:var(--pa-muted);margin-bottom:10px">General Practitioner</div>
+              <div class="pa-num" style="font-size:15px">R 520</div></div><div style="background:#fff;border:1px solid var(--pa-line);padding:14px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:4px">Dr Riaan van Wyk</div>
+              <div style="font-size:11px;color:var(--pa-muted);margin-bottom:10px">Cardiologist</div>
+              <div class="pa-num" style="font-size:15px">R 1 450</div></div>
+        </div>
+      </div>
+      <div style="border:1px dashed #CFC8B8;margin:10px;padding:34px;text-align:center;font-size:12px;color:var(--pa-muted-2)">Drop a block here</div>
+    </div>
+  </div>
+
+  <div style="border-left:1px solid var(--pa-line);overflow-y:auto;max-height:820px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--pa-line)">
+      <button class="pa-tab is-on" style="border:0;border-radius:0">Content</button>
+      <button class="pa-tab" style="border:0;border-left:1px solid var(--pa-line);border-radius:0">Style</button>
+      <button class="pa-tab" style="border:0;border-left:1px solid var(--pa-line);border-radius:0">Advanced</button>
+    </div>
+    <div style="padding:16px 18px;border-bottom:1px solid var(--pa-line)">
+      <div class="pa-label" style="margin-bottom:4px">Editing</div>
+      <div style="font-size:17px;font-weight:900;letter-spacing:-.012em">Hero section</div>
+    </div>
+    <div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+  <label class="pa-label">Eyebrow text</label>
+  <input class="pa-field" value="Care, medicine and transport · South Africa" /></div><div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+  <label class="pa-label">Heading</label>
+  <textarea class="pa-field" style="min-height:64px">Find a doctor, fill a script, and get a lift there.</textarea></div><div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+  <label class="pa-label">Heading level</label>
+  <select class="pa-field" style="background:#fff"><option>H1</option></select></div><div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+  <label class="pa-label">Body copy</label>
+  <textarea class="pa-field" style="min-height:64px">One account for clinics, pharmacies, labs and specialists — plus a medical shuttle.</textarea></div><div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+  <label class="pa-label">Button label</label>
+  <input class="pa-field" value="Book care" /></div><div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+  <label class="pa-label">Button links to</label>
+  <select class="pa-field" style="background:#fff"><option>/doctors</option></select></div><div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+  <label class="pa-label">Widget modes</label>
+  <select class="pa-field" style="background:#fff"><option>Book care · Order meds · Shuttle</option></select></div>
+    <div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+      <label class="pa-label">Background</label>
+      <div style="display:flex;gap:5px;flex-wrap:wrap"><div title="paper" style="width:30px;height:30px;background:#F5F2EC;border:2px solid var(--pa-ink);cursor:pointer"></div><div title="surface" style="width:30px;height:30px;background:#FFFFFF;border:1px solid #CFC8B8;cursor:pointer"></div><div title="ink" style="width:30px;height:30px;background:#101012;border:1px solid #CFC8B8;cursor:pointer"></div><div title="signal" style="width:30px;height:30px;background:#D0211C;border:1px solid #CFC8B8;cursor:pointer"></div><div title="beacon" style="width:30px;height:30px;background:#F2C200;border:1px solid #CFC8B8;cursor:pointer"></div><div title="go" style="width:30px;height:30px;background:#1F7A4C;border:1px solid #CFC8B8;cursor:pointer"></div></div>
+      <div style="font-size:11px;color:var(--pa-muted);margin-top:9px">Tokens only — changing the theme updates every page that uses them.</div>
+    </div>
+    <div style="padding:14px 18px;border-bottom:1px solid var(--pa-line-soft)">
+      <label class="pa-label">Spacing</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div style="font-size:11px;color:var(--pa-muted);margin-bottom:4px">Top</div><input class="pa-field" value="72" style="padding:8px 10px;font-size:13px" /></div><div><div style="font-size:11px;color:var(--pa-muted);margin-bottom:4px">Bottom</div><input class="pa-field" value="72" style="padding:8px 10px;font-size:13px" /></div><div><div style="font-size:11px;color:var(--pa-muted);margin-bottom:4px">Left</div><input class="pa-field" value="40" style="padding:8px 10px;font-size:13px" /></div><div><div style="font-size:11px;color:var(--pa-muted);margin-bottom:4px">Right</div><input class="pa-field" value="40" style="padding:8px 10px;font-size:13px" /></div>
+      </div>
+    </div>
+    <div style="padding:14px 18px">
+      <label class="pa-label">Visible to</label>
+      <label class="pa-check is-on"><span class="box"></span>Everyone</label><label class="pa-check"><span class="box"></span>Signed-out visitors only</label><label class="pa-check"><span class="box"></span>Hide on phone</label><label class="pa-check"><span class="box"></span>Patients only</label>
+    </div>
+  </div>
+</div>
+<div class="pa-note" style="margin-top:20px"><strong>How this maps to Laravel.</strong> Each node in the tree is a <code>page_blocks</code> row holding <code>{type, props, styles, visibility}</code>. The Style tab writes the fixed <code>styles</code> shape only — never raw CSS — which is what lets one theme change repaint every page ever built. See <code>HANDOVER.md</code> section 4.</div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

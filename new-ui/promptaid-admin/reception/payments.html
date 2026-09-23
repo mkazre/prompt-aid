@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Payments · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html" selected>Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Front desk</div><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a><a class="pa-navlink" href="./appointments.html"><span class="d"></span><span class="l">Diary</span><span class="b">24</span></a><a class="pa-navlink" href="./triage.html"><span class="d"></span><span class="l">Triage arrivals</span><span class="b">3</span></a><a class="pa-navlink" href="./patients.html"><span class="d"></span><span class="l">Patients</span></a></div><div class="pa-navgroup"><div class="t">Money</div><a class="pa-navlink" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink is-on" href="./payments.html"><span class="d"></span><span class="l">Payments</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">BD</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bongi Dube</div>    <div style="font-size:11px;color:var(--pa-muted)">Receptionist</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Sunninghill Family Clinic</div><div class="title">Payments</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./payments.html">Take a payment</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px"><div class="pa-stat"><div class="k">Taken today</div><div class="v">R 8 420</div><div class="d go">14 payments</div></div><div class="pa-stat"><div class="k">Cash</div><div class="v">R 2 180</div><div class="d flat">6 payments</div></div><div class="pa-stat"><div class="k">Card</div><div class="v">R 6 240</div><div class="d flat">8 payments</div></div><div class="pa-stat"><div class="k">Failed</div><div class="v">1</div><div class="d stop">Card declined</div></div></div><div class="pa-tabs" style="margin-bottom:18px"><button class="pa-tab is-on">Today <span class="n">14</span></button><button class="pa-tab">Cash <span class="n">6</span></button><button class="pa-tab">Card <span class="n">8</span></button><button class="pa-tab">Failed <span class="n">1</span></button><button class="pa-tab">All <span class="n">4 188</span></button></div><div class="pa-filterbar"><input class="pa-field" placeholder="Search payment, patient or invoice…" /><select class="pa-field"><option>All methods</option><option>Cash</option><option>Card · Yoco</option><option>Card · PayFast</option><option>Instant EFT</option></select><select class="pa-field"><option>All statuses</option><option>Succeeded</option><option>Failed</option><option>Refunded</option></select><button class="pa-btn-ghost pa-btn-sm">Export CSV</button></div><div class="pa-tablewrap"><table class="pa-table"><thead><tr><th>Payment</th><th>Patient</th><th>Invoice</th><th>Method</th><th>Amount</th><th></th></tr></thead><tbody><tr><td><div class="t-main">PMT-77411</div><div class="t-sub">Today 09:44</div></td><td>Ayesha Patel</td><td>INV-9210</td><td>Yoco · card</td><td><span class="pa-badge is-go">Succeeded</span> R 220.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./payments.html">Receipt</a></td></tr><tr><td><div class="t-main">PMT-77408</div><div class="t-sub">Today 09:20</div></td><td>Marie Louw</td><td>INV-9205</td><td>Cash</td><td><span class="pa-badge is-go">Succeeded</span> R 390.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./payments.html">Receipt</a></td></tr><tr><td><div class="t-main">PMT-77404</div><div class="t-sub">Today 08:52</div></td><td>Nomsa Khumalo</td><td>INV-9200</td><td>Yoco · card</td><td><span class="pa-badge is-go">Succeeded</span> R 460.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./payments.html">Receipt</a></td></tr><tr><td><div class="t-main">PMT-77402</div><div class="t-sub">Today 08:40</div></td><td>Sipho Dlamini</td><td>INV-9208</td><td>Yoco · card</td><td><span class="pa-badge is-stop">Declined</span> R 450.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./payments.html">Retry</a></td></tr><tr><td><div class="t-main">PMT-77398</div><div class="t-sub">Today 08:14</div></td><td>Willem Botha</td><td>INV-9196</td><td>Cash</td><td><span class="pa-badge is-go">Succeeded</span> R 390.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./payments.html">Receipt</a></td></tr><tr><td><div class="t-main">PMT-77390</div><div class="t-sub">Yesterday</div></td><td>Tebogo Mabaso</td><td>INV-9180</td><td>PayFast · EFT</td><td><span class="pa-badge is-go">Succeeded</span> R 450.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./payments.html">Receipt</a></td></tr></tbody></table><div class="pa-tablefoot"><span>Showing 6 of 4 188</span><div class="pa-tabs"><button class="pa-tab">Previous</button><button class="pa-tab is-on">1</button><button class="pa-tab">2</button><button class="pa-tab">Next</button></div></div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

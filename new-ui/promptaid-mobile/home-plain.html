@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04 · Home · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>04 · Home</span><span class="m-stack">patient</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<main class="m-body">
+ <div class="pa-spread" style="margin-bottom:18px"><div><div style="font-size:13px;color:var(--pa-muted)">Good morning</div><div style="font-size:24px;font-weight:900">Lerato</div></div>
+ <a href="./profile.html" class="pa-avatar round" style="width:44px;height:44px;font-size:14px;text-decoration:none">LM</a></div>
+ <a href="./triage-start.html" style="display:flex;gap:12px;align-items:center;background:#C8102E;color:#fff;padding:15px 16px;margin-bottom:14px;text-decoration:none;min-height:56px">
+  <span class="pa-blip" style="background:#fff"></span><span style="flex:1"><b style="display:block;font-size:15px">Emergency? Start triage</b><small style="font-size:12px;opacity:.85">Finds the nearest place that can treat it</small></span><span>&rarr;</span></a>
+ <div class="pa-dark" style="padding:18px;margin-bottom:14px">
+  <div class="pa-row" style="margin-bottom:10px"><span class="pa-tick-beacon" style="width:6px;height:6px"></span><span class="pa-eyebrow" style="color:var(--pa-beacon)">Next appointment</span></div>
+  <div style="font-size:17px;font-weight:700">Dr Naledi Mokoena</div><div style="font-size:13px;color:#8A857C;margin:3px 0 14px">Today 09:20 · Rosebank Medical Suites</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a class="pa-btn-beacon" href="./ride-track.html">Track shuttle</a><a class="pa-btn-ghost" style="color:#fff;border-color:#4A4A4E" href="./appointments.html">Details</a></div></div>
+ <div class="m-grid2">
+  <a href="./find-care.html"><div class="pa-num" style="color:var(--pa-signal);font-size:20px;margin-bottom:8px">01</div><b>Find a doctor</b></a>
+  <a href="./shop.html"><div class="pa-num" style="color:var(--pa-signal);font-size:20px;margin-bottom:8px">02</div><b>Order medicine</b></a>
+  <a href="./shuttle-request.html"><div class="pa-num" style="color:var(--pa-signal);font-size:20px;margin-bottom:8px">03</div><b>Book a shuttle</b></a>
+  <a href="./script-upload.html"><div class="pa-num" style="color:var(--pa-signal);font-size:20px;margin-bottom:8px">04</div><b>Upload a script</b></a></div>
+ <div class="pa-label" style="margin:18px 0 8px">Waiting for you</div>
+ <a class="m-row" href="./results.html"><span><b>Lab result ready</b><small>FBC + iron studies · Lancet</small></span><span class="pa-badge is-go">New</span></a>
+ <a class="m-row" href="./orders.html"><span><b>Repeat script due</b><small>Amlodipine · 4 days left</small></span><span class="pa-badge is-wait">Order</span></a>
+ <a class="m-row" href="./consult-room.html"><span><b>Video consult Mon 11:00</b><small>Google Meet · Dr Mokoena</small></span><span class="pa-badge ">Link at 10:50</span></a></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(5,1fr)"><a href="./home.html"><span></span>Home</a><a href="./find-care.html"><span></span>Care</a><a href="./shuttle-request.html"><span></span>Shuttle</a><a href="./shop.html"><span></span>Pharmacy</a><a href="./record.html"><span></span>Record</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> Home after the triage sheet is dismissed. The red strip keeps triage one tap away.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

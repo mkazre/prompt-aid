@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Results · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html" selected>Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Overview</div><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a></div><div class="pa-navgroup"><div class="t">Queue</div><a class="pa-navlink" href="./queue.html"><span class="d"></span><span class="l">Available requests</span><span class="b">12</span></a><a class="pa-navlink" href="./requests.html"><span class="d"></span><span class="l">My requests</span><span class="b">7</span></a><a class="pa-navlink is-on" href="./results.html"><span class="d"></span><span class="l">Results</span><span class="b">3</span></a></div><div class="pa-navgroup"><div class="t">Business</div><a class="pa-navlink" href="./catalogue.html"><span class="d"></span><span class="l">Test catalogue</span></a><a class="pa-navlink" href="./sites.html"><span class="d"></span><span class="l">Collection sites</span></a><a class="pa-navlink" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./settings.html"><span class="d"></span><span class="l">Partner settings</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">LD</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Lancet Diagnostics</div>    <div style="font-size:11px;color:var(--pa-muted)">Lab / imaging partner</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Partner panel</div><div class="title">Results</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+
+    </div>
+  </div></div>
+  <div class="pa-page">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start">
+<div><div class="pa-tabs" style="margin-bottom:18px"><button class="pa-tab is-on">To upload <span class="n">3</span></button><button class="pa-tab">Critical values <span class="n">2</span></button><button class="pa-tab">Released today <span class="n">42</span></button></div><div class="pa-tablewrap"><table class="pa-table"><thead><tr><th>Request</th><th>Patient</th><th>Panel</th><th>Status</th><th></th></tr></thead><tbody><tr><td><div class="t-main">LAB-2214</div><div class="t-sub">Due 17:00</div></td><td>Lerato Mahlangu</td><td>FBC + iron studies</td><td><span class="pa-badge is-wait">Ready to upload</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./results.html">Upload</a></td></tr><tr><td><div class="t-main">LAB-2208</div><div class="t-sub">Critical</div></td><td>Tebogo Mabaso</td><td>Potassium 6.4 mmol/L</td><td><span class="pa-badge is-stop">Phone prescriber</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./results.html">Log call</a></td></tr><tr><td><div class="t-main">LAB-2211</div><div class="t-sub">Critical</div></td><td>Walk-in</td><td>Glucose 2.1 mmol/L</td><td><span class="pa-badge is-stop">Phone prescriber</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./results.html">Log call</a></td></tr><tr><td><div class="t-main">LAB-2212</div><div class="t-sub">Due 17:00</div></td><td>Ayesha Patel</td><td>Urine MCS</td><td><span class="pa-badge is-wait">Ready to upload</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./results.html">Upload</a></td></tr></tbody></table><div class="pa-tablefoot"><span>Showing 4 of 3</span><div class="pa-tabs"><button class="pa-tab">Previous</button><button class="pa-tab is-on">1</button><button class="pa-tab">2</button><button class="pa-tab">Next</button></div></div></div></div>
+<div class="pa-pop" style="padding:24px">
+  <div class="pa-label" style="margin-bottom:10px">Upload · LAB-2214</div>
+  <h3 style="margin-bottom:14px">FBC + iron studies</h3>
+  <div class="pa-slot" style="height:130px;border-style:dashed;margin-bottom:16px">Drop the signed PDF report</div>
+  <div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">Haemoglobin</span><span><strong>10.2 g/dL</strong> <span class="pa-badge is-stop">Low</span></span></div><div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">Ferritin</span><span><strong>8 µg/L</strong> <span class="pa-badge is-stop">Low</span></span></div><div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">Transferrin sat.</span><span><strong>9%</strong> <span class="pa-badge is-stop">Low</span></span></div><div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">WCC</span><span><strong>6.4 × 10⁹/L</strong> <span class="pa-badge is-go">Normal</span></span></div>
+  <label class="pa-check is-on" style="margin-top:10px"><span class="box"></span>Flag as abnormal to the referring doctor</label>
+  <a class="pa-btn pa-btn-block" style="margin-top:14px" href="./requests.html">Release result</a>
+  <div class="pa-note" style="margin-top:14px">Released results go to the patient record and the referring doctor at the same time.</div>
+</div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My day · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html" selected>Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">My day</div><a class="pa-navlink is-on" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a><a class="pa-navlink" href="./appointments.html"><span class="d"></span><span class="l">My appointments</span><span class="b">11</span></a><a class="pa-navlink" href="./encounters.html"><span class="d"></span><span class="l">Consultation</span></a></div><div class="pa-navgroup"><div class="t">Clinical</div><a class="pa-navlink" href="./patients.html"><span class="d"></span><span class="l">My patients</span></a><a class="pa-navlink" href="./prescriptions.html"><span class="d"></span><span class="l">Prescriptions</span></a><a class="pa-navlink" href="./lab-requests.html"><span class="d"></span><span class="l">Lab requests</span><span class="b">2</span></a></div><div class="pa-navgroup"><div class="t">Practice</div><a class="pa-navlink" href="./services.html"><span class="d"></span><span class="l">My services</span></a><a class="pa-navlink" href="./availability.html"><span class="d"></span><span class="l">Availability</span></a><a class="pa-navlink" href="./settings.html"><span class="d"></span><span class="l">Profile</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">NM</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Dr Naledi Mokoena</div>    <div style="font-size:11px;color:var(--pa-muted)">Doctor</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Rosebank Medical Suites</div><div class="title">My day</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./encounters.html">Start encounter</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px"><div class="pa-stat"><div class="k">Booked today</div><div class="v">11</div><div class="d flat">2 video, 9 in rooms</div></div><div class="pa-stat"><div class="k">Seen</div><div class="v">2</div><div class="d go">On time</div></div><div class="pa-stat"><div class="k">Waiting</div><div class="v">1</div><div class="d wait">Johan Pretorius, 4 min</div></div><div class="pa-stat"><div class="k">Billed today</div><div class="v">R 5 240</div><div class="d go">8 claims</div></div><div class="pa-stat"><div class="k">Unsigned notes</div><div class="v">1</div><div class="d stop">From yesterday</div></div></div>
+<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start">
+<div>
+  <div class="pa-card" style="margin-bottom:22px"><div class="pa-card-head"><h3>Today's list</h3><a class="pa-btn-ghost pa-btn-sm" href="./appointments.html">Full schedule</a></div>
+  <div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">08:20</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Willem Botha</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Follow-up · hypertension</span></span></div>
+      <div class="pa-row"><span class="pa-badge is-go">Completed</span><a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">08:40</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Ayesha Patel</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Script review</span></span></div>
+      <div class="pa-row"><span class="pa-badge is-go">Completed</span><a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft);background:var(--pa-beacon-wash)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">09:20</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Lerato Mahlangu</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Standard consultation</span></span></div>
+      <div class="pa-row"><span class="pa-badge is-wait">In progress</span><a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">09:40</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Johan Pretorius</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Extended consultation</span></span></div>
+      <div class="pa-row"><span class="pa-badge is-wait">Checked in</span><a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">11:00</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Nomsa Khumalo</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Video · Google Meet</span></span></div>
+      <div class="pa-row"><span class="pa-badge is-go">Confirmed</span><a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">11:20</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Sipho Dlamini</span><span style="display:block;font-size:13px;color:var(--pa-muted)">New patient</span></span></div>
+      <div class="pa-row"><span class="pa-badge is-go">Confirmed</span><a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">14:00</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Tebogo Mabaso</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Chronic review</span></span></div>
+      <div class="pa-row"><span class="pa-badge is-go">Confirmed</span><a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div><div class="pa-spread" style="padding:14px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div class="pa-row" style="gap:16px"><span class="pa-num" style="font-size:15px;width:46px">15:30</span>
+      <span><span style="display:block;font-size:15px;font-weight:700">Zanele Sithole</span><span style="display:block;font-size:13px;color:var(--pa-muted)">Video · Google Meet</span></span></div>
+      <div class="pa-row"><span class="pa-badge is-go">Confirmed</span><a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div></div>
+  <div class="pa-card"><div class="pa-card-head"><h3>Needs you</h3></div>
+  <div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">1 unsigned encounter</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Willem Botha, 19 September</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Sign</a></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">2 lab results to review</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">HbA1c abnormal · lipogram abnormal</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./lab-requests.html">Review</a></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">3 repeat script requests</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Metformin, amlodipine, fluticasone</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./prescriptions.html">Approve</a></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+      <div><div style="font-size:14px;font-weight:700">1 triage arrival assigned to you</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Lerato Mahlangu · orange · burn</div></div>
+      <a class="pa-btn-ghost pa-btn-sm" href="./encounters.html">Open</a></div></div>
+</div>
+<div>
+  <div class="pa-dark" style="padding:22px;margin-bottom:22px">
+    <div class="pa-row" style="margin-bottom:16px"><span class="pa-tick-beacon" style="width:7px;height:7px;animation:pa-blip 1.6s ease-in-out infinite"></span><span class="pa-eyebrow" style="color:var(--pa-beacon)">Next video consult</span></div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">Nomsa Khumalo</div>
+    <div style="font-size:13px;color:#8A857C;margin-bottom:18px">11:00 · repeat script review</div>
+    <a class="pa-btn-beacon pa-btn-block" href="https://meet.google.com/" target="_blank" rel="noopener">Join on Google Meet</a>
+    <div style="font-size:11px;color:#6E6A62;margin-top:10px;text-align:center">Link opens 10 minutes before</div></div>
+  <div class="pa-card" style="margin-bottom:22px"><div class="pa-card-head"><h3>Quick actions</h3></div>
+    <div class="pa-card-body pa-stack">
+      <a class="pa-btn pa-btn-block" href="./encounters.html">Start an encounter</a>
+      <a class="pa-btn-quiet pa-btn-block" href="./prescriptions.html">Write a prescription</a>
+      <a class="pa-btn-ghost pa-btn-block" href="./lab-requests.html">Order labs</a>
+      <a class="pa-btn-ghost pa-btn-block" href="../super/dispatch.html">Book a patient shuttle</a></div></div>
+  <div class="pa-card pa-card-pad"><div class="pa-label" style="margin-bottom:12px">This week</div>
+  <div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Consultations</span><strong>47</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Video</span><strong>11</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">No-shows</span><strong>2</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Billed</span><strong>R 24 180</strong></div><div class="pa-spread" style="font-size:14px;margin-bottom:8px"><span class="pa-muted">Rating</span><strong>4.8</strong></div></div>
+</div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

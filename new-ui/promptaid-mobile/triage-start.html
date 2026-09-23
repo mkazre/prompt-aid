@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05 · Triage · who &amp; what · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>05 · Triage · who &amp; what</span><span class="m-stack">shared</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<header class="m-head"><a class="m-back" href="./home.html">&larr;</a><div class="m-htitle">Triage</div><a href="tel:10177" style="font-size:12px;font-weight:900;color:#C8102E;text-align:center">10177</a></header><main class="m-body">
+ <div class="pa-satsbar" style="margin-bottom:16px"><span class="s-red">Red</span><span class="s-orange on">Orange</span><span class="s-yellow">Yellow</span><span class="s-green">Green</span></div>
+ <div class="pa-eyebrow">Step 1 of 3</div><h3 style="font-size:20px;margin:6px 0 14px">Who needs help?</h3>
+ <div class="m-chips"><span class="on">Me</span><span>Someone with me</span><span>Someone elsewhere</span></div>
+ <div class="m-chips"><span class="on">Adult</span><span>Baby</span><span>Child</span><span>65+</span><span>Pregnant</span></div>
+ <h3 style="font-size:20px;margin:16px 0 10px">What is happening?</h3>
+ <div class="pa-symptoms" style="grid-template-columns:1fr 1fr">
+  <button class="pa-symptom crit" type="button"><span class="k">BR</span>Breathing</button><button class="pa-symptom crit" type="button"><span class="k">CH</span>Chest or heart</button><button class="pa-symptom" type="button"><span class="k">BL</span>Bleeding</button><button class="pa-symptom is-on crit" type="button"><span class="k">BU</span>Burns</button><button class="pa-symptom" type="button"><span class="k">IN</span>Injury or fall</button><button class="pa-symptom" type="button"><span class="k">HE</span>Head or neck</button><button class="pa-symptom" type="button"><span class="k">HE</span>Headache</button><button class="pa-symptom" type="button"><span class="k">ST</span>Stomach</button><button class="pa-symptom" type="button"><span class="k">FE</span>Fever or flu</button><button class="pa-symptom" type="button"><span class="k">SK</span>Skin or rash</button><button class="pa-symptom crit" type="button"><span class="k">PR</span>Pregnancy</button><button class="pa-symptom" type="button"><span class="k">SI</span>Sick child</button><button class="pa-symptom" type="button"><span class="k">ME</span>Mental health</button><button class="pa-symptom crit" type="button"><span class="k">PO</span>Poisoning or bite</button>
+ </div>
+ <div class="pa-slot" style="height:80px;border-style:dashed;margin-top:14px">Add a photo of the burn</div>
+ <div style="margin-top:16px"><a class="pa-btn pa-btn-block" href="./triage-flags.html">Continue</a></div></main>
+
+</div>
+<div class="m-note"><strong>Expo notes.</strong> Symptom list and discriminators come from assets/js/triage.js — port to mobile/src/triage/satsEngine.ts and share the test fixtures with the PHP SatsEngine so web, app and server always agree. Photo via expo-image-picker, uploaded with the booking.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>24 · Driver · online · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>24 · Driver · online</span><span class="m-stack">driver</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<main class="m-body flush">
+ <div class="pa-map" style="height:360px"><span class="pin" style="left:46%;top:50%;width:16px;height:16px;background:#F2C200"></span><span class="pin" style="left:30%;top:30%;width:9px;height:9px;background:#D0211C"></span><span class="pin" style="left:66%;top:70%;width:9px;height:9px;background:#D0211C"></span>
+ <div style="position:absolute;left:14px;top:14px;right:14px;background:var(--pa-paper);padding:12px 14px;display:flex;justify-content:space-between;align-items:center"><div><div class="pa-label" style="margin:0">Today</div><div class="pa-num" style="font-size:22px">R 1 840</div></div><span class="pa-badge is-go">Online</span></div></div>
+ <div style="padding:16px">
+  <a class="m-row" href="./driver-trip.html"><span><b>Next · 11:30 return leg</b><small>Lerato Mahlangu · Rosebank → Fourways</small></span><span class="pa-badge is-wait">Scheduled</span></a>
+  <a class="m-row" href="./driver-trips.html"><span><b>13:00 · Nomsa Khumalo</b><small>Northcliff → Rosebank Pharmacy</small></span><span class="pa-badge ">R 246</span></a>
+  <div class="m-grid2"><div><div class="pa-label">Trips</div><div class="pa-num" style="font-size:22px">9</div></div><div><div class="pa-label">Rating</div><div class="pa-num" style="font-size:22px">4.9</div></div></div>
+  <a class="pa-btn-quiet pa-btn-block" href="./driver-home.html">Go offline</a>
+ </div></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(5,1fr)"><a href="./driver-home.html" class="on"><span></span>Drive</a><a href="./driver-offer.html"><span></span>Offers</a><a href="./driver-trips.html"><span></span>Trips</a><a href="./driver-earnings.html"><span></span>Earnings</a><a href="./driver-documents.html"><span></span>Profile</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> Background location with expo-location + expo-task-manager while online; POST /api/driver/location every 5 s on a trip, 30 s idle.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17 · Request a shuttle · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>17 · Request a shuttle</span><span class="m-stack">patient</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<main class="m-body flush">
+ <div class="pa-map" style="height:300px"><span class="pin" style="left:22%;top:66%;width:14px;height:14px;background:#F2C200"></span><span class="pin" style="left:70%;top:26%;width:14px;height:14px;background:#D0211C"></span><span class="pin" style="left:44%;top:44%;width:9px;height:9px;background:#F5F2EC"></span><span class="pin" style="left:58%;top:58%;width:9px;height:9px;background:#F5F2EC"></span></div>
+ <div id="request" style="padding:16px;margin-top:-26px;position:relative;background:var(--pa-paper)">
+  <label class="pa-label">Pick up</label><input class="pa-field" value="14 Waterford Drive, Fourways" />
+  <label class="pa-label" style="margin-top:10px">Drop off</label><input class="pa-field" value="Rosebank Medical Suites" />
+  <div class="m-chips" style="margin-top:10px"><span class="on">Now</span><span>Schedule</span><span class="on">Return leg</span><span>Repeat weekly</span></div>
+  <div class="m-row" style=""><span><b>Standard</b><small>Sedan · 4 min</small></span><span class="pa-num" style="font-size:17px">R 214</span></div><div class="m-row" style=""><span><b>Comfort</b><small>SUV · 7 min</small></span><span class="pa-num" style="font-size:17px">R 286</span></div><div class="m-row" style="border-color:var(--pa-ink);background:var(--pa-beacon-wash)"><span><b>Wheelchair</b><small>Ramp · 12 min</small></span><span class="pa-num" style="font-size:17px">R 381</span></div><div class="m-row" style=""><span><b>Stretcher</b><small>Transfer · 26 min</small></span><span class="pa-num" style="font-size:17px">R 548</span></div>
+  <a class="pa-btn pa-btn-block" href="./ride-track.html">Confirm · R 381 return</a>
+ </div></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(5,1fr)"><a href="./home.html"><span></span>Home</a><a href="./find-care.html"><span></span>Care</a><a href="./shuttle-request.html" class="on"><span></span>Shuttle</a><a href="./shop.html"><span></span>Pharmacy</a><a href="./record.html"><span></span>Record</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> Keep react-native-webview + Leaflet (already in the repo) or move to react-native-maps. POST /api/rides/quote then /api/rides. "Repeat weekly" opens ride-series. ?to= prefill comes from every "Add shuttle" button in the app.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>

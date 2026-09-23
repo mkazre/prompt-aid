@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html" selected>Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Overview</div><a class="pa-navlink is-on" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a><a class="pa-navlink" href="./dispatch.html"><span class="d"></span><span class="l">Live dispatch</span><span class="b">3</span></a><a class="pa-navlink" href="./triage.html"><span class="d"></span><span class="l">Triage monitor</span><span class="b">5</span></a></div><div class="pa-navgroup"><div class="t">Site</div><a class="pa-navlink" href="./pages.html"><span class="d"></span><span class="l">Pages</span></a><a class="pa-navlink" href="./page-builder.html"><span class="d"></span><span class="l">Page builder</span></a><a class="pa-navlink" href="./templates.html"><span class="d"></span><span class="l">Templates</span></a><a class="pa-navlink" href="./menus.html"><span class="d"></span><span class="l">Menus</span></a><a class="pa-navlink" href="./theme.html"><span class="d"></span><span class="l">Theme</span></a><a class="pa-navlink" href="./media.html"><span class="d"></span><span class="l">Media library</span></a></div><div class="pa-navgroup"><div class="t">Clinical</div><a class="pa-navlink" href="./appointments.html"><span class="d"></span><span class="l">Appointments</span><span class="b">48</span></a><a class="pa-navlink" href="./encounters.html"><span class="d"></span><span class="l">Encounters</span></a><a class="pa-navlink" href="./prescriptions.html"><span class="d"></span><span class="l">Prescriptions</span></a><a class="pa-navlink" href="./lab-requests.html"><span class="d"></span><span class="l">Lab requests</span><span class="b">12</span></a></div><div class="pa-navgroup"><div class="t">Directory</div><a class="pa-navlink" href="./clinics.html"><span class="d"></span><span class="l">Clinics</span></a><a class="pa-navlink" href="./doctors.html"><span class="d"></span><span class="l">Doctors</span></a><a class="pa-navlink" href="./patients.html"><span class="d"></span><span class="l">Patients</span></a><a class="pa-navlink" href="./pharmacies.html"><span class="d"></span><span class="l">Pharmacies</span></a><a class="pa-navlink" href="./partners.html"><span class="d"></span><span class="l">Partners</span></a><a class="pa-navlink" href="./drivers.html"><span class="d"></span><span class="l">Drivers</span></a></div><div class="pa-navgroup"><div class="t">Ride service</div><a class="pa-navlink" href="./rides.html"><span class="d"></span><span class="l">Rides</span></a><a class="pa-navlink" href="./ride-series.html"><span class="d"></span><span class="l">Recurring series</span></a><a class="pa-navlink" href="./rate-cards.html"><span class="d"></span><span class="l">Rate cards</span></a></div><div class="pa-navgroup"><div class="t">Commerce</div><a class="pa-navlink" href="./orders.html"><span class="d"></span><span class="l">Orders</span><span class="b">31</span></a><a class="pa-navlink" href="./products.html"><span class="d"></span><span class="l">Products</span></a><a class="pa-navlink" href="./categories.html"><span class="d"></span><span class="l">Categories</span></a></div><div class="pa-navgroup"><div class="t">Billing</div><a class="pa-navlink" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./payments.html"><span class="d"></span><span class="l">Payments</span></a><a class="pa-navlink" href="./claims.html"><span class="d"></span><span class="l">Claims</span><span class="b">9</span></a><a class="pa-navlink" href="./schemes.html"><span class="d"></span><span class="l">Medical schemes</span></a></div><div class="pa-navgroup"><div class="t">System</div><a class="pa-navlink" href="./users.html"><span class="d"></span><span class="l">Users</span></a><a class="pa-navlink" href="./roles.html"><span class="d"></span><span class="l">Roles &amp; permissions</span></a><a class="pa-navlink" href="./settings.html"><span class="d"></span><span class="l">Settings</span></a><a class="pa-navlink" href="./notifications.html"><span class="d"></span><span class="l">Notification log</span></a><a class="pa-navlink" href="./audit.html"><span class="d"></span><span class="l">Audit trail</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">MK</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Marcus Kazre</div>    <div style="font-size:11px;color:var(--pa-muted)">Super admin</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Prompt Aid · all clinics</div><div class="title">Dashboard</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./patients.html">New record</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px"><div class="pa-stat"><div class="k">Appointments today</div><div class="v">48</div><div class="d go">+12% vs last Friday</div></div><div class="pa-stat"><div class="k">Shuttle trips today</div><div class="v">412</div><div class="d go">+8% vs last Friday</div></div><div class="pa-stat"><div class="k">Triage cases today</div><div class="v">37</div><div class="d stop">2 red, 6 orange</div></div><div class="pa-stat"><div class="k">Orders in flight</div><div class="v">31</div><div class="d wait">6 awaiting script</div></div><div class="pa-stat"><div class="k">Gross this month</div><div class="v">R 1.84 m</div><div class="d go">+21% vs August</div></div></div>
+<div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px;align-items:start">
+<div><div class="pa-card" style="margin-bottom:24px">
+  <div class="pa-card-head"><h3>Bookings, last 14 days</h3>
+    <div style="display:flex;gap:16px;font-size:12px;color:var(--pa-muted)">
+      <span class="pa-row" style="gap:6px"><span style="width:9px;height:9px;background:var(--pa-signal);display:block"></span>Consults</span>
+      <span class="pa-row" style="gap:6px"><span style="width:9px;height:9px;background:var(--pa-beacon);display:block"></span>Shuttle trips</span></div></div>
+  <div style="padding:22px;display:flex;align-items:flex-end;gap:6px;height:220px">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:62px"></div><div style="background:var(--pa-beacon);height:28px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">M</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:71px"></div><div style="background:var(--pa-beacon);height:34px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">T</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:58px"></div><div style="background:var(--pa-beacon);height:26px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">W</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:80px"></div><div style="background:var(--pa-beacon);height:41px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">T</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:74px"></div><div style="background:var(--pa-beacon);height:38px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">F</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:45px"></div><div style="background:var(--pa-beacon);height:52px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">S</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:30px"></div><div style="background:var(--pa-beacon);height:44px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">S</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:68px"></div><div style="background:var(--pa-beacon);height:31px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">M</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:77px"></div><div style="background:var(--pa-beacon);height:36px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">T</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:64px"></div><div style="background:var(--pa-beacon);height:29px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">W</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:85px"></div><div style="background:var(--pa-beacon);height:47px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">T</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:79px"></div><div style="background:var(--pa-beacon);height:40px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">F</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:52px"></div><div style="background:var(--pa-beacon);height:55px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">S</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%">
+      <div style="background:var(--pa-signal);height:38px"></div><div style="background:var(--pa-beacon);height:49px"></div>
+      <div style="font-size:10px;color:var(--pa-muted-2);text-align:center;padding-top:5px">S</div></div>
+  </div></div>
+  <div class="pa-card">
+    <div class="pa-card-head"><h3>Needs attention</h3><a class="pa-btn-ghost pa-btn-sm" href="./notifications.html">All alerts</a></div>
+    <div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+        <div class="pa-row" style="gap:14px"><span style="width:7px;height:7px;background:var(--pa-sats-red);display:block;flex:none"></span>
+        <div><div style="font-size:14px;font-weight:700">2 red triage cases unrouted</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">Fourways and Midrand · ambulance not confirmed</div></div></div>
+        <div class="pa-row"><span style="font-size:12px;color:var(--pa-muted)">2 min</span><a class="pa-btn-ghost pa-btn-sm" href="./triage.html">Route</a></div></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+        <div class="pa-row" style="gap:14px"><span style="width:7px;height:7px;background:var(--pa-signal);display:block;flex:none"></span>
+        <div><div style="font-size:14px;font-weight:700">3 rides unassigned over 4 minutes</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">Fourways, Midrand, Randburg</div></div></div>
+        <div class="pa-row"><span style="font-size:12px;color:var(--pa-muted)">4 min</span><a class="pa-btn-ghost pa-btn-sm" href="./dispatch.html">Dispatch</a></div></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+        <div class="pa-row" style="gap:14px"><span style="width:7px;height:7px;background:var(--pa-beacon);display:block;flex:none"></span>
+        <div><div style="font-size:14px;font-weight:700">6 pharmacy orders awaiting script approval</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">Rosebank Pharmacy, Fourways Chemist</div></div></div>
+        <div class="pa-row"><span style="font-size:12px;color:var(--pa-muted)">2 hrs</span><a class="pa-btn-ghost pa-btn-sm" href="./orders.html">Review</a></div></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+        <div class="pa-row" style="gap:14px"><span style="width:7px;height:7px;background:var(--pa-signal);display:block;flex:none"></span>
+        <div><div style="font-size:14px;font-weight:700">9 medical aid claims unresolved</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">Discovery 4 · Bonitas 3 · GEMS 2</div></div></div>
+        <div class="pa-row"><span style="font-size:12px;color:var(--pa-muted)">31 days</span><a class="pa-btn-ghost pa-btn-sm" href="./claims.html">Chase</a></div></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+        <div class="pa-row" style="gap:14px"><span style="width:7px;height:7px;background:var(--pa-beacon);display:block;flex:none"></span>
+        <div><div style="font-size:14px;font-weight:700">2 urgent lab requests unaccepted</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">FBC + iron studies, abdominal ultrasound</div></div></div>
+        <div class="pa-row"><span style="font-size:12px;color:var(--pa-muted)">38 min</span><a class="pa-btn-ghost pa-btn-sm" href="./lab-requests.html">Reassign</a></div></div><div class="pa-spread" style="padding:15px 22px;border-bottom:1px solid var(--pa-line-soft)">
+        <div class="pa-row" style="gap:14px"><span style="width:7px;height:7px;background:var(--pa-muted);display:block;flex:none"></span>
+        <div><div style="font-size:14px;font-weight:700">Driver PrDP expiring within 30 days</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">Sipho Ndlovu · GP 82 194</div></div></div>
+        <div class="pa-row"><span style="font-size:12px;color:var(--pa-muted)">21 days</span><a class="pa-btn-ghost pa-btn-sm" href="./drivers.html">Notify</a></div></div>
+  </div>
+</div>
+<div>
+  <div class="pa-dark" style="padding:22px;margin-bottom:24px">
+    <div class="pa-row" style="margin-bottom:18px"><span class="pa-tick-beacon" style="width:7px;height:7px;animation:pa-blip 1.6s ease-in-out infinite"></span><span class="pa-eyebrow" style="color:var(--pa-beacon)">Fleet, live</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
+      <div><div class="pa-num" style="font-size:30px">14</div><div style="font-size:12px;color:#8A857C;margin-top:3px">on a trip</div></div><div><div class="pa-num" style="font-size:30px">22</div><div style="font-size:12px;color:#8A857C;margin-top:3px">idle</div></div><div><div class="pa-num" style="font-size:30px;color:var(--pa-beacon)">3</div><div style="font-size:12px;color:#8A857C;margin-top:3px">unassigned</div></div><div><div class="pa-num" style="font-size:30px">9 min</div><div style="font-size:12px;color:#8A857C;margin-top:3px">median pickup</div></div>
+    </div>
+    <a class="pa-btn-beacon pa-btn-block" href="./dispatch.html">Open dispatch board</a>
+  </div>
+  <div class="pa-card" style="margin-bottom:24px">
+    <div class="pa-card-head"><h3>Triage today</h3><a class="pa-btn-ghost pa-btn-sm" href="./triage.html">Monitor</a></div>
+    <div class="pa-card-body">
+      <div class="pa-spread" style="padding:9px 0;border-bottom:1px solid var(--pa-line-soft)">
+          <span class="pa-row" style="gap:10px"><span style="width:10px;height:10px;display:block;background:#C8102E"></span>
+          <span style="font-size:13px">Red · immediate</span></span>
+          <span style="text-align:right"><strong style="font-size:15px">2</strong><span style="display:block;font-size:11px;color:var(--pa-muted)">100% routed to ED</span></span></div><div class="pa-spread" style="padding:9px 0;border-bottom:1px solid var(--pa-line-soft)">
+          <span class="pa-row" style="gap:10px"><span style="width:10px;height:10px;display:block;background:#E4701E"></span>
+          <span style="font-size:13px">Orange · 10 min</span></span>
+          <span style="text-align:right"><strong style="font-size:15px">6</strong><span style="display:block;font-size:11px;color:var(--pa-muted)">5 within target</span></span></div><div class="pa-spread" style="padding:9px 0;border-bottom:1px solid var(--pa-line-soft)">
+          <span class="pa-row" style="gap:10px"><span style="width:10px;height:10px;display:block;background:#F2C200"></span>
+          <span style="font-size:13px">Yellow · 60 min</span></span>
+          <span style="text-align:right"><strong style="font-size:15px">14</strong><span style="display:block;font-size:11px;color:var(--pa-muted)">13 within target</span></span></div><div class="pa-spread" style="padding:9px 0;border-bottom:1px solid var(--pa-line-soft)">
+          <span class="pa-row" style="gap:10px"><span style="width:10px;height:10px;display:block;background:#1F7A4C"></span>
+          <span style="font-size:13px">Green · 4 hrs</span></span>
+          <span style="text-align:right"><strong style="font-size:15px">15</strong><span style="display:block;font-size:11px;color:var(--pa-muted)">all within target</span></span></div>
+    </div>
+  </div>
+  <div class="pa-card">
+    <div class="pa-card-head"><h3>Revenue, this month</h3><a class="pa-btn-ghost pa-btn-sm" href="./payments.html">Payments</a></div>
+    <div class="pa-card-body">
+      <div style="margin-bottom:16px"><div class="pa-spread" style="font-size:13px;margin-bottom:7px"><span style="color:var(--pa-ink-soft)">Consultations</span><strong>R 862 400</strong></div>
+        <div style="height:7px;background:var(--pa-line-soft)"><div style="height:7px;background:var(--pa-signal);width:47%"></div></div></div><div style="margin-bottom:16px"><div class="pa-spread" style="font-size:13px;margin-bottom:7px"><span style="color:var(--pa-ink-soft)">Pharmacy &amp; store</span><strong>R 553 200</strong></div>
+        <div style="height:7px;background:var(--pa-line-soft)"><div style="height:7px;background:var(--pa-ink);width:30%"></div></div></div><div style="margin-bottom:16px"><div class="pa-spread" style="font-size:13px;margin-bottom:7px"><span style="color:var(--pa-ink-soft)">Shuttle fares</span><strong>R 294 400</strong></div>
+        <div style="height:7px;background:var(--pa-line-soft)"><div style="height:7px;background:var(--pa-beacon);width:16%"></div></div></div><div style="margin-bottom:16px"><div class="pa-spread" style="font-size:13px;margin-bottom:7px"><span style="color:var(--pa-ink-soft)">Labs &amp; imaging</span><strong>R 130 000</strong></div>
+        <div style="height:7px;background:var(--pa-line-soft)"><div style="height:7px;background:var(--pa-go);width:7%"></div></div></div>
+      <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px;align-items:baseline"><span class="pa-label" style="margin:0">Gross</span><span class="pa-num" style="font-size:24px">R 1.84 m</span></div>
+    </div>
+  </div>
+</div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

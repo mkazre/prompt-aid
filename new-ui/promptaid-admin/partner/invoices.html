@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invoices · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html" selected>Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Overview</div><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a></div><div class="pa-navgroup"><div class="t">Queue</div><a class="pa-navlink" href="./queue.html"><span class="d"></span><span class="l">Available requests</span><span class="b">12</span></a><a class="pa-navlink" href="./requests.html"><span class="d"></span><span class="l">My requests</span><span class="b">7</span></a><a class="pa-navlink" href="./results.html"><span class="d"></span><span class="l">Results</span><span class="b">3</span></a></div><div class="pa-navgroup"><div class="t">Business</div><a class="pa-navlink" href="./catalogue.html"><span class="d"></span><span class="l">Test catalogue</span></a><a class="pa-navlink" href="./sites.html"><span class="d"></span><span class="l">Collection sites</span></a><a class="pa-navlink is-on" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./settings.html"><span class="d"></span><span class="l">Partner settings</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">LD</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Lancet Diagnostics</div>    <div style="font-size:11px;color:var(--pa-muted)">Lab / imaging partner</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Partner panel</div><div class="title">Invoices</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px"><div class="pa-stat"><div class="k">Billed this month</div><div class="v">R 412 800</div><div class="d flat">842 requests</div></div><div class="pa-stat"><div class="k">Paid by scheme</div><div class="v">R 344 100</div><div class="d go"></div></div><div class="pa-stat"><div class="k">Awaiting</div><div class="v">R 52 400</div><div class="d wait"></div></div><div class="pa-stat"><div class="k">Rejected</div><div class="v">R 16 300</div><div class="d stop">14 claims</div></div></div><div class="pa-tabs" style="margin-bottom:18px"><button class="pa-tab is-on">All <span class="n">842</span></button><button class="pa-tab">Awaiting <span class="n">88</span></button><button class="pa-tab">Rejected <span class="n">14</span></button><button class="pa-tab">Paid <span class="n">740</span></button></div><div class="pa-filterbar"><input class="pa-field" placeholder="Search invoice or patient…" /><select class="pa-field"><option>All schemes</option><option>Discovery</option><option>Bonitas</option><option>GEMS</option><option>Cash</option></select><select class="pa-field"><option>All statuses</option><option>Awaiting</option><option>Paid</option><option>Rejected</option></select><button class="pa-btn-ghost pa-btn-sm">Export CSV</button></div><div class="pa-tablewrap"><table class="pa-table"><thead><tr><th>Invoice</th><th>Patient</th><th>Test</th><th>Status</th><th>Amount</th><th></th></tr></thead><tbody><tr><td><div class="t-main">LIN-4412</div><div class="t-sub">20 Sep</div></td><td>Lerato Mahlangu</td><td>FBC + iron studies</td><td><span class="pa-badge is-wait">Claim submitted</span></td><td>R 620.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a></td></tr><tr><td><div class="t-main">LIN-4408</div><div class="t-sub">19 Sep</div></td><td>Johan Pretorius</td><td>Lipogram</td><td><span class="pa-badge is-go">Paid by scheme</span></td><td>R 410.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a></td></tr><tr><td><div class="t-main">LIN-4390</div><div class="t-sub">14 Sep</div></td><td>Nomsa Khumalo</td><td>HbA1c</td><td><span class="pa-badge is-go">Paid by scheme</span></td><td>R 295.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a></td></tr><tr><td><div class="t-main">LIN-4344</div><div class="t-sub">6 Sep</div></td><td>Tebogo Mabaso</td><td>Abdominal ultrasound</td><td><span class="pa-badge is-stop">Rejected · no referral</span></td><td>R 1 180.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Resubmit</a></td></tr></tbody></table><div class="pa-tablefoot"><span>Showing 4 of 842</span><div class="pa-tabs"><button class="pa-tab">Previous</button><button class="pa-tab is-on">1</button><button class="pa-tab">2</button><button class="pa-tab">Next</button></div></div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vehicles · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html" selected>Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Live</div><a class="pa-navlink" href="./dispatch.html"><span class="d"></span><span class="l">Dispatch board</span><span class="b">3</span></a><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a></div><div class="pa-navgroup"><div class="t">Rides</div><a class="pa-navlink" href="./rides.html"><span class="d"></span><span class="l">All rides</span></a><a class="pa-navlink" href="./ride-series.html"><span class="d"></span><span class="l">Recurring series</span></a><a class="pa-navlink" href="./rate-cards.html"><span class="d"></span><span class="l">Rate cards</span></a></div><div class="pa-navgroup"><div class="t">Fleet</div><a class="pa-navlink" href="./drivers.html"><span class="d"></span><span class="l">Drivers</span></a><a class="pa-navlink is-on" href="./vehicles.html"><span class="d"></span><span class="l">Vehicles</span></a><a class="pa-navlink" href="./incidents.html"><span class="d"></span><span class="l">Incidents</span><span class="b">1</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">SC</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sibusiso Cele</div>    <div style="font-size:11px;color:var(--pa-muted)">Ride dispatch</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Dispatch · Gauteng</div><div class="title">Vehicles</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./vehicles.html">Add a vehicle</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-tabs" style="margin-bottom:18px"><button class="pa-tab is-on">All <span class="n">118</span></button><button class="pa-tab">Wheelchair <span class="n">24</span></button><button class="pa-tab">Stretcher <span class="n">9</span></button><button class="pa-tab">Service due <span class="n">6</span></button></div><div class="pa-filterbar"><input class="pa-field" placeholder="Search registration or driver…" /><select class="pa-field"><option>All classes</option><option>Standard</option><option>Comfort</option><option>Wheelchair</option><option>Stretcher</option></select><select class="pa-field"><option>All statuses</option><option>Approved</option><option>Service due</option><option>Suspended</option></select><button class="pa-btn-ghost pa-btn-sm">Export CSV</button></div><div class="pa-tablewrap"><table class="pa-table"><thead><tr><th>Vehicle</th><th>Driver</th><th>Class</th><th>Roadworthy</th><th>Status</th><th></th></tr></thead><tbody><tr><td><div class="t-main">Toyota Quantum · GP 82 194</div><div class="t-sub">2022</div></td><td>Sipho Ndlovu</td><td>Wheelchair</td><td>4 Mar 2027</td><td><span class="pa-badge is-wait">Service in 840 km</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./vehicles.html">Open</a></td></tr><tr><td><div class="t-main">VW Caddy · GP 44 019</div><div class="t-sub">2021</div></td><td>Thabo Mokwena</td><td>Standard</td><td>12 Jan 2027</td><td><span class="pa-badge is-go">Approved</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./vehicles.html">Open</a></td></tr><tr><td><div class="t-main">Toyota Avanza · CA 210 884</div><div class="t-sub">2023</div></td><td>Ayesha Dawood</td><td>Comfort</td><td>8 May 2027</td><td><span class="pa-badge is-go">Approved</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./vehicles.html">Open</a></td></tr><tr><td><div class="t-main">Mercedes Sprinter · ND 88 412</div><div class="t-sub">2020</div></td><td>Bongani Mthembu</td><td>Stretcher</td><td>2 Dec 2026</td><td><span class="pa-badge is-go">Approved</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./vehicles.html">Open</a></td></tr><tr><td><div class="t-main">Nissan NV200 · GP 19 442</div><div class="t-sub">2019</div></td><td>Lucky Mahlaba</td><td>Standard</td><td>Expired</td><td><span class="pa-badge is-stop">Suspended</span></td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./vehicles.html">Review</a></td></tr></tbody></table><div class="pa-tablefoot"><span>Showing 5 of 118</span><div class="pa-tabs"><button class="pa-tab">Previous</button><button class="pa-tab is-on">1</button><button class="pa-tab">2</button><button class="pa-tab">Next</button></div></div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

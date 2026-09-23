@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invoices · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html">Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html" selected>Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Front desk</div><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a><a class="pa-navlink" href="./appointments.html"><span class="d"></span><span class="l">Diary</span><span class="b">24</span></a><a class="pa-navlink" href="./triage.html"><span class="d"></span><span class="l">Triage arrivals</span><span class="b">3</span></a><a class="pa-navlink" href="./patients.html"><span class="d"></span><span class="l">Patients</span></a></div><div class="pa-navgroup"><div class="t">Money</div><a class="pa-navlink is-on" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./payments.html"><span class="d"></span><span class="l">Payments</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">BD</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bongi Dube</div>    <div style="font-size:11px;color:var(--pa-muted)">Receptionist</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Sunninghill Family Clinic</div><div class="title">Invoices</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./invoices.html">New invoice</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px"><div class="pa-stat"><div class="k">Raised today</div><div class="v">R 14 280</div><div class="d flat">19 invoices</div></div><div class="pa-stat"><div class="k">Collected</div><div class="v">R 8 420</div><div class="d go">14 payments</div></div><div class="pa-stat"><div class="k">At the desk</div><div class="v">R 1 640</div><div class="d stop">4 patients</div></div><div class="pa-stat"><div class="k">To claim</div><div class="v">R 4 220</div><div class="d wait">6 invoices</div></div></div><div class="pa-tabs" style="margin-bottom:18px"><button class="pa-tab is-on">Today <span class="n">19</span></button><button class="pa-tab">Unpaid <span class="n">4</span></button><button class="pa-tab">To claim <span class="n">6</span></button><button class="pa-tab">All <span class="n">486</span></button></div><div class="pa-filterbar"><input class="pa-field" placeholder="Search invoice or patient…" /><select class="pa-field"><option>All doctors</option><option>Dr N. Mokoena</option><option>Dr P. Nkosi</option></select><select class="pa-field"><option>All statuses</option><option>Unpaid</option><option>Paid</option><option>Claim submitted</option></select><button class="pa-btn-ghost pa-btn-sm">Export CSV</button></div><div class="pa-tablewrap"><table class="pa-table"><thead><tr><th>Invoice</th><th>Patient</th><th>Doctor</th><th>Status</th><th>Amount</th><th></th></tr></thead><tbody><tr><td><div class="t-main">INV-9214</div><div class="t-sub">Today</div></td><td>Willem Botha</td><td>Dr P. Nkosi</td><td><span class="pa-badge is-stop">Unpaid at desk</span></td><td>R 390.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a> <a class="pa-btn-quiet pa-btn-sm" href="./payments.html">Take payment</a></td></tr><tr><td><div class="t-main">INV-9213</div><div class="t-sub">Today</div></td><td>Lerato Mahlangu</td><td>Dr N. Mokoena</td><td><span class="pa-badge is-wait">Claim submitted</span></td><td>R 520.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a></td></tr><tr><td><div class="t-main">INV-9212</div><div class="t-sub">Today</div></td><td>Johan Pretorius</td><td>Dr N. Mokoena</td><td><span class="pa-badge is-stop">Unpaid at desk</span></td><td>R 780.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a> <a class="pa-btn-quiet pa-btn-sm" href="./payments.html">Take payment</a></td></tr><tr><td><div class="t-main">INV-9210</div><div class="t-sub">Today</div></td><td>Ayesha Patel</td><td>Sr T. Mokoena</td><td><span class="pa-badge is-go">Paid</span></td><td>R 220.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a></td></tr><tr><td><div class="t-main">INV-9208</div><div class="t-sub">Today</div></td><td>Sipho Dlamini</td><td>Dr K. Reddy</td><td><span class="pa-badge is-stop">Unpaid at desk</span></td><td>R 450.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a> <a class="pa-btn-quiet pa-btn-sm" href="./payments.html">Take payment</a></td></tr><tr><td><div class="t-main">INV-9205</div><div class="t-sub">Today</div></td><td>Marie Louw</td><td>Dr P. Nkosi</td><td><span class="pa-badge is-go">Paid · cash</span></td><td>R 390.00</td><td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="./invoices.html">Open</a></td></tr></tbody></table><div class="pa-tablefoot"><span>Showing 6 of 486</span><div class="pa-tabs"><button class="pa-tab">Previous</button><button class="pa-tab is-on">1</button><button class="pa-tab">2</button><button class="pa-tab">Next</button></div></div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

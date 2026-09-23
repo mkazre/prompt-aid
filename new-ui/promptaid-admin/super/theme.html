@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Theme · Prompt Aid admin</title>
+<link rel="icon" href="../assets/img/favicon.ico" />
+<link rel="stylesheet" href="../assets/css/promptaid.css" />
+</head>
+<body data-pa-no-triage>
+<div class="pa-admin">
+<aside class="pa-side">
+  <div class="pa-side-top">
+    <a href="../index.html"><img src="../assets/img/logo.png" alt="Prompt Aid" /></a>
+    <div class="pa-label" style="margin-bottom:8px">Signed in as</div>
+    <select class="pa-field" data-pa-roleswitch style="background:#fff;font-weight:700;font-size:13px;padding:9px 10px"><option value="../super/index.html" selected>Super admin</option><option value="../clinic/index.html">Clinic admin</option><option value="../doctor/index.html">Doctor</option><option value="../reception/index.html">Receptionist</option><option value="../pharmacy/index.html">Pharmacy vendor</option><option value="../partner/index.html">Lab / imaging partner</option><option value="../dispatch/index.html">Ride dispatch</option></select>
+  </div>
+  <nav><div class="pa-navgroup"><div class="t">Overview</div><a class="pa-navlink" href="./index.html"><span class="d"></span><span class="l">Dashboard</span></a><a class="pa-navlink" href="./dispatch.html"><span class="d"></span><span class="l">Live dispatch</span><span class="b">3</span></a><a class="pa-navlink" href="./triage.html"><span class="d"></span><span class="l">Triage monitor</span><span class="b">5</span></a></div><div class="pa-navgroup"><div class="t">Site</div><a class="pa-navlink" href="./pages.html"><span class="d"></span><span class="l">Pages</span></a><a class="pa-navlink" href="./page-builder.html"><span class="d"></span><span class="l">Page builder</span></a><a class="pa-navlink" href="./templates.html"><span class="d"></span><span class="l">Templates</span></a><a class="pa-navlink" href="./menus.html"><span class="d"></span><span class="l">Menus</span></a><a class="pa-navlink is-on" href="./theme.html"><span class="d"></span><span class="l">Theme</span></a><a class="pa-navlink" href="./media.html"><span class="d"></span><span class="l">Media library</span></a></div><div class="pa-navgroup"><div class="t">Clinical</div><a class="pa-navlink" href="./appointments.html"><span class="d"></span><span class="l">Appointments</span><span class="b">48</span></a><a class="pa-navlink" href="./encounters.html"><span class="d"></span><span class="l">Encounters</span></a><a class="pa-navlink" href="./prescriptions.html"><span class="d"></span><span class="l">Prescriptions</span></a><a class="pa-navlink" href="./lab-requests.html"><span class="d"></span><span class="l">Lab requests</span><span class="b">12</span></a></div><div class="pa-navgroup"><div class="t">Directory</div><a class="pa-navlink" href="./clinics.html"><span class="d"></span><span class="l">Clinics</span></a><a class="pa-navlink" href="./doctors.html"><span class="d"></span><span class="l">Doctors</span></a><a class="pa-navlink" href="./patients.html"><span class="d"></span><span class="l">Patients</span></a><a class="pa-navlink" href="./pharmacies.html"><span class="d"></span><span class="l">Pharmacies</span></a><a class="pa-navlink" href="./partners.html"><span class="d"></span><span class="l">Partners</span></a><a class="pa-navlink" href="./drivers.html"><span class="d"></span><span class="l">Drivers</span></a></div><div class="pa-navgroup"><div class="t">Ride service</div><a class="pa-navlink" href="./rides.html"><span class="d"></span><span class="l">Rides</span></a><a class="pa-navlink" href="./ride-series.html"><span class="d"></span><span class="l">Recurring series</span></a><a class="pa-navlink" href="./rate-cards.html"><span class="d"></span><span class="l">Rate cards</span></a></div><div class="pa-navgroup"><div class="t">Commerce</div><a class="pa-navlink" href="./orders.html"><span class="d"></span><span class="l">Orders</span><span class="b">31</span></a><a class="pa-navlink" href="./products.html"><span class="d"></span><span class="l">Products</span></a><a class="pa-navlink" href="./categories.html"><span class="d"></span><span class="l">Categories</span></a></div><div class="pa-navgroup"><div class="t">Billing</div><a class="pa-navlink" href="./invoices.html"><span class="d"></span><span class="l">Invoices</span></a><a class="pa-navlink" href="./payments.html"><span class="d"></span><span class="l">Payments</span></a><a class="pa-navlink" href="./claims.html"><span class="d"></span><span class="l">Claims</span><span class="b">9</span></a><a class="pa-navlink" href="./schemes.html"><span class="d"></span><span class="l">Medical schemes</span></a></div><div class="pa-navgroup"><div class="t">System</div><a class="pa-navlink" href="./users.html"><span class="d"></span><span class="l">Users</span></a><a class="pa-navlink" href="./roles.html"><span class="d"></span><span class="l">Roles &amp; permissions</span></a><a class="pa-navlink" href="./settings.html"><span class="d"></span><span class="l">Settings</span></a><a class="pa-navlink" href="./notifications.html"><span class="d"></span><span class="l">Notification log</span></a><a class="pa-navlink" href="./audit.html"><span class="d"></span><span class="l">Audit trail</span></a></div></nav>
+  <div class="pa-side-foot"><div class="pa-avatar round">MK</div>    <div style="min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Marcus Kazre</div>    <div style="font-size:11px;color:var(--pa-muted)">Super admin</div></div></div>
+</aside>
+<main class="pa-main">
+  <div class="pa-topbar"><div class="inner">
+    <div style="min-width:0"><div class="crumb">Prompt Aid · all clinics</div><div class="title">Theme</div></div>
+    <div class="tools">
+      <input class="pa-field" placeholder="Search patients, orders, rides…" />
+      <a class="pa-btn-ghost" href="./notifications.html" style="position:relative">Alerts<span class="pa-badge" style="background:var(--pa-signal);color:#fff;position:absolute;top:-7px;right:-7px">7</span></a>
+      <a class="pa-btn-ghost" href="../../promptaid-website/index.html">View site</a>
+<a class="pa-btn" href="./theme.html">Save theme</a>
+    </div>
+  </div></div>
+  <div class="pa-page"><div class="pa-note" style="margin-bottom:20px">These values compile to CSS custom properties on <code>&lt;html&gt;</code>. Blocks reference token <em>names</em>, never hex, so changing one here repaints every page, every template and the admin panel at once.</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start">
+<div>
+  <div class="pa-card" style="margin-bottom:22px">
+    <div class="pa-card-head"><h3>Colour tokens</h3><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Reset to default</a></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#101012;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">ink</div><div style="font-size:12px;color:var(--pa-muted)">Body text, dark surfaces, footer</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#101012</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#F5F2EC;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">paper</div><div style="font-size:12px;color:var(--pa-muted)">Page background</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#F5F2EC</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#FFFFFF;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">surface</div><div style="font-size:12px;color:var(--pa-muted)">Cards, table rows, inputs, sidebar</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#FFFFFF</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#E0DACB;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">line</div><div style="font-size:12px;color:var(--pa-muted)">Every hairline border</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#E0DACB</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#D0211C;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">signal</div><div style="font-size:12px;color:var(--pa-muted)">Primary action — from the logo cross</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#D0211C</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#F2C200;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">beacon</div><div style="font-size:12px;color:var(--pa-muted)">Shuttle, focus, highlights — from the logo streak</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#F2C200</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#1F7A4C;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">go</div><div style="font-size:12px;color:var(--pa-muted)">Paid, completed, active</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#1F7A4C</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#C8102E;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">sats-red</div><div style="font-size:12px;color:var(--pa-muted)">Triage · immediate</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#C8102E</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#E4701E;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">sats-orange</div><div style="font-size:12px;color:var(--pa-muted)">Triage · very urgent</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#E4701E</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#F2C200;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">sats-yellow</div><div style="font-size:12px;color:var(--pa-muted)">Triage · urgent</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#F2C200</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+    <div class="pa-spread" style="padding:13px 20px;border-bottom:1px solid var(--pa-line-soft)">
+  <div class="pa-row" style="gap:14px"><span style="width:34px;height:34px;background:#1F7A4C;border:1px solid #CFC8B8;display:block;flex:none"></span>
+  <div><div style="font-size:14px;font-weight:700">sats-green</div><div style="font-size:12px;color:var(--pa-muted)">Triage · routine</div></div></div>
+  <div class="pa-row" style="gap:10px"><code style="font-size:12px;color:var(--pa-muted)">#1F7A4C</code><a class="pa-btn-ghost pa-btn-sm" href="./theme.html">Change</a></div></div>
+  </div>
+  <div class="pa-card" style="margin-bottom:20px"><div class="pa-card-head"><h3>Typography</h3></div><div class="pa-card-body"><div class="pa-formgrid"><div><label class="pa-label">Display &amp; UI font</label><select class="pa-field"><option>Lato</option><option>Source Sans 3</option><option>Public Sans</option></select></div><div><label class="pa-label">Weights loaded</label><input class="pa-field" value="300, 400, 700, 900" /></div><div><label class="pa-label">Base size</label><input class="pa-field" value="15px" /></div><div><label class="pa-label">Heading tracking</label><input class="pa-field" value="-0.022em" /></div><div><label class="pa-label">Body line height</label><input class="pa-field" value="1.5" /></div><div><label class="pa-label">Tabular numerals</label><select class="pa-field"><option>On</option><option>Off</option></select></div></div><div style="margin-top:18px"><a class="pa-btn" href="./theme.html">Save</a></div></div></div>
+  <div class="pa-card" style="margin-bottom:20px"><div class="pa-card-head"><h3>Shape &amp; layout</h3></div><div class="pa-card-body"><div class="pa-formgrid"><div><label class="pa-label">Corner radius</label><input class="pa-field" value="2px" /></div><div><label class="pa-label">Container width</label><input class="pa-field" value="1280px" /></div><div><label class="pa-label">Gutter</label><input class="pa-field" value="40px" /></div><div><label class="pa-label">Grid columns</label><input class="pa-field" value="12" /></div><div><label class="pa-label">Shadow</label><select class="pa-field"><option>Popovers and modals only</option><option>Everywhere</option><option>None</option></select></div><div><label class="pa-label">Motion</label><input class="pa-field" value="140ms ease-out" /></div><div><label class="pa-label">Border width</label><input class="pa-field" value="1px" /></div><div style="grid-column:1/-1"><label class="pa-label">Spacing scale</label><input class="pa-field" value="4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 56 / 80" /></div></div><div style="margin-top:18px"><a class="pa-btn" href="./theme.html">Save</a></div></div></div>
+</div>
+<div>
+  <div class="pa-card" style="margin-bottom:20px">
+    <div class="pa-card-head"><h3>Brand assets</h3></div>
+    <div class="pa-card-body">
+      <div class="pa-label" style="margin-bottom:8px">Logo</div>
+      <div style="border:1px solid var(--pa-line);padding:16px;background:var(--pa-paper);margin-bottom:10px"><img src="../assets/img/logo.png" alt="" style="height:34px;width:auto" /></div>
+      <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-bottom:18px" href="./media.html">Replace logo</a>
+      <div class="pa-label" style="margin-bottom:8px">Favicon &amp; app icon</div>
+      <div class="pa-slot" style="height:80px;margin-bottom:10px">favicon.ico · 512px app icon</div>
+      <a class="pa-btn-ghost pa-btn-block pa-btn-sm" href="./media.html">Replace</a>
+    </div>
+  </div>
+  <div class="pa-card">
+    <div class="pa-card-head"><h3>Live preview</h3></div>
+    <div class="pa-card-body">
+      <div style="border:1px solid var(--pa-line);padding:16px;background:var(--pa-paper)">
+        <div class="pa-eyebrow" style="margin-bottom:8px">Eyebrow label</div>
+        <div style="font-size:22px;font-weight:900;letter-spacing:-.02em;margin-bottom:8px">Heading in Lato</div>
+        <p style="font-size:14px;color:var(--pa-ink-soft)">Body copy at base size, with the line height and measure your pages will use.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><span class="pa-btn pa-btn-sm">Primary</span><span class="pa-btn-ghost pa-btn-sm">Secondary</span><span class="pa-btn-beacon pa-btn-sm">Shuttle</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pa-badge is-go">Badge</span><span class="pa-badge is-wait">Badge</span><span class="pa-badge is-stop">Badge</span><span class="pa-badge is-ink">Badge</span></div>
+      </div>
+    </div>
+  </div>
+</div></div></div>
+</main>
+</div>
+<script src="../assets/js/promptaid.js"></script>
+</body>
+</html>

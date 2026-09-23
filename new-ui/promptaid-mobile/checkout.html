@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>15 · Checkout (split payment) · Prompt Aid app</title>
+<link rel="stylesheet" href="./assets/css/promptaid.css" />
+<link rel="stylesheet" href="./assets/css/mobile.css" />
+</head>
+<body data-pa-no-triage>
+<div class="m-wrap">
+<div class="m-meta"><a href="./index.html">All screens</a><span>15 · Checkout (split payment)</span><span class="m-stack">patient</span></div>
+<div class="m-phone">
+<div class="m-status"><span>9:41</span><span>5G ▮▮▮</span></div>
+<header class="m-head"><a class="m-back" href="./shop.html">&larr;</a><div class="m-htitle">Checkout</div><span></span></header><main class="m-body">
+ <div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">Consultation · Dr Mokoena</span><b>R 520.00</b></div><div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">Amoxicillin 500mg · 21</span><b>R 145.00</b></div><div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">Panado 500mg · 24</span><b>R 32.99</b></div><div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">Delivery</span><b>R 45.00</b></div><div class="pa-spread" style="font-size:13px;margin-bottom:8px"><span class="pa-muted">Shuttle, return</span><b>R 381.00</b></div>
+ <div style="border-top:1px solid var(--pa-line);padding-top:8px;margin-top:4px">
+ <div class="pa-spread" style="font-size:13px;margin-bottom:6px"><span class="pa-muted">Discovery claim</span><b style="color:var(--pa-go)">− R 520.00</b></div>
+ <div class="pa-spread" style="font-size:13px"><span class="pa-muted">Medical savings</span><b style="color:var(--pa-go)">− R 145.00</b></div></div>
+ <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:10px;margin:10px 0 14px"><span class="pa-label" style="margin:0">You pay</span><span class="pa-num" style="font-size:26px">R 458.99</span></div>
+ <div class="pa-label" style="margin:18px 0 8px">Pay with</div>
+ <label class="m-row" style="border-color:var(--pa-ink);background:var(--pa-beacon-wash)"><span><b>Card · PayFast</b><small>•••• 4412</small></span><span style="width:16px;height:16px;border:1px solid var(--pa-ink);background:var(--pa-ink)"></span></label><label class="m-row" style=""><span><b>Instant EFT · Ozow</b><small>All major banks</small></span><span style="width:16px;height:16px;border:1px solid var(--pa-ink);background:#fff"></span></label><label class="m-row" style=""><span><b>Mobile wallet</b><small>SnapScan, Zapper</small></span><span style="width:16px;height:16px;border:1px solid var(--pa-ink);background:#fff"></span></label><label class="m-row" style=""><span><b>Pay at the clinic</b><small>Consult only</small></span><span style="width:16px;height:16px;border:1px solid var(--pa-ink);background:#fff"></span></label>
+ <div style="margin-top:10px"><a class="pa-btn pa-btn-block" href="./orders.html">Pay R 458.99</a></div></main>
+<nav class="m-tabs" style="grid-template-columns:repeat(5,1fr)"><a href="./home.html"><span></span>Home</a><a href="./find-care.html"><span></span>Care</a><a href="./shuttle-request.html"><span></span>Shuttle</a><a href="./shop.html"><span></span>Pharmacy</a><a href="./record.html"><span></span>Record</a></nav>
+</div>
+<div class="m-note"><strong>Expo notes.</strong> One charge, one split_group_id, three payment rows (consult / order / ride). PayFast via expo-web-browser → return deep link promptaid://payment/{id}; trust only the ITN webhook.</div></div>
+<script src="./assets/js/promptaid.js"></script>
+</body>
+</html>
