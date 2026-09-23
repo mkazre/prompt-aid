@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClinicController;
+use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\LabRequestController;
 use App\Http\Controllers\Api\PharmacyController;
@@ -62,6 +63,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Doctor-only ---
     Route::middleware('role:'.User::ROLE_DOCTOR)->prefix('doctor')->group(function () {
+        Route::get('/stats', [DoctorController::class, 'stats']);
+        Route::get('/appointments', [DoctorController::class, 'appointments']);
+        Route::post('/appointments/{id}/status', [DoctorController::class, 'updateAppointmentStatus']);
+        Route::get('/patients', [DoctorController::class, 'patients']);
         Route::get('/lab-requests', [LabRequestController::class, 'doctorIndex']);
         Route::post('/lab-requests', [LabRequestController::class, 'store']);
     });

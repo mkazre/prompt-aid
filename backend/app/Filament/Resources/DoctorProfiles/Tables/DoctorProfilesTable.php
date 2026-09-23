@@ -5,8 +5,10 @@ namespace App\Filament\Resources\DoctorProfiles\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class DoctorProfilesTable
@@ -27,10 +29,14 @@ class DoctorProfilesTable
                         'pending_approval' => 'warning',
                         default => 'gray',
                     }),
+                IconColumn::make('is_accepting_appointments')
+                    ->label('Accepting')
+                    ->boolean(),
                 TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')->options(['active' => 'Active', 'inactive' => 'Inactive', 'pending_approval' => 'Pending Approval']),
+                TernaryFilter::make('is_accepting_appointments')->label('Accepting appointments'),
             ])
             ->recordActions([
                 EditAction::make(),

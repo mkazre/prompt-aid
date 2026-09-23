@@ -2,6 +2,9 @@ export type Role = 'super_admin' | 'clinic_admin' | 'doctor' | 'driver' | 'patie
 
 export interface PatientProfile {
   id: number;
+  name?: string;
+  phone?: string | null;
+  avatar?: string | null;
   dob: string | null;
   gender: string | null;
   blood_group: string | null;
@@ -25,6 +28,14 @@ export interface DriverProfile {
   status: string;
 }
 
+export interface DoctorMiniProfile {
+  id: number;
+  name: string;
+  specialization: string;
+  status: string;
+  is_accepting_appointments: boolean;
+}
+
 export interface User {
   id: number;
   name: string;
@@ -35,6 +46,7 @@ export interface User {
   status: string;
   patient_profile?: PatientProfile;
   driver_profile?: DriverProfile;
+  doctor_profile?: DoctorMiniProfile;
 }
 
 export interface Clinic {
@@ -59,6 +71,8 @@ export interface Doctor {
   consultation_fee: number;
   rating_avg: number;
   rating_count: number;
+  is_accepting_appointments: boolean;
+  availability_summary: string | null;
   clinics: Clinic[];
 }
 
@@ -73,6 +87,23 @@ export interface Appointment {
   reason: string | null;
   doctor?: Doctor;
   clinic?: Clinic;
+  patient?: PatientProfile;
+}
+
+export interface DoctorStats {
+  total_patients: number;
+  total_appointments: number;
+  weekly_appointments: { day: string; date: string; count: number }[];
+}
+
+export interface DoctorPatient {
+  id: number;
+  name: string;
+  phone: string | null;
+  gender: string | null;
+  dob: string | null;
+  visits: number;
+  last_visit: string | null;
 }
 
 export type VehicleType = 'sedan' | 'suv' | 'van' | 'wheelchair_accessible';

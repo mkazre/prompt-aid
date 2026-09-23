@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api, apiErrorMessage } from '../../api/client';
 import { Doctor } from '../../api/types';
-import { Card, Input, PrimaryButton, SectionTitle } from '../../components/UI';
+import { Badge, Card, Input, PrimaryButton, SectionTitle } from '../../components/UI';
 import { colors, font, radius, spacing } from '../../theme';
 
 export default function DoctorDetailScreen({ route, navigation }: any) {
@@ -60,9 +60,16 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
       <Card>
-        <Text style={styles.name}>{doctor.name}</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.name}>{doctor.name}</Text>
+          <Badge
+            status={doctor.is_accepting_appointments ? 'available' : 'unavailable'}
+            label={doctor.is_accepting_appointments ? 'Accepting appointments' : 'Not accepting new patients'}
+          />
+        </View>
         <Text style={styles.spec}>{doctor.specialization} · {doctor.experience_years} yrs experience</Text>
         <Text style={styles.meta}>★ {doctor.rating_avg.toFixed(1)} ({doctor.rating_count} reviews)</Text>
+        {doctor.availability_summary ? <Text style={styles.schedule}>🕐 {doctor.availability_summary}</Text> : null}
         <Text style={styles.bio}>{doctor.bio}</Text>
       </Card>
 
@@ -70,31 +77,39 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
       <Card>
         <Text style={styles.fee}>Consultation fee: R{doctor.consultation_fee}</Text>
 
-        <Text style={styles.label}>Clinic</Text>
-        <View style={styles.chipRow}>
-          {doctor.clinics.map((c) => (
-            <Chip key={c.id} label={c.name} active={clinicId === c.id} onPress={() => setClinicId(c.id)} />
-          ))}
-        </View>
-
-        <Input label="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} placeholder="2026-09-20" />
-
-        <Text style={styles.label}>Available time slots</Text>
-        {loadingSlots ? (
-          <Text style={styles.mutedText}>Loading slots...</Text>
-        ) : slots.length ? (
-          <View style={styles.chipRow}>
-            {slots.map((s) => (
-              <Chip key={s} label={s} active={slot === s} onPress={() => setSlot(s)} />
-            ))}
-          </View>
+        {!doctor.is_accepting_appointments ? (
+          <Text style={styles.mutedText}>
+            This doctor is not currently accepting new appointments. Please check back later or browse other available doctors.
+          </Text>
         ) : (
-          <Text style={styles.mutedText}>No slots available this day — try another date.</Text>
+          <>
+            <Text style={styles.label}>Clinic</Text>
+            <View style={styles.chipRow}>
+              {doctor.clinics.map((c) => (
+                <Chip key={c.id} label={c.name} active={clinicId === c.id} onPress={() => setClinicId(c.id)} />
+              ))}
+            </View>
+
+            <Input label="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} placeholder="2026-09-20" />
+
+            <Text style={styles.label}>Available time slots</Text>
+            {loadingSlots ? (
+              <Text style={styles.mutedText}>Loading slots...</Text>
+            ) : slots.length ? (
+              <View style={styles.chipRow}>
+                {slots.map((s) => (
+                  <Chip key={s} label={s} active={slot === s} onPress={() => setSlot(s)} />
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.mutedText}>No slots available this day — try another date.</Text>
+            )}
+
+            <Input label="Reason for visit (optional)" value={reason} onChangeText={setReason} placeholder="Briefly describe your symptoms" multiline />
+
+            <PrimaryButton title="Confirm booking" onPress={handleBook} loading={booking} disabled={!slot} />
+          </>
         )}
-
-        <Input label="Reason for visit (optional)" value={reason} onChangeText={setReason} placeholder="Briefly describe your symptoms" multiline />
-
-        <PrimaryButton title="Confirm booking" onPress={handleBook} loading={booking} disabled={!slot} />
       </Card>
     </ScrollView>
   );
@@ -116,6 +131,8 @@ function defaultDate() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.gray50 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
+  schedule: { fontFamily: font.regular, fontSize: 12, color: colors.gray500, marginTop: 6 },
   name: { fontFamily: font.bold, fontSize: 20, color: colors.secondary },
   spec: { fontFamily: font.regular, color: colors.gray600, marginTop: 2 },
   meta: { fontFamily: font.medium, color: colors.accent, marginTop: 6 },

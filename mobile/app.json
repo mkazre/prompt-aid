@@ -23,7 +23,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -41,6 +44,12 @@
           "backgroundColor": "#F8F9FA"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bf3efb69-3e1b-497a-acf1-7f1aaace1de2"
+      }
+    },
+    "owner": "mkazre"
   }
 }

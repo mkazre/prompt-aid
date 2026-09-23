@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PatientProfiles\Pages;
 
 use App\Filament\Resources\PatientProfiles\PatientProfileResource;
+use App\Filament\Resources\PatientProfiles\Widgets\PatientProfilesHeaderStats;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -14,6 +15,13 @@ class ListPatientProfiles extends ListRecords
     {
         return [
             CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            PatientProfilesHeaderStats::class,
         ];
     }
 }

@@ -32,7 +32,7 @@ class ClinicController extends Controller
     {
         $doctors = DoctorProfile::query()
             ->where('status', 'active')
-            ->with(['user', 'clinics'])
+            ->with(['user', 'clinics', 'availabilities' => fn ($q) => $q->where('is_active', true)])
             ->when($request->string('specialization')->isNotEmpty(), fn ($q) => $q->where('specialization', 'like', '%'.$request->string('specialization').'%'))
             ->when($request->integer('clinic_id'), fn ($q, $clinicId) => $q->whereHas('clinics', fn ($cq) => $cq->where('clinics.id', $clinicId)))
             ->when($request->string('search')->isNotEmpty(), function ($q) use ($request) {
@@ -45,6 +45,6 @@ class ClinicController extends Controller
 
     public function doctor(DoctorProfile $doctor)
     {
-        return new DoctorProfileResource($doctor->load(['user', 'clinics']));
+        return new DoctorProfileResource($doctor->load(['user', 'clinics', 'availabilities' => fn ($q) => $q->where('is_active', true)]));
     }
 }

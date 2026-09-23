@@ -22,6 +22,9 @@ Route::get('/doctors/{doctor}/slots', [PageController::class, 'doctorSlots'])->n
 Route::get('/pharmacies', [PharmacyPageController::class, 'index'])->name('pharmacies.index');
 Route::get('/pharmacies/{pharmacy}', [PharmacyPageController::class, 'show'])->name('pharmacies.show');
 
+Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact.submit');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [WebAuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [WebAuthController::class, 'login'])->name('login.store');
@@ -37,4 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/rides/{ride}/track', [RideTrackingController::class, 'show'])->name('rides.track');
     Route::get('/rides/{ride}/status', [RideTrackingController::class, 'status'])->name('rides.status');
     Route::post('/pharmacies/{pharmacy}/checkout', [PharmacyPageController::class, 'checkout'])->name('pharmacies.checkout');
+    Route::get('/staff/notifications/unread-count', function () {
+        return response()->json(['count' => request()->user()->unreadNotifications()->count()]);
+    })->name('staff.notifications.unread-count');
 });

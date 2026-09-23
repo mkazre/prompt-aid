@@ -26,6 +26,8 @@ class DoctorProfileResource extends JsonResource
             'rating_avg' => (float) $this->rating_avg,
             'rating_count' => $this->rating_count,
             'status' => $this->status,
+            'is_accepting_appointments' => (bool) $this->is_accepting_appointments,
+            'availability_summary' => $this->availabilitySummary(),
             'clinics' => ClinicResource::collection($this->whenLoaded('clinics')),
         ];
     }

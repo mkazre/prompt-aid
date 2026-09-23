@@ -9,6 +9,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import PatientTabs from './PatientTabs';
 import DriverTabs from './DriverTabs';
 import ThirdPartyTabs from './ThirdPartyTabs';
+import DoctorTabs from './DoctorTabs';
 import { colors } from '../theme';
 
 const Stack = createNativeStackNavigator();
@@ -42,6 +43,8 @@ export default function RootNavigator() {
         <DriverTabs />
       ) : user.role === 'third_party' ? (
         <ThirdPartyTabs />
+      ) : user.role === 'doctor' ? (
+        <DoctorTabs />
       ) : (
         <PatientTabs />
       )}

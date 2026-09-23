@@ -5,6 +5,7 @@ namespace App\Filament\Resources\DoctorProfiles\Schemas;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class DoctorProfileForm
@@ -34,6 +35,10 @@ class DoctorProfileForm
                     ->options(['active' => 'Active', 'inactive' => 'Inactive', 'pending_approval' => 'Pending Approval'])
                     ->required()
                     ->default('pending_approval'),
+                Toggle::make('is_accepting_appointments')
+                    ->label('Accepting new appointments')
+                    ->helperText('Turn this off to hide the "book now" option from patients while you are away, fully booked, etc. Your profile stays visible either way.')
+                    ->default(true),
             ]);
     }
 }

@@ -6,6 +6,7 @@ use App\Contracts\NotificationDispatcherInterface;
 use App\Models\Appointment;
 use App\Models\DoctorProfile;
 use App\Models\PatientProfile;
+use App\Support\StaffNotifier;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -104,6 +105,16 @@ class AppointmentBookingService
             $patient->user,
             'Appointment booked',
             "Your appointment with Dr. {$doctor->user->name} on {$date} at {$startTime} has been booked and is pending confirmation."
+        );
+
+        StaffNotifier::alert(
+            $doctor->user,
+            'New appointment booking',
+            "{$patient->user->name} booked a {$visitType} visit on {$date} at {$startTime}.",
+            icon: 'heroicon-o-calendar-days',
+            color: 'warning',
+            url: route('filament.admin.resources.appointments.index'),
+            actionLabel: 'Review',
         );
 
         return $appointment;

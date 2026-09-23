@@ -16,6 +16,9 @@ class PatientProfileResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'name' => $this->whenLoaded('user', fn () => $this->user?->name),
+            'phone' => $this->whenLoaded('user', fn () => $this->user?->phone),
+            'avatar' => $this->whenLoaded('user', fn () => $this->user?->avatar),
             'dob' => $this->dob?->format('Y-m-d'),
             'gender' => $this->gender,
             'blood_group' => $this->blood_group,

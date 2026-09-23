@@ -9,6 +9,7 @@ use App\Models\PatientProfile;
 use App\Models\Pharmacy;
 use App\Models\Product;
 use App\Models\PrescriptionUpload;
+use App\Support\StaffNotifier;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -105,6 +106,18 @@ class OrderService
             }
 
             $this->notifier->email($patient->user, 'Order placed', "Your order {$order->order_no} from {$pharmacy->name} has been placed.");
+
+            if ($pharmacy->vendor) {
+                StaffNotifier::alert(
+                    $pharmacy->vendor,
+                    'New order received',
+                    "{$patient->user->name} placed order {$order->order_no} for R".number_format($total, 2).($needsPrescription ? ' (awaiting prescription review)' : '.'),
+                    icon: 'heroicon-o-shopping-bag',
+                    color: $needsPrescription ? 'warning' : 'success',
+                    url: route('filament.admin.resources.orders.index'),
+                    actionLabel: 'Review',
+                );
+            }
 
             return $order->fresh('items');
         });

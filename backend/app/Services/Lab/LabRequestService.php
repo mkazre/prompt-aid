@@ -9,6 +9,7 @@ use App\Models\LabResult;
 use App\Models\PatientProfile;
 use App\Models\ThirdPartyProfile;
 use App\Models\User;
+use App\Support\StaffNotifier;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -54,6 +55,19 @@ class LabRequestService
 
             $this->notifier->email($patient->user, 'Lab request logged', "Dr. {$doctor->user->name} has requested tests for you. A lab partner will be in touch to collect a sample.");
 
+            $labPartners = User::query()->where('role', User::ROLE_THIRD_PARTY)->where('status', 'active')->get();
+            if ($labPartners->isNotEmpty()) {
+                StaffNotifier::alert(
+                    $labPartners,
+                    'New lab request available',
+                    "Dr. {$doctor->user->name} logged a {$priority} request ({$request->request_ref}) for {$patient->user->name}.",
+                    icon: 'heroicon-o-beaker',
+                    color: $priority === 'urgent' ? 'danger' : 'warning',
+                    url: route('filament.admin.resources.lab-requests.index'),
+                    actionLabel: 'Review',
+                );
+            }
+
             return $request->load('items');
         });
     }
@@ -67,6 +81,15 @@ class LabRequestService
         ]);
 
         $this->notifier->push($request->patient->user, 'Lab request accepted', "{$thirdParty->company_name} will collect your sample soon.");
+
+        StaffNotifier::alert(
+            $request->doctor->user,
+            'Lab request accepted',
+            "{$thirdParty->company_name} accepted the {$request->request_ref} request for {$request->patient->user->name}.",
+            icon: 'heroicon-o-beaker',
+            color: 'success',
+            url: route('filament.admin.resources.lab-requests.index'),
+        );
 
         return $request->fresh();
     }
@@ -99,6 +122,15 @@ class LabRequestService
 
         $this->notifier->email($request->patient->user, 'Your lab results are ready', "Results for your {$request->request_ref} request are now available in your dashboard.");
         $this->notifier->email($request->doctor->user, 'Lab results uploaded', "Results for {$request->patient->user->name}'s {$request->request_ref} request are ready to review.");
+
+        StaffNotifier::alert(
+            $request->doctor->user,
+            'Lab results ready to review',
+            "Results for {$request->patient->user->name}'s {$request->request_ref} request have been uploaded.",
+            icon: 'heroicon-o-document-check',
+            color: 'success',
+            url: route('filament.admin.resources.lab-requests.index'),
+        );
 
         return $result;
     }
