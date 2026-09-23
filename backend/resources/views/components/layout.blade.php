@@ -20,11 +20,16 @@
 <header class="pa-header"><div class="inner">
   <a class="logo" href="{{ url('/') }}"><img src="{{ asset('assets/img/logo.png') }}" alt="Prompt Aid" /></a>
   <nav class="pa-nav">
-    <a href="{{ route('doctors.index') }}" class="{{ request()->routeIs('doctors.*') ? 'is-on' : '' }}">Find care</a>
-    <a href="{{ route('shop.index') }}" class="{{ request()->routeIs('shop.*', 'pharmacies.*') ? 'is-on' : '' }}">Pharmacy &amp; tests</a>
-    <a href="{{ route('shuttle') }}" class="{{ request()->routeIs('shuttle') ? 'is-on' : '' }}">Shuttle</a>
-    <a href="{{ route('how-it-works') }}" class="{{ request()->routeIs('how-it-works') ? 'is-on' : '' }}">How it works</a>
-    <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'is-on' : '' }}">About</a>
+    @php $headerLinks = \App\Models\Menu::tree('header'); @endphp
+    @forelse ($headerLinks as $link)
+      <a href="{{ $link['route'] && \Illuminate\Support\Facades\Route::has($link['route']) ? route($link['route']) : ($link['url'] ?? '#') }}" target="{{ $link['target'] ?? '_self' }}">{{ $link['label'] }}</a>
+    @empty
+      <a href="{{ route('doctors.index') }}" class="{{ request()->routeIs('doctors.*') ? 'is-on' : '' }}">Find care</a>
+      <a href="{{ route('shop.index') }}" class="{{ request()->routeIs('shop.*', 'pharmacies.*') ? 'is-on' : '' }}">Pharmacy &amp; tests</a>
+      <a href="{{ route('shuttle') }}" class="{{ request()->routeIs('shuttle') ? 'is-on' : '' }}">Shuttle</a>
+      <a href="{{ route('how-it-works') }}" class="{{ request()->routeIs('how-it-works') ? 'is-on' : '' }}">How it works</a>
+      <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'is-on' : '' }}">About</a>
+    @endforelse
   </nav>
   <div class="actions">
     @auth
