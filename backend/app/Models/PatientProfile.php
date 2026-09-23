@@ -43,6 +43,11 @@ class PatientProfile extends Model
         return $this->hasMany(Ride::class);
     }
 
+    public function rideSeries(): HasMany
+    {
+        return $this->hasMany(RideSeries::class);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);

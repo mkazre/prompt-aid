@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/appointments', [WebAppointmentController::class, 'store'])->name('appointments.store');
     Route::post('/rides', [WebRideController::class, 'store'])->name('rides.store');
+    Route::post('/rides/{ride}/return', [WebRideController::class, 'requestReturn'])->name('rides.return');
     Route::get('/rides/{ride}/track', [RideTrackingController::class, 'show'])->name('rides.track');
     Route::get('/rides/{ride}/status', [RideTrackingController::class, 'status'])->name('rides.status');
     Route::post('/pharmacies/{pharmacy}/checkout', [PharmacyPageController::class, 'checkout'])->name('pharmacies.checkout');

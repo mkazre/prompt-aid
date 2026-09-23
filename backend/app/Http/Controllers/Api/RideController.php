@@ -4,14 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RideResource;
+use App\Http\Resources\RideSeriesResource;
 use App\Models\Ride;
 use App\Models\RideReview;
 use App\Services\Rides\RideDispatchService;
+use App\Services\Rides\RideSeriesService;
 use Illuminate\Http\Request;
 
 class RideController extends Controller
 {
-    public function __construct(protected RideDispatchService $dispatch) {}
+    public function __construct(
+        protected RideDispatchService $dispatch,
+        protected RideSeriesService $series,
+    ) {}
 
     /** Public: live fare quotes for every vehicle type — powers the "choose your ride" screen. */
     public function quote(Request $request)
@@ -40,6 +45,7 @@ class RideController extends Controller
             'dropoff_lng' => ['required', 'numeric'],
             'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible'],
             'appointment_id' => ['nullable', 'integer', 'exists:appointments,id'],
+            'wait_and_return' => ['nullable', 'boolean'],
         ]);
 
         $ride = $this->dispatch->requestRide(
@@ -50,7 +56,85 @@ class RideController extends Controller
             $data['vehicle_type'] ?? 'sedan',
         );
 
+        if (! empty($data['wait_and_return'])) {
+            $ride->update(['wait_and_return' => true]);
+        }
+
         return new RideResource($ride->load(['driver.user', 'statusEvents']));
+    }
+
+    /** Patient: request the return leg of an already-booked ride. */
+    public function requestReturn(Request $request, Ride $ride)
+    {
+        $this->authorizeRideAccess($request, $ride);
+
+        $data = $request->validate([
+            'scheduled_for' => ['nullable', 'date'],
+        ]);
+
+        if ($ride->return_of_ride_id || Ride::query()->where('return_of_ride_id', $ride->id)->exists()) {
+            return response()->json(['message' => 'This ride already has a return leg.'], 409);
+        }
+
+        $returnLeg = $this->series->requestReturnLeg($ride, $data['scheduled_for'] ?? null);
+
+        return new RideResource($returnLeg->load(['driver.user', 'statusEvents']));
+    }
+
+    /** Patient: create a recurring shuttle series (e.g. dialysis 3x/week). */
+    public function storeSeries(Request $request)
+    {
+        $data = $request->validate([
+            'days' => ['required', 'array', 'min:1'],
+            'days.*' => ['integer', 'min:0', 'max:6'],
+            'time' => ['required', 'date_format:H:i'],
+            'until' => ['required', 'date', 'after:today'],
+            'pickup_address' => ['required', 'string'],
+            'pickup_lat' => ['required', 'numeric'],
+            'pickup_lng' => ['required', 'numeric'],
+            'dropoff_address' => ['required', 'string'],
+            'dropoff_lat' => ['required', 'numeric'],
+            'dropoff_lng' => ['required', 'numeric'],
+            'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible'],
+        ]);
+
+        $rideSeries = $this->series->create(
+            $request->user()->patientProfile,
+            ['days' => $data['days'], 'time' => $data['time'], 'until' => $data['until']],
+            ['address' => $data['pickup_address'], 'lat' => $data['pickup_lat'], 'lng' => $data['pickup_lng']],
+            ['address' => $data['dropoff_address'], 'lat' => $data['dropoff_lat'], 'lng' => $data['dropoff_lng']],
+            $data['vehicle_type'] ?? 'sedan',
+        );
+
+        return new RideSeriesResource($rideSeries);
+    }
+
+    /** Patient: my recurring series. */
+    public function indexSeries(Request $request)
+    {
+        $series = $request->user()->patientProfile->rideSeries()->latest()->get();
+
+        return RideSeriesResource::collection($series);
+    }
+
+    /** Patient: pause a recurring series (stops future materialisation). */
+    public function pauseSeries(Request $request, \App\Models\RideSeries $rideSeries)
+    {
+        abort_unless($rideSeries->patient_profile_id === $request->user()->patientProfile?->id, 403);
+
+        $this->series->pause($rideSeries);
+
+        return new RideSeriesResource($rideSeries->fresh());
+    }
+
+    /** Patient: resume a paused recurring series. */
+    public function resumeSeries(Request $request, \App\Models\RideSeries $rideSeries)
+    {
+        abort_unless($rideSeries->patient_profile_id === $request->user()->patientProfile?->id, 403);
+
+        $this->series->resume($rideSeries);
+
+        return new RideSeriesResource($rideSeries->fresh());
     }
 
     /** Patient: my ride history. */

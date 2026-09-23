@@ -32,6 +32,11 @@ class RidesTable
                         default => 'gray',
                     }),
                 TextColumn::make('requested_at')->dateTime()->sortable(),
+                TextColumn::make('scheduled_for')->dateTime()->sortable()->placeholder('—')->toggleable(),
+                TextColumn::make('is_return')->badge()->label('Type')
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Return leg' : 'Outbound')
+                    ->color(fn (bool $state): string => $state ? 'info' : 'gray')
+                    ->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('status')->options([

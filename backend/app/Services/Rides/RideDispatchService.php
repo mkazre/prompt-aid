@@ -63,6 +63,7 @@ class RideDispatchService
         float $dropoffLng,
         ?int $appointmentId = null,
         string $vehicleType = 'sedan',
+        bool $autoAssign = true,
     ): Ride {
         $distance = $this->geo->distanceKm($pickupLat, $pickupLng, $dropoffLat, $dropoffLng);
         $eta = $this->geo->etaMinutes($distance);
@@ -86,11 +87,16 @@ class RideDispatchService
 
         $this->logEvent($ride, Ride::STATUS_REQUESTED, $pickupLat, $pickupLng);
 
-        // Try to auto-assign the closest available driver with a matching vehicle type.
-        $driver = $this->findNearestAvailableDriver($pickupLat, $pickupLng, $vehicleType);
+        // Try to auto-assign the closest available driver with a matching
+        // vehicle type — skipped for rides scheduled ahead of time (return
+        // legs, materialised recurring series), since "closest available
+        // driver right now" is meaningless for a ride days in the future.
+        if ($autoAssign) {
+            $driver = $this->findNearestAvailableDriver($pickupLat, $pickupLng, $vehicleType);
 
-        if ($driver) {
-            $this->assignDriver($ride, $driver);
+            if ($driver) {
+                $this->assignDriver($ride, $driver);
+            }
         }
 
         return $ride->fresh();

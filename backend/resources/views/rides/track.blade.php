@@ -36,6 +36,19 @@
             <p class="text-xs font-semibold text-gray-500 mt-4 mb-2">Drop-off</p>
             <p class="text-sm text-gray-700">🏥 {{ $ride->dropoff_address }}</p>
         </div>
+
+        @if ($ride->status === 'completed' && ! $ride->is_return && ! $ride->returnLeg)
+            <div class="mt-6 card flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p class="text-sm font-semibold text-secondary-500">Need a ride back?</p>
+                    <p class="text-xs text-gray-500">Request the return leg — same route, reversed.</p>
+                </div>
+                <form method="POST" action="{{ route('rides.return', $ride) }}">
+                    @csrf
+                    <button type="submit" class="btn-primary !px-5 !py-2.5 text-xs">Request return ride</button>
+                </form>
+            </div>
+        @endif
     </section>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

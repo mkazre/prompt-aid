@@ -51,6 +51,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/rides', [RideController::class, 'index']);
         Route::post('/rides', [RideController::class, 'store']);
         Route::post('/rides/{ride}/review', [RideController::class, 'review']);
+        Route::post('/rides/{ride}/return', [RideController::class, 'requestReturn']);
+
+        Route::get('/ride-series', [RideController::class, 'indexSeries']);
+        Route::post('/ride-series', [RideController::class, 'storeSeries']);
+        Route::post('/ride-series/{rideSeries}/pause', [RideController::class, 'pauseSeries']);
+        Route::post('/ride-series/{rideSeries}/resume', [RideController::class, 'resumeSeries']);
 
         Route::get('/lab-requests', [LabRequestController::class, 'patientIndex']);
 
