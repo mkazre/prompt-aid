@@ -19,6 +19,16 @@ class StaticPageController extends Controller
         return view('pages.for-providers');
     }
 
+    public function emergency()
+    {
+        return view('pages.emergency');
+    }
+
+    public function emergencyResults()
+    {
+        return view('pages.emergency-results');
+    }
+
     public function forProvidersSubmit(Request $request)
     {
         $data = $request->validate([

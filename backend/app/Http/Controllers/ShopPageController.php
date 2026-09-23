@@ -20,4 +20,9 @@ class ShopPageController extends Controller
 
         return view('pages.shop', ['products' => $products]);
     }
+
+    public function show(Product $product)
+    {
+        return view('pages.product-single', ['product' => $product->load('pharmacy')]);
+    }
 }

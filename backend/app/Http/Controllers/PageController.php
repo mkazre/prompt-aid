@@ -52,10 +52,25 @@ class PageController extends Controller
         ]);
     }
 
-    public function clinics()
+    public function clinics(Request $request)
     {
-        return view('clinics.index', [
-            'clinics' => Clinic::where('status', 'active')->withCount('doctors')->paginate(9),
+        $clinics = Clinic::where('status', 'active')
+            ->withCount('doctors')
+            ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
+            ->paginate(9)
+            ->withQueryString();
+
+        return view('clinics.index', ['clinics' => $clinics]);
+    }
+
+    public function clinicShow(Clinic $clinic)
+    {
+        return view('clinics.show', [
+            'clinic' => $clinic->load([
+                'doctors.user',
+                'services' => fn ($q) => $q->where('is_active', true),
+                'reviews' => fn ($q) => $q->where('status', 'approved')->with('patient.user')->latest()->limit(5),
+            ]),
         ]);
     }
 
@@ -80,6 +95,7 @@ class PageController extends Controller
                 'user',
                 'clinics',
                 'availabilities' => fn ($q) => $q->where('is_active', true),
+                'services' => fn ($q) => $q->where('is_active', true),
                 'reviews' => fn ($q) => $q->where('status', 'approved')->with('patient.user')->latest()->limit(5),
             ]),
         ]);

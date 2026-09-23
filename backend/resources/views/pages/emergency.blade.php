@@ -1,0 +1,346 @@
+@php $noTriage = true; @endphp
+<x-layout title="Emergency triage · Prompt Aid">
+<div class="pa-pagehead"><div class="inner">
+  <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Emergency triage</div>
+  <div class="pa-spread" style="align-items:flex-end">
+    <div>
+      <div class="pa-row" style="margin-bottom:12px"><span class="pa-blip"></span><span class="pa-eyebrow">South African Triage Scale · pre-triage</span></div>
+      <h1>Let's work out how fast you need help</h1>
+      <p class="pa-muted" style="font-size:15px;margin:8px 0 20px;max-width:640px">Four questions. We will give you a triage colour, tell you where the nearest place that can treat this is, and send what you have told us ahead so you do not have to repeat it.</p>
+    </div>
+    <div style="margin-bottom:20px;min-width:220px">
+      <label class="pa-label">Language</label>
+      <select class="pa-field" style="background:#fff"><option>English</option><option>isiZulu</option><option>isiXhosa</option><option>Afrikaans</option><option>Sesotho</option><option>Setswana</option><option>Sepedi</option><option>Xitsonga</option><option>siSwati</option><option>Tshivenda</option><option>isiNdebele</option></select>
+    </div>
+  </div>
+  <div class="pa-satsbar" style="margin-bottom:24px" id="pa-satsbar">
+    <span class="s-red">Red · immediate</span><span class="s-orange">Orange · 10 min</span><span class="s-yellow">Yellow · 60 min</span><span class="s-green">Green · 4 hrs</span>
+  </div>
+</div></div>
+
+<div class="pa-container" style="padding-top:32px;padding-bottom:80px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:32px;align-items:start">
+  <div>
+
+
+<section class="pa-triage-step pa-hide" data-step="1">
+  <div class="pa-spread" style="margin-bottom:6px">
+    <span class="pa-eyebrow">Step 1 of 4</span>
+    <a href="tel:10177" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call 10177</a>
+  </div>
+  <h2 style="font-size:30px;margin-bottom:8px">Who needs help?</h2>
+  <p class="pa-muted" style="margin-bottom:24px">Children and infants are scored differently — the same symptoms are more serious in a small body.</p>
+
+    <div class="pa-formrow"><label class="pa-label">This is for</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="who" data-value="me" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Me</span>
+  </label><label class="pa-opt" data-name="who" data-value="someone" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Someone with me</span>
+  </label><label class="pa-opt" data-name="who" data-value="remote" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Someone elsewhere</span>
+  <span style="display:block;font-size:12px;color:var(--pa-muted)">You will be asked for their address</span></label></div></div>
+    <div class="pa-formrow" style="margin-top:20px"><label class="pa-label">Age</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="ageBand" data-value="adult" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Adult</span>
+  <span style="display:block;font-size:12px;color:var(--pa-muted)">13–64</span></label><label class="pa-opt" data-name="ageBand" data-value="infant" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Baby</span>
+  <span style="display:block;font-size:12px;color:var(--pa-muted)">Under 1 year</span></label><label class="pa-opt" data-name="ageBand" data-value="child" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Child</span>
+  <span style="display:block;font-size:12px;color:var(--pa-muted)">1–12</span></label><label class="pa-opt" data-name="ageBand" data-value="older" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">65 or older</span>
+  </label></div></div>
+    <div class="pa-formrow" style="margin-top:20px"><label class="pa-label">Pregnant?</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="pregnant" data-value="no" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">No</span>
+  </label><label class="pa-opt" data-name="pregnant" data-value="yes" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Yes</span>
+  </label><label class="pa-opt" data-name="pregnant" data-value="unsure" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Not sure</span>
+  </label></div></div>
+    <div class="pa-locrow" style="margin-top:20px">
+      <span class="pa-tick-beacon"></span>
+      <span style="flex:1"><strong>Finding you…</strong> <span id="pa-locstatus">14 Waterford Drive, Fourways · accurate to 12 m</span></span>
+      <a class="pa-btn-ghost pa-btn-sm" href="#" id="pa-locmanual">Enter address instead</a>
+    </div>
+  <div class="pa-spread" style="margin-top:26px;border-top:1px solid var(--pa-line);padding-top:20px"><a class="pa-btn-ghost" href="{{ url('/') }}">Cancel</a><button class="pa-btn pa-btn-lg" data-next>Continue</button></div>
+</section>
+
+
+<section class="pa-triage-step pa-hide" data-step="2">
+  <div class="pa-spread" style="margin-bottom:6px">
+    <span class="pa-eyebrow">Step 2 of 4</span>
+    <a href="tel:10177" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call 10177</a>
+  </div>
+  <h2 style="font-size:30px;margin-bottom:8px">What is happening?</h2>
+  <p class="pa-muted" style="margin-bottom:24px">Pick everything that applies. This decides which kind of facility can actually treat you, not just which is closest.</p>
+
+    <div class="pa-symptoms" id="pa-symptoms"></div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:20px;margin-top:22px;align-items:start">
+      <div>
+        <label class="pa-label">Describe it in your own words (optional)</label>
+        <textarea class="pa-field" placeholder="e.g. hot water spilled on my left forearm about twenty minutes ago"></textarea>
+        <label class="pa-label" style="margin-top:16px">Add a photo</label>
+        <div class="pa-slot" style="height:110px;border-style:dashed">Photograph of the burn, wound or rash</div>
+        <p style="font-size:12px;color:var(--pa-muted);margin-top:8px">Sent only to the practitioner who takes the case. Deleted after 30 days.</p>
+      </div>
+      <div>
+        <label class="pa-label">Where on the body?</label>
+        <div class="pa-map-light" style="height:230px;display:flex;align-items:center;justify-content:center">
+          <span style="position:relative;z-index:1;font-size:11px;color:var(--pa-muted-2);text-align:center;padding:12px">Body map<br />tap the area</span>
+        </div>
+      </div>
+    </div>
+  <div class="pa-spread" style="margin-top:26px;border-top:1px solid var(--pa-line);padding-top:20px"><button class="pa-btn-ghost" data-back>Back</button><button class="pa-btn pa-btn-lg" data-next>Continue</button></div>
+</section>
+
+
+<section class="pa-triage-step pa-hide" data-step="3">
+  <div class="pa-spread" style="margin-bottom:6px">
+    <span class="pa-eyebrow">Step 3 of 4</span>
+    <a href="tel:10177" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call 10177</a>
+  </div>
+  <h2 style="font-size:30px;margin-bottom:8px">Is any of this true right now?</h2>
+  <p class="pa-muted" style="margin-bottom:24px">These are the red flags. One of them is enough to move you up the queue on its own — be honest, nothing here is a bother.</p>
+
+    <div id="pa-discriminators"></div>
+  <div class="pa-spread" style="margin-top:26px;border-top:1px solid var(--pa-line);padding-top:20px"><button class="pa-btn-ghost" data-back>Back</button><button class="pa-btn pa-btn-lg" data-next>Continue</button></div>
+</section>
+
+
+<section class="pa-triage-step pa-hide" data-step="4">
+  <div class="pa-spread" style="margin-bottom:6px">
+    <span class="pa-eyebrow">Step 4 of 4</span>
+    <a href="tel:10177" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call 10177</a>
+  </div>
+  <h2 style="font-size:30px;margin-bottom:8px">How are they right now?</h2>
+  <p class="pa-muted" style="margin-bottom:24px">This is the vital-signs part, in plain language. A nurse will measure the real numbers on arrival.</p>
+
+    <div class="pa-formrow"><label class="pa-label">Can they walk?</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="mobility" data-value="walking" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Walking normally</span>
+  </label><label class="pa-opt" data-name="mobility" data-value="with_help" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Only with help</span>
+  </label><label class="pa-opt" data-name="mobility" data-value="cannot_walk" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Cannot walk at all</span>
+  </label></div></div>
+    <div class="pa-formrow" style="margin-top:18px"><label class="pa-label">Breathing</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="breathing" data-value="normal" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Normal</span>
+  </label><label class="pa-opt" data-name="breathing" data-value="short_on_effort" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Short of breath when moving</span>
+  </label><label class="pa-opt" data-name="breathing" data-value="short_at_rest" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Short of breath sitting still</span>
+  </label><label class="pa-opt" data-name="breathing" data-value="struggling" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Struggling or gasping</span>
+  </label></div></div>
+    <div class="pa-formrow" style="margin-top:18px"><label class="pa-label">How awake are they?</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="consciousness" data-value="alert" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Wide awake</span>
+  </label><label class="pa-opt" data-name="consciousness" data-value="drowsy" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Drowsy, wakes when spoken to</span>
+  </label><label class="pa-opt" data-name="consciousness" data-value="responds_to_pain" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Only wakes when shaken</span>
+  </label><label class="pa-opt" data-name="consciousness" data-value="unresponsive" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Cannot be woken</span>
+  </label></div></div>
+    <div class="pa-formrow" style="margin-top:18px"><label class="pa-label">Bleeding</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="bleeding" data-value="none" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">None</span>
+  </label><label class="pa-opt" data-name="bleeding" data-value="minor" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Bleeding but under control</span>
+  </label><label class="pa-opt" data-name="bleeding" data-value="soaking" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Soaking through dressings</span>
+  </label></div></div>
+    <div class="pa-formrow" style="margin-top:18px"><label class="pa-label">Temperature</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="temperature" data-value="normal" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Normal</span>
+  </label><label class="pa-opt" data-name="temperature" data-value="feverish" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Feverish</span>
+  </label><label class="pa-opt" data-name="temperature" data-value="burning_or_cold" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Burning hot or cold and shivering</span>
+  </label></div></div>
+    <div class="pa-formrow" style="margin-top:18px"><label class="pa-label">Pain, 0 to 10</label>
+      <input class="pa-field" type="range" min="0" max="10" value="6" id="pa-pain" style="padding:0" />
+      <div class="pa-spread" style="font-size:12px;color:var(--pa-muted);margin-top:6px"><span>0 · none</span><strong id="pa-painval" style="color:var(--pa-ink);font-size:14px">6</strong><span>10 · worst imaginable</span></div></div>
+    <div class="pa-formrow" style="margin-top:18px"><label class="pa-label">Was there an injury or accident?</label>
+      <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<label class="pa-opt" data-name="trauma" data-value="no" style="padding:14px 16px;cursor:pointer;display:block;background:var(--pa-beacon-wash)">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">No</span>
+  </label><label class="pa-opt" data-name="trauma" data-value="yes" style="padding:14px 16px;cursor:pointer;display:block">
+  <span style="display:block;font-size:14px;font-weight:700;margin-bottom:3px">Yes</span>
+  </label></div></div>
+  <div class="pa-spread" style="margin-top:26px;border-top:1px solid var(--pa-line);padding-top:20px"><button class="pa-btn-ghost" data-back>Back</button><button class="pa-btn pa-btn-lg" data-next>Get my triage colour</button></div>
+</section>
+
+  <section class="pa-triage-step pa-hide" data-step="5">
+    <div id="pa-verdict"></div>
+  </section>
+  </div>
+
+  <aside style="position:sticky;top:96px">
+    <a class="pa-emergency-cta" style="margin-bottom:16px" href="tel:10177">Ambulance · 10177</a>
+    <div class="pa-card" style="margin-bottom:16px">
+      <div class="pa-card-head"><h3>Other numbers</h3></div>
+      <a class="pa-spread" href="tel:082911" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
+          <span style="font-size:13px;font-weight:700">Netcare 911</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">082 911</span></a><a class="pa-spread" href="tel:084124" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
+          <span style="font-size:13px;font-weight:700">ER24</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">084 124</span></a><a class="pa-spread" href="tel:0861555777" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
+          <span style="font-size:13px;font-weight:700">Poison Information</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">0861 555 777</span></a><a class="pa-spread" href="tel:116" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
+          <span style="font-size:13px;font-weight:700">Childline</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">116</span></a><a class="pa-spread" href="tel:0800428428" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
+          <span style="font-size:13px;font-weight:700">GBV Command Centre</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">0800 428 428</span></a><a class="pa-spread" href="tel:0800567567" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
+          <span style="font-size:13px;font-weight:700">Suicide Crisis Line</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">0800 567 567</span></a>
+    </div>
+    <div class="pa-card pa-card-pad" style="margin-bottom:16px">
+      <div class="pa-label" style="margin-bottom:10px">Your record travels with you</div>
+      <p style="font-size:13px;color:var(--pa-ink-soft)">Allergies, chronic medicine and your scheme are attached to whatever you book, so the person treating you already has them.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pa-badge is-stop">Penicillin allergy</span><span class="pa-badge is-wait">Hypertension</span></div>
+    </div>
+    <div class="pa-note-stop">This is a pre-triage aid, not a diagnosis. A practitioner performs the formal SATS assessment on arrival and may reach a different colour.</div>
+  </aside>
+</div>
+<script src="{{ asset('assets/js/triage.js') }}"></script>
+<script>
+(function () {
+  'use strict';
+  var T = window.PromptAidTriage;
+  var params = new URLSearchParams(location.search);
+  var state = {
+    selfReported: params.get('start') || 'yellow',
+    ageBand: 'adult', pregnant: false,
+    symptoms: [], discriminators: [],
+    observations: { mobility:'walking', breathing:'normal', consciousness:'alert',
+                    bleeding:'none', temperature:'normal', trauma:'no', pain:6 }
+  };
+  var stepEls = [].slice.call(document.querySelectorAll('.pa-triage-step'));
+  var current = 1;
+
+  function show(n) {
+    current = n;
+    stepEls.forEach(function (el) {
+      el.classList.toggle('pa-hide', +el.getAttribute('data-step') !== n);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* --- symptom chips --- */
+  var symWrap = document.getElementById('pa-symptoms');
+  T.SYMPTOMS.forEach(function (s) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pa-symptom' + (s.floor === 'red' || s.floor === 'orange' ? ' crit' : '');
+    b.innerHTML = '<span class="k">' + s.label.slice(0, 2).toUpperCase() + '</span>' + s.label;
+    b.addEventListener('click', function () {
+      b.classList.toggle('is-on');
+      var i = state.symptoms.indexOf(s.id);
+      if (i > -1) state.symptoms.splice(i, 1); else state.symptoms.push(s.id);
+    });
+    symWrap.appendChild(b);
+  });
+
+  /* --- discriminators, grouped by the level they force --- */
+  var discWrap = document.getElementById('pa-discriminators');
+  ['red', 'orange', 'yellow'].forEach(function (lvl) {
+    var items = T.DISCRIMINATORS.filter(function (d) { return d.level === lvl; });
+    var h = document.createElement('div');
+    h.style.marginBottom = '18px';
+    h.innerHTML = '<div class="pa-row" style="margin-bottom:10px">' +
+      '<span style="width:10px;height:10px;display:block;background:' + T.META[lvl].colour + '"></span>' +
+      '<span class="pa-eyebrow">' + T.META[lvl].label + ' · ' + T.META[lvl].targetLabel + '</span></div>' +
+      '<div class="pa-card" style="padding:6px 16px"></div>';
+    var box = h.querySelector('.pa-card');
+    items.forEach(function (d) {
+      var l = document.createElement('label');
+      l.className = 'pa-check';
+      l.innerHTML = '<span class="box"></span>' + d.label;
+      l.addEventListener('click', function () {
+        setTimeout(function () {
+          var on = l.classList.contains('is-on');
+          var i = state.discriminators.indexOf(d.id);
+          if (on && i === -1) state.discriminators.push(d.id);
+          if (!on && i > -1) state.discriminators.splice(i, 1);
+        }, 0);
+      });
+      box.appendChild(l);
+    });
+    discWrap.appendChild(h);
+  });
+
+  /* --- radio-style option cards --- */
+  document.addEventListener('click', function (e) {
+    var opt = e.target.closest('.pa-opt');
+    if (!opt) return;
+    var name = opt.getAttribute('data-name');
+    var val = opt.getAttribute('data-value');
+    var group = opt.parentNode.querySelectorAll('[data-name="' + name + '"]');
+    [].forEach.call(group, function (g) { g.style.background = ''; });
+    opt.style.background = 'var(--pa-beacon-wash)';
+    if (name === 'ageBand') state.ageBand = val;
+    else if (name === 'pregnant') state.pregnant = (val === 'yes');
+    else if (name === 'who') state.who = val;
+    else state.observations[name] = val;
+  });
+
+  var pain = document.getElementById('pa-pain');
+  if (pain) pain.addEventListener('input', function () {
+    state.observations.pain = +this.value;
+    document.getElementById('pa-painval').textContent = this.value;
+  });
+
+  /* --- navigation --- */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-next]')) {
+      if (current === 4) { render(); show(5); } else show(current + 1);
+    }
+    if (e.target.closest('[data-back]')) show(Math.max(1, current - 1));
+  });
+
+  /* --- verdict --- */
+  function render() {
+    var res = T.assess(state);
+    var m = res.meta;
+    document.querySelectorAll('#pa-satsbar span').forEach(function (s) {
+      s.classList.toggle('on', s.className.indexOf('s-' + res.level) > -1);
+    });
+
+    var advice = {
+      red: ['Call 10177 now, or 112 from a mobile.', 'Do not drive yourself.', 'Stay with the patient and keep them still.', 'If they stop breathing, start chest compressions — push hard and fast in the centre of the chest.'],
+      orange: ['Get to an emergency department within 10 minutes.', 'Do not eat or drink anything in case a procedure is needed.', 'Bring your ID, medical aid card and any medicine you take.', 'For burns, run cool water over the area for 20 minutes. No ice, no butter, no toothpaste.'],
+      yellow: ['You should be seen within the hour.', 'A clinic or GP can handle this — an emergency department will keep you waiting behind the red and orange cases.', 'Write down when the symptoms started and anything that makes them worse.'],
+      green: ['This can be booked normally, today or tomorrow.', 'A pharmacist can advise on minor complaints without an appointment.', 'Come back to this tool if anything changes — it only takes a minute.']
+    }[res.level];
+
+    document.getElementById('pa-verdict').innerHTML =
+      '<div class="pa-verdict ' + res.level + '">' +
+        '<div class="lvl">South African Triage Scale · result</div>' +
+        '<h2>' + m.label + ' — ' + m.name + '</h2>' +
+        '<p>Target time to be seen: <strong>' + m.targetLabel + '</strong>. Reference <strong>' + res.reference + '</strong> — show this at reception.</p>' +
+      '</div>' +
+      (res.callAmbulance ? '<a class="pa-emergency-cta" style="margin-top:2px" href="tel:10177">Call an ambulance now · 10177</a>' : '') +
+      '<div class="pa-card" style="margin-top:20px">' +
+        '<div class="pa-card-head"><h3>What to do right now</h3>' +
+        '<span class="pa-countdown" style="font-size:22px">' + (m.target === 0 ? 'NOW' : m.target + ' min') + '</span></div>' +
+        '<div class="pa-card-body"><ol style="margin:0;padding-left:20px;font-size:15px;line-height:1.8;color:var(--pa-ink-soft)">' +
+          advice.map(function (a) { return '<li>' + a + '</li>'; }).join('') +
+        '</ol></div></div>' +
+      '<div class="pa-card" style="margin-top:20px"><div class="pa-card-head"><h3>Why this colour</h3></div>' +
+        '<div class="pa-card-body"><ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;color:var(--pa-ink-soft)">' +
+          (res.reasons.length ? res.reasons : ['Nothing urgent reported']).map(function (x) { return '<li>' + x + '</li>'; }).join('') +
+        '</ul><div class="pa-note" style="margin-top:16px">Facilities that can treat this: <strong>' +
+          (res.facilityTypes.join(', ') || 'general practice') + '</strong>. We rank by capability first, distance second.</div>' +
+        '</div></div>' +
+      '<div class="pa-spread" style="margin-top:24px">' +
+        '<button class="pa-btn-ghost" data-back>Change my answers</button>' +
+        '<a class="pa-btn pa-btn-lg" href="{{ route('emergency.results') }}?level=' + res.level + '">See the nearest help</a>' +
+      '</div>';
+  }
+
+  show(1);
+})();
+</script>
+</x-layout>

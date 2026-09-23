@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/clinics', [PageController::class, 'clinics'])->name('clinics.index');
+Route::get('/clinics/{clinic}', [PageController::class, 'clinicShow'])->name('clinics.show');
 Route::get('/doctors', [PageController::class, 'doctors'])->name('doctors.index');
 Route::get('/doctors/{doctor}', [PageController::class, 'doctorShow'])->name('doctors.show');
 Route::get('/doctors/{doctor}/slots', [PageController::class, 'doctorSlots'])->name('doctors.slots');
@@ -33,6 +34,9 @@ Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact
 
 Route::get('/for-providers', [StaticPageController::class, 'forProviders'])->name('for-providers');
 Route::post('/for-providers', [StaticPageController::class, 'forProvidersSubmit'])->name('for-providers.submit');
+
+Route::get('/emergency', [StaticPageController::class, 'emergency'])->name('emergency');
+Route::get('/emergency-results', [StaticPageController::class, 'emergencyResults'])->name('emergency.results');
 
 // About, How It Works, FAQ, Privacy, Terms and the POPIA notice are pure
 // content — real page-builder pages (see SeedSitePages), editable from
@@ -51,6 +55,7 @@ Route::get('/shuttle', [ShuttlePageController::class, 'index'])->name('shuttle')
 Route::post('/shuttle/quote', [ShuttlePageController::class, 'quote'])->name('shuttle.quote');
 
 Route::get('/shop', [ShopPageController::class, 'index'])->name('shop.index');
+Route::get('/shop/{product}', [ShopPageController::class, 'show'])->name('shop.show');
 
 Route::get('/labs', [ThirdPartyPageController::class, 'labsIndex'])->name('labs.index');
 Route::get('/labs/{lab}', [ThirdPartyPageController::class, 'labsShow'])->name('labs.show');

@@ -1,65 +1,67 @@
-<x-layout title="Find a Doctor — Prompt Aid">
-    <section class="border-b border-gray-100 bg-white">
-        <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-            <h1 class="text-3xl font-bold text-secondary-500">Find a Doctor</h1>
-            <p class="mt-2 text-gray-500">Browse our network of verified doctors and book an appointment in minutes.</p>
-            <form method="GET" class="mt-6 flex flex-wrap gap-3">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Doctor name..." class="input max-w-xs">
-                <input type="text" name="specialization" value="{{ request('specialization') }}" placeholder="Specialization..." class="input max-w-xs">
-                <button class="btn-primary !px-6 !py-2.5 text-sm">Search</button>
-            </form>
+<x-layout title="Find a doctor · Prompt Aid">
+<div class="pa-pagehead"><div class="inner">
+  <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Find care</div>
+  <h1>Find a doctor</h1><p class="pa-muted" style="font-size:15px;margin:6px 0 24px">{{ number_format($doctors->total()) }} doctors across South Africa.</p>
+  <div class="pa-tabs" style="gap:2px">
+    <a class="pa-tab is-on" href="{{ route('doctors.index') }}" style="border-bottom:0">All providers</a>
+    <a class="pa-tab" href="{{ route('doctors.index') }}" style="border-bottom:0">Doctors</a>
+    <a class="pa-tab" href="{{ route('clinics.index') }}" style="border-bottom:0">Clinics</a>
+    <a class="pa-tab" href="{{ route('pharmacies.index') }}" style="border-bottom:0">Pharmacies</a>
+    <a class="pa-tab" href="{{ route('labs.index') }}" style="border-bottom:0">Labs &amp; imaging</a>
+    <a class="pa-tab" href="{{ route('specialists.index') }}" style="border-bottom:0">Physio &amp; specialists</a>
+  </div>
+</div></div>
+
+<div class="pa-container" style="padding-top:32px;padding-bottom:80px;display:grid;grid-template-columns:268px minmax(0,1fr);gap:32px;align-items:start">
+  <aside class="pa-card" style="position:sticky;top:96px">
+    <div class="pa-spread" style="padding:18px 20px;border-bottom:1px solid var(--pa-line)"><span class="pa-label" style="margin:0">Filters</span><a href="{{ route('doctors.index') }}" style="font-size:12px">Clear</a></div>
+    <form method="GET">
+      <div style="padding:18px 20px;border-bottom:1px solid var(--pa-line)">
+        <div class="pa-label" style="margin-bottom:11px">Name or symptom</div>
+        <input class="pa-field" name="search" value="{{ request('search') }}" placeholder="e.g. Naledi, persistent cough" />
+      </div>
+      <div style="padding:18px 20px;border-bottom:1px solid var(--pa-line)">
+        <div class="pa-label" style="margin-bottom:11px">Speciality</div>
+        <input class="pa-field" name="specialization" value="{{ request('specialization') }}" placeholder="e.g. Cardiology" />
+      </div>
+      <div style="padding:18px 20px">
+        <button type="submit" class="pa-btn pa-btn-block">Apply filters</button>
+      </div>
+    </form>
+  </aside>
+  <div>
+    <div class="pa-spread" style="margin-bottom:16px">
+      <div style="font-size:14px;color:var(--pa-muted)"><strong style="color:var(--pa-ink)">{{ $doctors->total() }}</strong> results</div>
+    </div>
+    <div class="pa-grid" style="grid-template-columns:1fr">
+      @forelse ($doctors as $doctor)
+        @php $schedule = $doctor->availabilitySummary(); @endphp
+        <div style="background:var(--pa-surface);padding:22px 24px;display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:20px;align-items:start">
+          <div class="pa-avatar" style="width:64px;height:64px;font-size:21px">{{ \Illuminate\Support\Str::of($doctor->user->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}</div>
+          <div style="min-width:0">
+            <div class="pa-row" style="flex-wrap:wrap;margin-bottom:5px">
+              <a href="{{ route('doctors.show', $doctor) }}" style="font-size:18px;font-weight:900;letter-spacing:-.012em;color:var(--pa-ink)">Dr {{ $doctor->user->name }}</a>
+              <span class="pa-badge">Doctor</span>
+            </div>
+            <div style="font-size:14px;color:var(--pa-ink-soft);margin-bottom:4px">{{ $doctor->specialization }}@if($doctor->qualification) · {{ $doctor->qualification }}@endif</div>
+            <div style="font-size:13px;color:var(--pa-muted);margin-bottom:12px">{{ $doctor->clinics->first()?->name ?? 'Video consultation available' }}</div>
+            @if ($doctor->clinics->isNotEmpty())
+              <div style="display:flex;gap:7px;flex-wrap:wrap">@foreach($doctor->clinics->take(3) as $clinic)<span class="pa-chip">{{ $clinic->name }}</span>@endforeach</div>
+            @endif
+          </div>
+          <div style="text-align:right;min-width:158px">
+            <div class="pa-num" style="font-size:23px">R {{ number_format($doctor->consultation_fee, 0) }}</div>
+            <div style="font-size:12px;color:var(--pa-muted);margin-bottom:12px">per consult</div>
+            <div style="font-size:12px;font-weight:900;color:{{ $doctor->isAvailableForBooking() ? 'var(--pa-go)' : 'var(--pa-muted)' }};margin-bottom:10px">{{ $doctor->isAvailableForBooking() ? ($schedule ?? 'Accepting bookings') : 'Not accepting bookings' }}</div>
+            <a class="pa-btn pa-btn-block" href="{{ route('doctors.show', $doctor) }}">Book</a>
+            <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="{{ route('shuttle') }}"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Add shuttle</a>
+          </div>
         </div>
-    </section>
-
-    <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            @forelse ($doctors as $doctor)
-                @php
-                    $available = $doctor->isAvailableForBooking();
-                    $schedule = $doctor->availabilitySummary();
-                @endphp
-                <a href="{{ route('doctors.show', $doctor) }}" class="card card-hover flex flex-col">
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-center gap-4">
-                            <img src="https://i.pravatar.cc/300?u=doctor{{ $doctor->id }}" alt="{{ $doctor->user->name }}" class="h-16 w-16 rounded-full object-cover avatar-ring">
-                            <div>
-                                <p class="font-semibold text-secondary-500">{{ $doctor->user->name }}</p>
-                                <span class="badge badge-info mt-1">{{ $doctor->specialization }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        @if ($available)
-                            <span class="inline-flex items-center gap-1.5 badge badge-success">
-                                <span class="h-1.5 w-1.5 rounded-full bg-success-500"></span>
-                                Accepting appointments
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1.5 badge bg-gray-100 text-gray-500">
-                                <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
-                                Not accepting new patients
-                            </span>
-                        @endif
-                    </div>
-
-                    @if ($schedule)
-                        <p class="mt-2 text-xs text-gray-500">🕐 {{ $schedule }}</p>
-                    @endif
-
-                    <div class="mt-4 flex items-center justify-between text-sm border-t border-gray-100 pt-4">
-                        <span class="inline-flex items-center gap-1 font-semibold text-secondary-500">
-                            <svg class="h-4 w-4 text-warning-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.54 1.118l-3.367-2.448a1 1 0 00-1.175 0l-3.367 2.448c-.784.57-1.838-.196-1.539-1.118l1.286-3.957a1 1 0 00-.363-1.118L2.98 9.384c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.286-3.957z"/></svg>
-                            {{ number_format($doctor->rating_avg, 1) }} <span class="text-gray-400 font-normal">({{ $doctor->rating_count }})</span>
-                        </span>
-                        <span class="font-semibold text-secondary-500">R{{ number_format($doctor->consultation_fee, 0) }}</span>
-                    </div>
-                    <p class="mt-3 text-xs text-gray-500">📍 {{ $doctor->clinics->pluck('name')->implode(', ') }}</p>
-                </a>
-            @empty
-                <p class="col-span-full text-center text-gray-500">No doctors found. Try a different search.</p>
-            @endforelse
-        </div>
-        <div class="mt-10">{{ $doctors->links() }}</div>
-    </section>
+      @empty
+        <p class="pa-muted">No doctors found.</p>
+      @endforelse
+    </div>
+    <div style="margin-top:18px">{{ $doctors->links() }}</div>
+  </div>
+</div>
 </x-layout>
