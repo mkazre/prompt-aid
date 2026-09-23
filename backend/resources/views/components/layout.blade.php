@@ -4,8 +4,27 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{{ $title ?? 'Prompt Aid — Find a doctor, fill a script, get a lift' }}</title>
-<link rel="icon" href="{{ asset('assets/img/favicon.ico') }}" />
+@php
+    $themeColors = \App\Models\ThemeSetting::get('colors', []);
+    $themeShape = \App\Models\ThemeSetting::get('shape', []);
+    $themeBrand = \App\Models\ThemeSetting::get('brand', []);
+    $logoUrl = ! empty($themeBrand['logo']) ? \Illuminate\Support\Facades\Storage::disk('public')->url($themeBrand['logo']) : asset('assets/img/logo.png');
+    $faviconUrl = ! empty($themeBrand['favicon']) ? \Illuminate\Support\Facades\Storage::disk('public')->url($themeBrand['favicon']) : asset('assets/img/favicon.ico');
+@endphp
+<link rel="icon" href="{{ $faviconUrl }}" />
 <link rel="stylesheet" href="{{ asset('assets/css/promptaid.css') }}" />
+@if ($themeColors || $themeShape)
+<style>
+  :root{
+    @if(!empty($themeColors['signal'])) --pa-signal:{{ $themeColors['signal'] }}; @endif
+    @if(!empty($themeColors['beacon'])) --pa-beacon:{{ $themeColors['beacon'] }}; @endif
+    @if(!empty($themeColors['ink'])) --pa-ink:{{ $themeColors['ink'] }}; @endif
+    @if(!empty($themeColors['paper'])) --pa-paper:{{ $themeColors['paper'] }}; @endif
+    @if(!empty($themeShape['container_width'])) --pa-container:{{ (int) $themeShape['container_width'] }}px; @endif
+    @if(!empty($themeShape['radius'])) --pa-radius:{{ (int) $themeShape['radius'] }}px; @endif
+  }
+</style>
+@endif
 @stack('meta')
 </head>
 <body data-pa-root="{{ url('/') }}"{{ isset($noTriage) && $noTriage ? ' data-pa-no-triage' : '' }}>
@@ -18,7 +37,7 @@
 </div></div>
 
 <header class="pa-header"><div class="inner">
-  <a class="logo" href="{{ url('/') }}"><img src="{{ asset('assets/img/logo.png') }}" alt="Prompt Aid" /></a>
+  <a class="logo" href="{{ url('/') }}"><img src="{{ $logoUrl }}" alt="Prompt Aid" /></a>
   <nav class="pa-nav">
     @php $headerLinks = \App\Models\Menu::tree('header'); @endphp
     @forelse ($headerLinks as $link)
@@ -49,7 +68,7 @@
 
 <footer class="pa-footer"><div class="inner">
   <div>
-    <img src="{{ asset('assets/img/logo.png') }}" alt="Prompt Aid" />
+    <img src="{{ $logoUrl }}" alt="Prompt Aid" />
     <p style="font-size:14px;color:var(--pa-muted);max-width:300px">Doctors, pharmacies, labs and specialists — with a medical shuttle to get you there and home.</p>
     <div style="font-size:13px;color:var(--pa-muted)">{{ \App\Models\Setting::get('support_phone', '0800 776 678') }} · {{ \App\Models\Setting::get('support_email', 'help@promptaid.health') }}</div>
   </div>
