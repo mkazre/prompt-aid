@@ -14,10 +14,24 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ThirdPartyProfileResource extends Resource
 {
     protected static ?string $model = ThirdPartyProfile::class;
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = Auth::user();
+
+        if ($user && $user->isThirdParty()) {
+            return $query->where('user_id', $user->id);
+        }
+
+        return $query;
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBeaker;
 protected static string|UnitEnum|null $navigationGroup = 'Users & Access';

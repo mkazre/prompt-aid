@@ -63,7 +63,7 @@ class LabRequestService
                     "Dr. {$doctor->user->name} logged a {$priority} request ({$request->request_ref}) for {$patient->user->name}.",
                     icon: 'heroicon-o-beaker',
                     color: $priority === 'urgent' ? 'danger' : 'warning',
-                    url: route('filament.admin.resources.lab-requests.index'),
+                    url: route('filament.partner.resources.lab-requests.index'),
                     actionLabel: 'Review',
                 );
             }

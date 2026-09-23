@@ -3,20 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ride;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $patient = $request->user()->patientProfile;
+        /** @var User $user */
+        $user = $request->user();
+        $patient = $user->patientProfile;
 
-        // Defense in depth: staff accounts (super admin/clinic admin/doctor)
-        // have no patient profile. WebAuthController already redirects them
-        // to /staff on login, but guard here too in case this route is hit
-        // any other way, so it degrades to a redirect instead of a crash.
+        // Defense in depth: staff/vendor/partner accounts have no patient
+        // profile. WebAuthController already redirects them to their own
+        // panel on login, but guard here too in case this route is hit any
+        // other way, so it degrades to a redirect instead of a crash.
         if (! $patient) {
-            return redirect('/staff');
+            $panelPath = match ($user->role) {
+                User::ROLE_SUPER_ADMIN, User::ROLE_CLINIC_ADMIN, User::ROLE_DOCTOR => '/staff',
+                User::ROLE_PHARMACY_ADMIN => '/vendor',
+                User::ROLE_THIRD_PARTY => '/partner',
+                default => '/',
+            };
+
+            return redirect($panelPath);
         }
 
         return view('dashboard.index', [

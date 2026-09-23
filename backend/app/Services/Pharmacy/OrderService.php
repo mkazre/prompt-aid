@@ -114,7 +114,7 @@ class OrderService
                     "{$patient->user->name} placed order {$order->order_no} for R".number_format($total, 2).($needsPrescription ? ' (awaiting prescription review)' : '.'),
                     icon: 'heroicon-o-shopping-bag',
                     color: $needsPrescription ? 'warning' : 'success',
-                    url: route('filament.admin.resources.orders.index'),
+                    url: route('filament.vendor.resources.orders.index'),
                     actionLabel: 'Review',
                 );
             }

@@ -66,11 +66,11 @@ class WelcomeBannerWidget extends Widget
                 ['label' => 'My Patients', 'url' => route('filament.admin.resources.patient-profiles.index'), 'icon' => 'heroicon-o-users', 'color' => 'gray'],
             ],
             User::ROLE_THIRD_PARTY => [
-                ['label' => 'Lab Requests', 'url' => route('filament.admin.resources.lab-requests.index'), 'icon' => 'heroicon-o-beaker', 'color' => 'primary'],
+                ['label' => 'Lab Requests', 'url' => route('filament.partner.resources.lab-requests.index'), 'icon' => 'heroicon-o-beaker', 'color' => 'primary'],
             ],
             User::ROLE_PHARMACY_ADMIN => [
-                ['label' => 'Orders', 'url' => route('filament.admin.resources.orders.index'), 'icon' => 'heroicon-o-shopping-bag', 'color' => 'primary'],
-                ['label' => 'Products', 'url' => route('filament.admin.resources.products.index'), 'icon' => 'heroicon-o-cube', 'color' => 'gray'],
+                ['label' => 'Orders', 'url' => route('filament.vendor.resources.orders.index'), 'icon' => 'heroicon-o-shopping-bag', 'color' => 'primary'],
+                ['label' => 'Products', 'url' => route('filament.vendor.resources.products.index'), 'icon' => 'heroicon-o-cube', 'color' => 'gray'],
             ],
             default => [],
         };

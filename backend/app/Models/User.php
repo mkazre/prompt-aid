@@ -134,16 +134,25 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Filament admin panel access — restricted to staff-side roles.
+     * Filament panel access, per panel: Staff (/staff) is clinical roles,
+     * Vendor (/vendor) is pharmacy vendors, Partner (/partner) is
+     * lab/diagnostics and other service partners.
      */
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        return in_array($this->role, [
-            self::ROLE_SUPER_ADMIN,
-            self::ROLE_CLINIC_ADMIN,
-            self::ROLE_DOCTOR,
-            self::ROLE_THIRD_PARTY,
-            self::ROLE_PHARMACY_ADMIN,
-        ], true) && $this->status === 'active';
+        if ($this->status !== 'active') {
+            return false;
+        }
+
+        return match ($panel->getId()) {
+            'admin' => in_array($this->role, [
+                self::ROLE_SUPER_ADMIN,
+                self::ROLE_CLINIC_ADMIN,
+                self::ROLE_DOCTOR,
+            ], true),
+            'vendor' => $this->role === self::ROLE_PHARMACY_ADMIN,
+            'partner' => $this->role === self::ROLE_THIRD_PARTY,
+            default => false,
+        };
     }
 }

@@ -33,12 +33,19 @@ class WebAuthController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        // Staff accounts (super admin, clinic admin, doctor) don't have a
-        // patient dashboard — send them to the Filament panel instead of
-        // crashing on a null patientProfile. This is the website's public
-        // login form; staff should normally use /staff/login directly.
-        if (! $user->isPatient()) {
-            return redirect('/staff');
+        // Staff accounts don't have a patient dashboard — send each role to
+        // its own Filament panel instead of crashing on a null
+        // patientProfile. This is the website's public login form; staff
+        // should normally use their panel's own /login route directly.
+        $panelPath = match ($user->role) {
+            User::ROLE_SUPER_ADMIN, User::ROLE_CLINIC_ADMIN, User::ROLE_DOCTOR => '/staff',
+            User::ROLE_PHARMACY_ADMIN => '/vendor',
+            User::ROLE_THIRD_PARTY => '/partner',
+            default => null,
+        };
+
+        if ($panelPath !== null) {
+            return redirect($panelPath);
         }
 
         return redirect()->intended(route('dashboard'));
