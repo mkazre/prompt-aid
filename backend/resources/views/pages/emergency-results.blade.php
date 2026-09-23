@@ -46,8 +46,8 @@
   <div style="text-align:right">
     <div class="pa-num" style="font-size:26px">11 min</div>
     <div style="font-size:12px;color:var(--pa-muted);margin-bottom:12px">by shuttle</div>
-    <a class="pa-btn pa-btn-block" href="./checkout.html">Alert them I am coming</a>
-    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="./shuttle.html?to=Sunninghill%20Emergency%20Department&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
+    <a class="pa-btn pa-btn-block" href="{{ route('shuttle') }}">Alert them I am coming</a>
+    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="/shuttle?to=Sunninghill%20Emergency%20Department&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
   </div>
 </div><div style="padding:22px 24px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:20px;align-items:start">
   <div style="min-width:0">
@@ -63,8 +63,8 @@
   <div style="text-align:right">
     <div class="pa-num" style="font-size:26px">7 min</div>
     <div style="font-size:12px;color:var(--pa-muted);margin-bottom:12px">by shuttle</div>
-    <a class="pa-btn pa-btn-block" href="./checkout.html">Alert them I am coming</a>
-    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="./shuttle.html?to=Fourways%20Life%20Emergency&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
+    <a class="pa-btn pa-btn-block" href="{{ route('shuttle') }}">Alert them I am coming</a>
+    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="/shuttle?to=Fourways%20Life%20Emergency&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
   </div>
 </div><div style="padding:22px 24px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:20px;align-items:start">
   <div style="min-width:0">
@@ -80,8 +80,8 @@
   <div style="text-align:right">
     <div class="pa-num" style="font-size:26px">15 min</div>
     <div style="font-size:12px;color:var(--pa-muted);margin-bottom:12px">by shuttle</div>
-    <a class="pa-btn pa-btn-block" href="./checkout.html">Book this</a>
-    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="./shuttle.html?to=Sunninghill%20Family%20Clinic&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
+    <a class="pa-btn pa-btn-block" href="{{ route('shuttle') }}">Book this</a>
+    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="/shuttle?to=Sunninghill%20Family%20Clinic&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
   </div>
 </div><div style="padding:22px 24px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:20px;align-items:start">
   <div style="min-width:0">
@@ -97,8 +97,8 @@
   <div style="text-align:right">
     <div class="pa-num" style="font-size:26px">8 min</div>
     <div style="font-size:12px;color:var(--pa-muted);margin-bottom:12px">by shuttle</div>
-    <a class="pa-btn pa-btn-block" href="./checkout.html">Book this</a>
-    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="./shuttle.html?to=Dr%20Naledi%20Mokoena&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
+    <a class="pa-btn pa-btn-block" href="{{ route('shuttle') }}">Book this</a>
+    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="/shuttle?to=Dr%20Naledi%20Mokoena&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
   </div>
 </div><div style="padding:22px 24px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:20px;align-items:start">
   <div style="min-width:0">
@@ -114,8 +114,8 @@
   <div style="text-align:right">
     <div class="pa-num" style="font-size:26px">8 min</div>
     <div style="font-size:12px;color:var(--pa-muted);margin-bottom:12px">by shuttle</div>
-    <a class="pa-btn pa-btn-block" href="./checkout.html">Order now</a>
-    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="./shuttle.html?to=Rosebank%20Pharmacy&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
+    <a class="pa-btn pa-btn-block" href="{{ route('shuttle') }}">Order now</a>
+    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="/shuttle?to=Rosebank%20Pharmacy&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
   </div>
 </div><div style="padding:22px 24px;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:20px;align-items:start">
   <div style="min-width:0">
@@ -131,8 +131,8 @@
   <div style="text-align:right">
     <div class="pa-num" style="font-size:26px">9 min</div>
     <div style="font-size:12px;color:var(--pa-muted);margin-bottom:12px">by shuttle</div>
-    <a class="pa-btn pa-btn-block" href="./checkout.html">Book this</a>
-    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="./shuttle.html?to=Lancet%20Diagnostics%20Rosebank&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
+    <a class="pa-btn pa-btn-block" href="{{ route('shuttle') }}">Book this</a>
+    <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="/shuttle?to=Lancet%20Diagnostics%20Rosebank&priority=emergency"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Emergency shuttle</a>
   </div>
 </div></div>
 
@@ -142,11 +142,11 @@
           <div style="min-width:0"><div style="font-size:15px;font-weight:700">Emergency shuttle</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Jumps the normal ride queue. Wheelchair vehicle if needed.</div></div>
           <div class="pa-row" style="gap:16px"><span style="font-size:13px;color:var(--pa-ink-soft);text-align:right">7 min to you · 11 min to hospital</span>
           <span class="pa-num" style="font-size:16px;min-width:60px;text-align:right">R 214</span>
-          <a class="pa-btn pa-btn-sm" href="./shuttle.html?priority=emergency">Choose</a></div></div><div class="pa-spread" style="padding:16px 22px;border-bottom:1px solid var(--pa-line-soft)">
+          <a class="pa-btn pa-btn-sm" href="/shuttle?priority=emergency">Choose</a></div></div><div class="pa-spread" style="padding:16px 22px;border-bottom:1px solid var(--pa-line-soft)">
           <div style="min-width:0"><div style="font-size:15px;font-weight:700">Drive yourself</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">Not advised for orange — pain and shock affect driving.</div></div>
           <div class="pa-row" style="gap:16px"><span style="font-size:13px;color:var(--pa-ink-soft);text-align:right">About 14 min in current traffic</span>
           <span class="pa-num" style="font-size:16px;min-width:60px;text-align:right">—</span>
-          <a class="pa-btn-ghost pa-btn-sm" href="./shuttle.html?priority=emergency">Choose</a></div></div><div class="pa-spread" style="padding:16px 22px;border-bottom:1px solid var(--pa-line-soft)">
+          <a class="pa-btn-ghost pa-btn-sm" href="/shuttle?priority=emergency">Choose</a></div></div><div class="pa-spread" style="padding:16px 22px;border-bottom:1px solid var(--pa-line-soft)">
           <div style="min-width:0"><div style="font-size:15px;font-weight:700">Ambulance, 10177</div><div style="font-size:13px;color:var(--pa-muted);margin-top:2px">For red cases, or if the patient cannot be moved safely.</div></div>
           <div class="pa-row" style="gap:16px"><span style="font-size:13px;color:var(--pa-ink-soft);text-align:right">Dispatch decides</span>
           <span class="pa-num" style="font-size:16px;min-width:60px;text-align:right">State service</span>
@@ -191,7 +191,7 @@
       <div class="pa-card-body">
         <div class="pa-spread" style="font-size:14px;margin-bottom:10px"><span>Nomsa Mahlangu</span><span class="pa-badge is-go">Notified</span></div>
         <p style="font-size:13px;color:var(--pa-muted)">She has a live tracking link and the destination.</p>
-        <a class="pa-btn-ghost pa-btn-block pa-btn-sm" href="./account/patient/profile.html">Add another contact</a>
+        <a class="pa-btn-ghost pa-btn-block pa-btn-sm" href="{{ route('dashboard') }}">Add another contact</a>
       </div>
     </div>
     <div class="pa-note">

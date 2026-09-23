@@ -71,7 +71,7 @@
       '<div class="pa-modal-body">' +
         '<div class="pa-sats">' +
           levels.map(function (l) {
-            return '<a class="pa-sats-btn ' + l[0] + '" href="' + base + '/emergency.html?start=' + l[0] + '">' +
+            return '<a class="pa-sats-btn ' + l[0] + '" href="' + base + '/emergency?start=' + l[0] + '">' +
               '<span class="sig">' + l[1].charAt(0) + '</span>' +
               '<span><span class="t">' + l[2] + '</span><span class="d">' + l[3] + '</span></span>' +
               '<span class="w">' + l[4] + '</span></a>';
