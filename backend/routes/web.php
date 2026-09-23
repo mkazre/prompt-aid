@@ -6,6 +6,10 @@ use App\Http\Controllers\PageBuilderRenderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PharmacyPageController;
 use App\Http\Controllers\RideTrackingController;
+use App\Http\Controllers\ShopPageController;
+use App\Http\Controllers\ShuttlePageController;
+use App\Http\Controllers\StaticPageController;
+use App\Http\Controllers\ThirdPartyPageController;
 use App\Http\Controllers\WebAppointmentController;
 use App\Http\Controllers\WebAuthController;
 use App\Http\Controllers\WebRideController;
@@ -26,6 +30,32 @@ Route::get('/pharmacies/{pharmacy}', [PharmacyPageController::class, 'show'])->n
 
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact.submit');
+
+Route::get('/for-providers', [StaticPageController::class, 'forProviders'])->name('for-providers');
+Route::post('/for-providers', [StaticPageController::class, 'forProvidersSubmit'])->name('for-providers.submit');
+
+// About, How It Works, FAQ, Privacy, Terms and the POPIA notice are pure
+// content — real page-builder pages (see SeedSitePages), editable from
+// /staff/pages without a deploy. Named routes to the same renderer the
+// catch-all uses below, so route('about') etc. still resolve from Blade.
+foreach (['about', 'how-it-works', 'faq', 'privacy', 'terms', 'legal-popia'] as $contentSlug) {
+    Route::get("/{$contentSlug}", fn (
+        \Illuminate\Http\Request $request,
+        PageBuilderRenderController $controller,
+        \App\PageBuilder\Rendering\PageRenderer $renderer,
+        \App\PageBuilder\Templates\TemplateResolver $templates,
+    ) => $controller->render($request, $contentSlug, $renderer, $templates))->name($contentSlug);
+}
+
+Route::get('/shuttle', [ShuttlePageController::class, 'index'])->name('shuttle');
+Route::post('/shuttle/quote', [ShuttlePageController::class, 'quote'])->name('shuttle.quote');
+
+Route::get('/shop', [ShopPageController::class, 'index'])->name('shop.index');
+
+Route::get('/labs', [ThirdPartyPageController::class, 'labsIndex'])->name('labs.index');
+Route::get('/labs/{lab}', [ThirdPartyPageController::class, 'labsShow'])->name('labs.show');
+Route::get('/specialists', [ThirdPartyPageController::class, 'specialistsIndex'])->name('specialists.index');
+Route::get('/specialists/{specialist}', [ThirdPartyPageController::class, 'specialistsShow'])->name('specialists.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [WebAuthController::class, 'showLogin'])->name('login');
@@ -55,5 +85,5 @@ Route::middleware('auth')->group(function () {
 // exclusion is baked into the route's own pattern rather than relying on
 // "runs after everything else" alone.
 Route::get('/{path}', [PageBuilderRenderController::class, 'render'])
-    ->where('path', '^(?!(login|register|dashboard|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build)(/|$)).+$')
+    ->where('path', '^(?!(login|register|dashboard|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets)(/|$)).+$')
     ->name('page-builder.render');

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PatientProfiles;
 use App\Filament\Resources\PatientProfiles\Pages\CreatePatientProfile;
 use App\Filament\Resources\PatientProfiles\Pages\EditPatientProfile;
 use App\Filament\Resources\PatientProfiles\Pages\ListPatientProfiles;
+use App\Filament\Resources\PatientProfiles\RelationManagers\SchemeMembershipsRelationManager;
 use App\Filament\Resources\PatientProfiles\Schemas\PatientProfileForm;
 use App\Filament\Resources\PatientProfiles\Tables\PatientProfilesTable;
 use App\Models\PatientProfile;
@@ -35,7 +36,7 @@ class PatientProfileResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            SchemeMembershipsRelationManager::class,
         ];
     }
 

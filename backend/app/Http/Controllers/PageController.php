@@ -5,21 +5,50 @@ namespace App\Http\Controllers;
 use App\Models\Clinic;
 use App\Models\DoctorProfile;
 use App\Models\DriverProfile;
+use App\Models\MedicalScheme;
+use App\Models\Pharmacy;
+use App\Models\Ride;
+use App\Models\ThirdPartyProfile;
 use App\Models\User;
 use App\Services\Booking\AppointmentBookingService;
 use App\Support\StaffNotifier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class PageController extends Controller
 {
     public function home()
     {
+        $doctors = DoctorProfile::where('status', 'active')->count();
+        $clinics = Clinic::where('status', 'active')->count();
+        $pharmacies = Pharmacy::where('status', 'active')->count();
+        $labs = ThirdPartyProfile::where('status', 'active')->count();
+
+        $featured = DoctorProfile::where('status', 'active')
+            ->where('is_accepting_appointments', true)
+            ->with('user')
+            ->inRandomOrder()
+            ->limit(2)
+            ->get();
+
+        $featuredPartners = ThirdPartyProfile::where('status', 'active')
+            ->with('user')
+            ->inRandomOrder()
+            ->limit(2)
+            ->get();
+
         return view('home', [
             'stats' => [
-                'clinics' => Clinic::where('status', 'active')->count(),
-                'doctors' => DoctorProfile::where('status', 'active')->count(),
+                'providers' => $doctors + $clinics + $pharmacies + $labs,
                 'drivers' => DriverProfile::where('status', 'active')->count(),
+                'schemes' => MedicalScheme::where('active', true)->count(),
+                'openToday' => DoctorProfile::where('status', 'active')->where('is_accepting_appointments', true)->count(),
+                'tripsToday' => Ride::whereDate('requested_at', Carbon::today())->count(),
+                'scriptsThisWeek' => \App\Models\OrderItem::whereHas('order', fn ($q) => $q->where('created_at', '>=', now()->subWeek()))->sum('qty'),
             ],
+            'featuredDoctors' => $featured,
+            'featuredPartners' => $featuredPartners,
+            'schemeNames' => MedicalScheme::where('active', true)->orderBy('name')->pluck('name'),
         ]);
     }
 
@@ -76,10 +105,9 @@ class PageController extends Controller
     public function contactSubmit(Request $request)
     {
         $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:30'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
+            'subject' => ['nullable', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:2000'],
         ]);
 
@@ -88,7 +116,7 @@ class PageController extends Controller
         if ($admins->isNotEmpty()) {
             StaffNotifier::alert(
                 $admins,
-                "New contact message from {$data['first_name']} {$data['last_name']}",
+                "New contact message from {$data['name']}".(! empty($data['subject']) ? " — {$data['subject']}" : ''),
                 $data['message'],
                 icon: 'heroicon-o-envelope',
                 color: 'info',
@@ -97,6 +125,6 @@ class PageController extends Controller
             );
         }
 
-        return back()->with('success', "Thanks {$data['first_name']}, we've received your message and will get back to you soon.");
+        return back()->with('success', "Thanks {$data['name']}, we've received your message and will get back to you soon.");
     }
 }

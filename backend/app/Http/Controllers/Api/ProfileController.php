@@ -40,7 +40,7 @@ class ProfileController extends Controller
                 'vehicle_model' => ['sometimes', 'nullable', 'string'],
                 'vehicle_color' => ['sometimes', 'nullable', 'string'],
                 'vehicle_plate_no' => ['sometimes', 'nullable', 'string'],
-                'vehicle_type' => ['sometimes', 'in:sedan,suv,van,wheelchair_accessible'],
+                'vehicle_type' => ['sometimes', 'in:sedan,suv,van,wheelchair_accessible,stretcher'],
             ]));
         }
 

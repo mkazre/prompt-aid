@@ -14,7 +14,7 @@ class RideRateCardForm
         return $schema
             ->components([
                 Select::make('vehicle_type')
-                    ->options(['sedan' => 'Sedan', 'suv' => 'SUV', 'van' => 'Van', 'wheelchair_accessible' => 'Wheelchair Accessible'])
+                    ->options(['sedan' => 'Sedan', 'suv' => 'SUV', 'van' => 'Van', 'wheelchair_accessible' => 'Wheelchair Accessible', 'stretcher' => 'Stretcher'])
                     ->required(),
                 TextInput::make('base_fare')->label('Base fare (R)')
                     ->required()

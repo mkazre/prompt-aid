@@ -43,7 +43,7 @@ class RideController extends Controller
             'dropoff_address' => ['required', 'string'],
             'dropoff_lat' => ['required', 'numeric'],
             'dropoff_lng' => ['required', 'numeric'],
-            'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible'],
+            'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible,stretcher'],
             'appointment_id' => ['nullable', 'integer', 'exists:appointments,id'],
             'wait_and_return' => ['nullable', 'boolean'],
         ]);
@@ -95,7 +95,7 @@ class RideController extends Controller
             'dropoff_address' => ['required', 'string'],
             'dropoff_lat' => ['required', 'numeric'],
             'dropoff_lng' => ['required', 'numeric'],
-            'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible'],
+            'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible,stretcher'],
         ]);
 
         $rideSeries = $this->series->create(

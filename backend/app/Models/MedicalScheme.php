@@ -10,7 +10,13 @@ class MedicalScheme extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'code', 'claims_endpoint', 'active'];
+    public const SUBMISSION_ELECTRONIC = 'electronic';
+
+    public const SUBMISSION_PORTAL = 'portal';
+
+    public const SUBMISSION_MANUAL = 'manual';
+
+    protected $fillable = ['name', 'code', 'claims_endpoint', 'submission_mode', 'active'];
 
     protected function casts(): array
     {

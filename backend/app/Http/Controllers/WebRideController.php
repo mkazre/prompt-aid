@@ -18,7 +18,7 @@ class WebRideController extends Controller
             'dropoff_address' => ['required', 'string'],
             'dropoff_lat' => ['required', 'numeric'],
             'dropoff_lng' => ['required', 'numeric'],
-            'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible'],
+            'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible,stretcher'],
             'wait_and_return' => ['nullable', 'boolean'],
         ]);
 
