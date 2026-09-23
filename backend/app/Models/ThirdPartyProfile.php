@@ -11,10 +11,20 @@ class ThirdPartyProfile extends Model
 {
     use HasFactory;
 
+    public const CATEGORIES = ['lab', 'imaging', 'physio', 'optometry', 'dental', 'dietetics', 'audiology', 'home_nursing', 'other'];
+
     protected $fillable = [
         'user_id', 'company_name', 'service_type', 'license_no', 'description',
-        'logo', 'rating_avg', 'rating_count', 'status',
+        'logo', 'rating_avg', 'rating_count', 'status', 'category', 'service_area', 'accepts_walk_ins',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'service_area' => 'array',
+            'accepts_walk_ins' => 'boolean',
+        ];
+    }
 
     public function user(): BelongsTo
     {

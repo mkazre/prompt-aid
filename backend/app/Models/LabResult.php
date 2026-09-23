@@ -10,11 +10,11 @@ class LabResult extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['lab_request_id', 'uploaded_by', 'label', 'file_path', 'summary', 'visible_to_patient'];
+    protected $fillable = ['lab_request_id', 'uploaded_by', 'label', 'file_path', 'summary', 'visible_to_patient', 'critical'];
 
     protected function casts(): array
     {
-        return ['visible_to_patient' => 'boolean'];
+        return ['visible_to_patient' => 'boolean', 'critical' => 'boolean'];
     }
 
     public function labRequest(): BelongsTo

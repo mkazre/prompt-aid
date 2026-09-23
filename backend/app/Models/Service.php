@@ -11,7 +11,7 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
-        'clinic_id', 'doctor_profile_id', 'name', 'category', 'description',
+        'clinic_id', 'doctor_profile_id', 'service_category_id', 'name', 'category', 'description',
         'price', 'duration_minutes', 'is_active',
     ];
 
@@ -30,5 +30,10 @@ class Service extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(DoctorProfile::class, 'doctor_profile_id');
+    }
+
+    public function serviceCategory(): BelongsTo
+    {
+        return $this->belongsTo(ServiceCategory::class);
     }
 }

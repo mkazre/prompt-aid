@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PageBuilderPreviewController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PharmacyPageController;
 use App\Http\Controllers\RideTrackingController;
@@ -43,4 +44,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/staff/notifications/unread-count', function () {
         return response()->json(['count' => request()->user()->unreadNotifications()->count()]);
     })->name('staff.notifications.unread-count');
+    Route::get('/staff/preview/pages/{page}', [PageBuilderPreviewController::class, 'show'])->name('page-builder.preview');
 });

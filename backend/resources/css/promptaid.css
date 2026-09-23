@@ -283,6 +283,11 @@ textarea.pa-field{min-height:110px;resize:vertical;line-height:1.55}
   .pa-side,.pa-topbar .tools,.pa-header,.pa-alertbar{display:none}
 }
 
+/* ---------- page builder ---------- */
+@media (max-width:820px){
+  [class*="pa-columns-"]{grid-template-columns:1fr!important}
+}
+
 
 /* ===================================================================
    SATS TRIAGE — entry modal, flow, results

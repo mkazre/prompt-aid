@@ -31,6 +31,7 @@ class Ride extends Model
         'pickup_address', 'pickup_lat', 'pickup_lng', 'dropoff_address', 'dropoff_lat', 'dropoff_lng',
         'status', 'distance_km', 'eta_minutes', 'fare_estimate', 'fare_final', 'cancel_reason',
         'requested_at', 'accepted_at', 'started_at', 'completed_at',
+        'ride_series_id', 'return_of_ride_id', 'is_return', 'scheduled_for', 'wait_and_return', 'priority',
     ];
 
     protected function casts(): array
@@ -40,6 +41,9 @@ class Ride extends Model
             'accepted_at' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'scheduled_for' => 'datetime',
+            'is_return' => 'boolean',
+            'wait_and_return' => 'boolean',
         ];
     }
 
@@ -74,6 +78,21 @@ class Ride extends Model
     public function review(): HasOne
     {
         return $this->hasOne(RideReview::class);
+    }
+
+    public function series(): BelongsTo
+    {
+        return $this->belongsTo(RideSeries::class, 'ride_series_id');
+    }
+
+    public function returnOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'return_of_ride_id');
+    }
+
+    public function returnLeg(): HasOne
+    {
+        return $this->hasOne(self::class, 'return_of_ride_id');
     }
 
     public function isActive(): bool

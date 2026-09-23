@@ -10,8 +10,16 @@ class Product extends Model
 {
     use HasFactory;
 
+    public const KIND_GOODS = 'goods';
+
+    public const KIND_LAB_PACKAGE = 'lab_package';
+
+    public const KIND_SERVICE_BLOCK = 'service_block';
+
+    public const KIND_CONSULT_BUNDLE = 'consult_bundle';
+
     protected $fillable = [
-        'pharmacy_id', 'name', 'slug', 'category', 'description', 'image',
+        'pharmacy_id', 'service_category_id', 'kind', 'name', 'slug', 'category', 'description', 'image',
         'price', 'stock', 'requires_prescription', 'is_active',
     ];
 
@@ -26,6 +34,11 @@ class Product extends Model
     public function pharmacy(): BelongsTo
     {
         return $this->belongsTo(Pharmacy::class);
+    }
+
+    public function serviceCategory(): BelongsTo
+    {
+        return $this->belongsTo(ServiceCategory::class);
     }
 
     public function inStock(): bool

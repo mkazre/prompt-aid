@@ -10,7 +10,7 @@ class Payment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['invoice_id', 'method', 'amount', 'status', 'gateway', 'gateway_ref'];
+    protected $fillable = ['invoice_id', 'method', 'amount', 'status', 'gateway', 'gateway_ref', 'split_group_id'];
 
     public function invoice(): BelongsTo
     {

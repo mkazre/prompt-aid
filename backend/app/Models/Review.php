@@ -12,7 +12,15 @@ class Review extends Model
 
     protected $fillable = [
         'patient_profile_id', 'doctor_profile_id', 'clinic_id', 'appointment_id', 'rating', 'comment', 'status',
+        'reply', 'replied_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'replied_at' => 'datetime',
+        ];
+    }
 
     public function patient(): BelongsTo
     {

@@ -23,9 +23,14 @@ class Appointment extends Model
 
     public const STATUS_NO_SHOW = 'no_show';
 
+    public const MODE_IN_PERSON = 'in_person';
+
+    public const MODE_VIDEO = 'video';
+
     protected $fillable = [
         'booking_ref', 'patient_profile_id', 'doctor_profile_id', 'clinic_id', 'service_id',
         'date', 'start_time', 'end_time', 'visit_type', 'status', 'reason', 'cancel_reason', 'ride_requested',
+        'mode', 'meet_url', 'meet_event_id', 'meet_created_at',
     ];
 
     protected function casts(): array
@@ -33,6 +38,7 @@ class Appointment extends Model
         return [
             'date' => 'date',
             'ride_requested' => 'boolean',
+            'meet_created_at' => 'datetime',
         ];
     }
 
@@ -41,6 +47,27 @@ class Appointment extends Model
         static::creating(function (self $appointment) {
             $appointment->booking_ref ??= 'APT-'.strtoupper(uniqid());
         });
+    }
+
+    public function isVideo(): bool
+    {
+        return $this->mode === self::MODE_VIDEO;
+    }
+
+    /**
+     * Whether the video Join button should be shown right now — 10 minutes
+     * before start through 30 minutes after the scheduled end.
+     */
+    public function canJoinVideoNow(): bool
+    {
+        if (! $this->isVideo() || ! $this->meet_url) {
+            return false;
+        }
+
+        $start = \Carbon\Carbon::parse("{$this->date->toDateString()} {$this->start_time}");
+        $end = \Carbon\Carbon::parse("{$this->date->toDateString()} {$this->end_time}");
+
+        return now()->between($start->clone()->subMinutes(10), $end->clone()->addMinutes(30));
     }
 
     public function patient(): BelongsTo
