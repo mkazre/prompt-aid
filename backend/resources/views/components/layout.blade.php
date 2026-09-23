@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Prompt Aid — Clinics, Doctors & Patient Shuttle' }}</title>
     <link rel="icon" href="{{ asset('images/favicon.ico') }}">
+    @stack('meta')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-gray-50 font-sans">

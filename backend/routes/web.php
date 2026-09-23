@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PageBuilderPreviewController;
+use App\Http\Controllers\PageBuilderRenderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PharmacyPageController;
 use App\Http\Controllers\RideTrackingController;
@@ -46,3 +47,12 @@ Route::middleware('auth')->group(function () {
     })->name('staff.notifications.unread-count');
     Route::get('/staff/preview/pages/{page}', [PageBuilderPreviewController::class, 'show'])->name('page-builder.preview');
 });
+
+// Page builder catch-all — must stay last. Never matches a path starting
+// with a reserved segment (auth, dashboard, checkout, rides, the Filament
+// panels, or the API), regardless of route registration order, since that
+// exclusion is baked into the route's own pattern rather than relying on
+// "runs after everything else" alone.
+Route::get('/{path}', [PageBuilderRenderController::class, 'render'])
+    ->where('path', '^(?!(login|register|dashboard|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build)(/|$)).+$')
+    ->name('page-builder.render');

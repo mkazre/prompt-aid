@@ -64,6 +64,17 @@ abstract class AbstractBlock
         return false;
     }
 
+    /**
+     * True only for LoopBlock — signals PageRenderer to fetch results via
+     * QuerySource and render this block's children once per row (with
+     * {{ item.* }} tokens resolved), instead of rendering them once as
+     * plain child blocks.
+     */
+    public static function isLoop(): bool
+    {
+        return false;
+    }
+
     abstract public function view(): string;
 
     /**

@@ -5,26 +5,37 @@ namespace App\PageBuilder\Rendering;
 use App\Models\Page;
 use App\Models\PageBlock;
 use App\PageBuilder\BlockRegistry;
+use App\PageBuilder\Templates\QuerySource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\HtmlString;
 
 /**
  * Renders a Page's block tree to HTML. Each block wraps in
  * `.pa-block.pa-block-{id}`; compiled per-block CSS is collected into one
- * `<style>` tag rendered once at the end via `renderStyles()`.
+ * `<style>` tag rendered once at the end.
+ *
+ * LoopBlock is the one special case: its children are an *item template*,
+ * rendered once per row from QuerySource with `$item` bound so
+ * `{{ item.* }}` tokens (resolved by TokenResolver) reach every descendant
+ * until another LoopBlock is hit.
  */
 class PageRenderer
 {
     protected array $collectedCss = [];
 
-    public function __construct(protected StyleCompiler $compiler) {}
+    public function __construct(
+        protected StyleCompiler $compiler,
+        protected TokenResolver $tokens,
+        protected QuerySource $querySource,
+    ) {}
 
     /**
      * Render a page's top-level blocks (and their descendants). Cached per
-     * page + entity, invalidated whenever any block on the page changes
-     * (the cache key includes the max block updated_at).
+     * page + entity + query string (loop filters/sort/page live in the
+     * query string), invalidated whenever any block on the page changes.
      */
     public function render(Page $page, ?Model $entity = null): HtmlString
     {
@@ -32,7 +43,7 @@ class PageRenderer
 
         $cacheKey = $this->cacheKey($page, $blocks, $entity);
 
-        $html = Cache::remember($cacheKey, now()->addHour(), function () use ($blocks, $entity) {
+        $html = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($blocks, $entity) {
             $this->collectedCss = [];
             $tree = $this->buildTree($blocks);
             $body = $this->renderBlocks($tree, $entity);
@@ -44,23 +55,13 @@ class PageRenderer
         return new HtmlString($html);
     }
 
-    /**
-     * Render an explicit list of blocks (used by LoopBlock for its item
-     * template, once per row) — not cached, since $entity differs per row.
-     */
-    public function renderBlockList(Collection $blocks, ?Model $entity = null): HtmlString
-    {
-        $tree = $this->buildTree($blocks);
-
-        return new HtmlString($this->renderBlocks($tree, $entity));
-    }
-
     protected function cacheKey(Page $page, Collection $blocks, ?Model $entity): string
     {
         $maxUpdated = $blocks->max('updated_at')?->timestamp ?? 0;
         $entityKey = $entity ? get_class($entity).':'.$entity->getKey() : 'none';
+        $queryKey = md5(Request::getQueryString() ?? '');
 
-        return "page_render:{$page->id}:{$maxUpdated}:{$entityKey}";
+        return "page_render:{$page->id}:{$maxUpdated}:{$entityKey}:{$queryKey}";
     }
 
     /**
@@ -83,12 +84,12 @@ class PageRenderer
         return ($byParent->get(null) ?? collect())->sortBy('sort')->values()->map($attach);
     }
 
-    protected function renderBlocks(Collection $blocks, ?Model $entity): string
+    protected function renderBlocks(Collection $blocks, ?Model $entity, ?Model $item = null): string
     {
-        return $blocks->map(fn (PageBlock $block) => $this->renderBlock($block, $entity))->implode('');
+        return $blocks->map(fn (PageBlock $block) => $this->renderBlock($block, $entity, $item))->implode('');
     }
 
-    protected function renderBlock(PageBlock $block, ?Model $entity): string
+    protected function renderBlock(PageBlock $block, ?Model $entity, ?Model $item = null): string
     {
         $instance = BlockRegistry::make($block->type);
 
@@ -101,11 +102,19 @@ class PageRenderer
             $this->collectedCss[] = $css;
         }
 
+        if ($instance::isLoop()) {
+            return $this->wrap($block, $this->renderLoop($block, $instance, $entity));
+        }
+
+        $props = ($item || $entity)
+            ? $this->tokens->resolveProps($block->props ?? [], $item, $entity)
+            : ($block->props ?? []);
+
         $childrenHtml = $instance::acceptsChildren()
-            ? $this->renderBlocks($block->childBlocks ?? collect(), $entity)
+            ? $this->renderBlocks($block->childBlocks ?? collect(), $entity, $item)
             : '';
 
-        $data = $instance->data($block->props ?? [], $entity);
+        $data = $instance->data($props, $entity, $item);
         $data['children'] = new HtmlString($childrenHtml);
         $data['blockId'] = $block->id;
 
@@ -118,8 +127,35 @@ class PageRenderer
                 : '';
         }
 
+        return $this->wrap($block, $inner);
+    }
+
+    protected function wrap(PageBlock $block, string $inner): string
+    {
         $classes = "pa-block pa-block-{$block->id} pa-block-type-{$block->type}";
 
         return "<div class=\"{$classes}\" data-block-id=\"{$block->id}\">{$inner}</div>";
+    }
+
+    protected function renderLoop(PageBlock $block, $instance, ?Model $entity): string
+    {
+        $config = $block->props ?? [];
+        $results = $this->querySource->paginate($config, Request::query());
+
+        $cols = match ($config['layout'] ?? 'grid-3') {
+            'grid-2' => 2, 'grid-4' => 4, default => 3,
+        };
+
+        $rowsHtml = $results->getCollection()->map(
+            fn (Model $item) => '<div class="pa-loop-item">'.$this->renderBlocks($block->childBlocks ?? collect(), $entity, $item).'</div>',
+        )->implode('');
+
+        $grid = $rowsHtml
+            ? "<div class=\"pa-grid\" style=\"grid-template-columns:repeat({$cols},minmax(0,1fr));background:transparent;border:0\">{$rowsHtml}</div>"
+            : '<p class="pa-muted">No results found.</p>';
+
+        $pagination = $results->hasPages() ? (string) $results->onEachSide(1)->links('page-builder.pagination') : '';
+
+        return $grid.$pagination;
     }
 }
