@@ -79,6 +79,9 @@
                         <li><a href="{{ route('doctors.index') }}" class="hover:text-white">Find a Doctor</a></li>
                         <li><a href="{{ route('clinics.index') }}" class="hover:text-white">Our Clinics</a></li>
                         <li><a href="{{ route('pharmacies.index') }}" class="hover:text-white">Pharmacy</a></li>
+                        <li><a href="/how-it-works" class="hover:text-white">How It Works</a></li>
+                        <li><a href="/about" class="hover:text-white">About Us</a></li>
+                        <li><a href="/for-providers" class="hover:text-white">For Providers</a></li>
                         <li><a href="{{ route('register') }}" class="hover:text-white">Create an account</a></li>
                         <li><a href="{{ route('contact') }}" class="hover:text-white">Contact Us</a></li>
                         <li><a href="{{ url('/staff/login') }}" class="hover:text-white">Staff / Admin Login</a></li>
@@ -120,7 +123,13 @@
                     </ul>
                 </div>
             </div>
-            <p class="mt-12 border-t border-white/10 pt-6 text-xs text-gray-400">&copy; {{ date('Y') }} Prompt Aid. All rights reserved.</p>
+            <div class="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-gray-400">
+                <p>&copy; {{ date('Y') }} Prompt Aid. All rights reserved.</p>
+                <div class="flex gap-4">
+                    <a href="/privacy" class="hover:text-white">Privacy Policy</a>
+                    <a href="/terms" class="hover:text-white">Terms of Service</a>
+                </div>
+            </div>
         </div>
     </footer>
 </body>
