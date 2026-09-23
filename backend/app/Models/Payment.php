@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     protected $fillable = ['invoice_id', 'method', 'amount', 'status', 'gateway', 'gateway_ref', 'split_group_id'];
 

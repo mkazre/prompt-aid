@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Claim extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     public const STATUS_DRAFT = 'draft';
 

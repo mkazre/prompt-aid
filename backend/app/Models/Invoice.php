@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Invoice extends Model implements Payable
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     public const STATUS_UNPAID = 'unpaid';
 
