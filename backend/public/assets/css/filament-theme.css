@@ -38,24 +38,30 @@
   border: 1px solid var(--pa-line) !important;
 }
 
-/* Sidebar: dark ink background matching the admin mockup's nav, not
-   Filament's default white/gray. */
+/* Sidebar: white background to match the logo, red link text, black on
+   hover/active. */
 .fi-sidebar {
-  background: var(--pa-ink) !important;
-  border-inline-end: 1px solid #2A2A2E !important;
+  background: var(--pa-surface) !important;
+  border-inline-end: 1px solid var(--pa-line) !important;
 }
-.fi-sidebar-nav-groups .fi-sidebar-group-label,
+.fi-sidebar-nav-groups .fi-sidebar-group-label {
+  color: var(--pa-muted) !important;
+}
+.fi-sidebar-item-icon,
 .fi-sidebar-item-label {
-  color: #B8B3A8 !important;
+  color: var(--pa-signal) !important;
+}
+.fi-sidebar-item-button:hover .fi-sidebar-item-icon,
+.fi-sidebar-item-button:hover .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active .fi-sidebar-item-icon,
+.fi-sidebar-item.fi-active .fi-sidebar-item-label {
+  color: var(--pa-ink) !important;
+  font-weight: 700 !important;
 }
 .fi-sidebar-item.fi-active .fi-sidebar-item-button,
 .fi-sidebar-item-button:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: var(--pa-paper) !important;
   border-radius: var(--pa-radius) !important;
-}
-.fi-sidebar-item.fi-active .fi-sidebar-item-label {
-  color: #FFFFFF !important;
-  font-weight: 700 !important;
 }
 
 /* Topbar: hairline instead of shadow, matches .pa-header on the site. */
