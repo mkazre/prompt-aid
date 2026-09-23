@@ -26,6 +26,7 @@ class RideResource extends JsonResource
             'dropoff_lat' => (float) $this->dropoff_lat,
             'dropoff_lng' => (float) $this->dropoff_lng,
             'status' => $this->status,
+            'priority' => $this->priority,
             'distance_km' => $this->distance_km ? (float) $this->distance_km : null,
             'fare_estimate' => $this->fare_estimate ? (float) $this->fare_estimate : null,
             'fare_final' => $this->fare_final ? (float) $this->fare_final : null,

@@ -33,6 +33,30 @@ class RideController extends Controller
         ]);
     }
 
+    /**
+     * Mobile has no on-device geocoder — this mirrors the website's
+     * /shuttle/quote flow (address text -> geocode -> quotes) so the app
+     * can get a real fare estimate from free-text addresses alone,
+     * without a Google/Mapbox API key.
+     */
+    public function quoteByAddress(Request $request)
+    {
+        $data = $request->validate([
+            'pickup_address' => ['required', 'string'],
+            'dropoff_address' => ['required', 'string'],
+        ]);
+
+        $geo = app(\App\Contracts\GeocodingInterface::class);
+        $pickup = $geo->geocode($data['pickup_address']);
+        $dropoff = $geo->geocode($data['dropoff_address']);
+
+        return response()->json([
+            'pickup' => $pickup,
+            'dropoff' => $dropoff,
+            'quotes' => $this->dispatch->quotesFor($pickup['lat'], $pickup['lng'], $dropoff['lat'], $dropoff['lng']),
+        ]);
+    }
+
     /** Patient: request a shuttle ride. */
     public function store(Request $request)
     {

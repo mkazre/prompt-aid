@@ -21,6 +21,7 @@ class UserResource extends JsonResource
             'patient_profile' => new PatientProfileResource($this->whenLoaded('patientProfile')),
             'doctor_profile' => new DoctorProfileResource($this->whenLoaded('doctorProfile')),
             'driver_profile' => new DriverProfileResource($this->whenLoaded('driverProfile')),
+            'third_party_profile' => new ThirdPartyProfileResource($this->whenLoaded('thirdPartyProfile')),
         ];
     }
 }

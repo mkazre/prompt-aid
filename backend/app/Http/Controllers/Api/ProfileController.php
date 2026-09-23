@@ -44,6 +44,6 @@ class ProfileController extends Controller
             ]));
         }
 
-        return new UserResource($user->fresh(['patientProfile', 'driverProfile', 'doctorProfile']));
+        return new UserResource($user->fresh(['patientProfile', 'driverProfile', 'doctorProfile', 'thirdPartyProfile']));
     }
 }

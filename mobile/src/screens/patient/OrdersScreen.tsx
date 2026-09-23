@@ -1,11 +1,14 @@
 import React, { useCallback, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { Order } from '../../api/types';
-import { Badge, Card, EmptyState } from '../../components/UI';
-import { colors, font, spacing } from '../../theme';
+import { PaBadge, PaEmptyState, PaRow } from '../../components/pa';
+import { PaSteps, StepItem } from '../../components/pa/patient-commerce-extras';
+import { pa, paFonts, paRadius, type } from '../../theme';
 
+/** Pharmacy order history — matches `orders.html`: the most recent order gets
+ * an expanded step tracker, the rest are a flat status list. */
 export default function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,33 +25,70 @@ export default function OrdersScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const [latest, ...rest] = orders;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Orders</Text>
+      <Text style={[type.h2, { marginBottom: 12 }]}>Orders</Text>
       <FlatList
-        data={orders}
+        data={rest}
         keyExtractor={(o) => String(o.id)}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
-        ListEmptyComponent={!loading ? <EmptyState message="No orders yet." /> : null}
-        contentContainerStyle={{ paddingBottom: spacing.xxl }}
-        renderItem={({ item }) => (
-          <Card style={{ marginBottom: spacing.sm }}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.orderNo}>{item.order_no}</Text>
-              <Badge status={item.status} />
+        contentContainerStyle={{ paddingBottom: 40 }}
+        ListHeaderComponent={
+          latest ? (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.orderNo}>{latest.order_no}</Text>
+                <PaBadge status={latest.status} />
+              </View>
+              <PaSteps steps={buildSteps(latest)} />
             </View>
-            <Text style={styles.meta}>{item.pharmacy?.name} · R{item.total.toFixed(2)}</Text>
-          </Card>
+          ) : null
+        }
+        ListEmptyComponent={!loading && !latest ? <PaEmptyState message="No orders yet." /> : null}
+        renderItem={({ item }) => (
+          <PaRow
+            title={item.order_no}
+            subtitle={`${item.pharmacy?.name ?? 'Pharmacy'} · R${item.total.toFixed(2)}`}
+            right={<PaBadge status={item.status} />}
+          />
         )}
       />
     </View>
   );
 }
 
+// Mirrors the `orders.status` enum in
+// backend/database/migrations/2026_09_13_111435_create_orders_table.php.
+const ORDER_STAGES = ['pending_payment', 'awaiting_prescription_review', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'];
+
+const STAGE_LABELS: Record<string, string> = {
+  pending_payment: 'Placed',
+  awaiting_prescription_review: 'Pharmacist reviewing',
+  confirmed: 'Confirmed',
+  preparing: 'Preparing',
+  out_for_delivery: 'Out for delivery',
+  delivered: 'Delivered',
+};
+
+function buildSteps(order: Order): StepItem[] {
+  if (order.status === 'cancelled') {
+    return [
+      { label: 'Placed', time: '', state: 'done' },
+      { label: 'Cancelled', time: 'now', state: 'now' },
+    ];
+  }
+  const currentIdx = Math.max(0, ORDER_STAGES.indexOf(order.status));
+  return ORDER_STAGES.map((stage, i) => ({
+    label: STAGE_LABELS[stage],
+    time: i < currentIdx ? '' : i === currentIdx ? 'now' : '—',
+    state: i < currentIdx ? 'done' : i === currentIdx ? 'now' : 'todo',
+  }));
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray50, padding: spacing.lg },
-  title: { fontFamily: font.bold, fontSize: 22, color: colors.secondary, marginBottom: spacing.md },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  orderNo: { fontFamily: font.semibold, fontSize: 15, color: colors.secondary },
-  meta: { fontFamily: font.regular, fontSize: 12, color: colors.gray600, marginTop: 2 },
+  container: { flex: 1, backgroundColor: pa.paper, padding: 16 },
+  card: { backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, borderRadius: paRadius.sm, padding: 16, marginBottom: 8 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  orderNo: { fontFamily: paFonts.black, fontSize: 15, color: pa.ink },
 });

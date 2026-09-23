@@ -10,7 +10,8 @@ import PatientTabs from './PatientTabs';
 import DriverTabs from './DriverTabs';
 import ThirdPartyTabs from './ThirdPartyTabs';
 import DoctorTabs from './DoctorTabs';
-import { colors } from '../theme';
+import PharmacyTabs from './PharmacyTabs';
+import { colors, pa } from '../theme';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,8 +30,8 @@ export default function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.gray50 }}>
-        <ActivityIndicator color={colors.primary} size="large" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: pa.paper }}>
+        <ActivityIndicator color={pa.signal} size="large" />
       </View>
     );
   }
@@ -45,6 +46,8 @@ export default function RootNavigator() {
         <ThirdPartyTabs />
       ) : user.role === 'doctor' ? (
         <DoctorTabs />
+      ) : user.role === 'pharmacy_admin' ? (
+        <PharmacyTabs />
       ) : (
         <PatientTabs />
       )}

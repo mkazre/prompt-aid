@@ -1,10 +1,14 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api } from '../../api/client';
 import { Appointment } from '../../api/types';
-import { Badge, Card, EmptyState } from '../../components/UI';
-import { colors, font, spacing } from '../../theme';
+import { PaBadge, PaCard, PaEmptyState, PaRow, PaSectionLabel } from '../../components/pa';
+import { pa, paFonts, type } from '../../theme';
+import { DoctorStackParamList } from '../../navigation/DoctorTabs';
+
+type Nav = NativeStackNavigationProp<DoctorStackParamList>;
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -14,6 +18,7 @@ function toKey(d: Date) {
 }
 
 export default function DoctorCalendarScreen() {
+  const navigation = useNavigation<Nav>();
   const [cursor, setCursor] = useState(new Date());
   const [selected, setSelected] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -28,6 +33,14 @@ export default function DoctorCalendarScreen() {
       load(selected);
     }, [load, selected])
   );
+
+  function openAppointment(appointment: Appointment) {
+    if (appointment.mode === 'video' && appointment.meet_url) {
+      navigation.navigate('ConsultRoom', { appointment });
+    } else {
+      navigation.navigate('DoctorEncounter', { appointment });
+    }
+  }
 
   const weeks = useMemo(() => {
     const year = cursor.getFullYear();
@@ -51,17 +64,17 @@ export default function DoctorCalendarScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}>
-      <Card>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
+      <PaCard>
         <View style={styles.monthHeader}>
-          <Pressable onPress={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}>
+          <Pressable onPress={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} hitSlop={12}>
             <Text style={styles.monthArrow}>‹</Text>
           </Pressable>
           <View style={{ alignItems: 'center' }}>
-            <Text style={styles.today}>Today</Text>
+            <Text style={type.small}>Today</Text>
             <Text style={styles.monthTitle}>{MONTHS[cursor.getMonth()]} {cursor.getFullYear()}</Text>
           </View>
-          <Pressable onPress={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}>
+          <Pressable onPress={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} hitSlop={12}>
             <Text style={styles.monthArrow}>›</Text>
           </Pressable>
         </View>
@@ -89,29 +102,27 @@ export default function DoctorCalendarScreen() {
             })}
           </View>
         ))}
-      </Card>
+      </PaCard>
 
       <View style={styles.selectedBanner}>
         <Text style={styles.selectedText}>
-          {selected.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit', year: 'numeric' })}
+          {selected.toLocaleDateString('en-ZA', { weekday: 'long', month: 'long', day: '2-digit', year: 'numeric' })}
         </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Today's Appointment{appointments.length !== 1 ? 's' : ''}</Text>
+      <PaSectionLabel style={{ marginBottom: 8 }}>Appointment{appointments.length !== 1 ? 's' : ''}</PaSectionLabel>
       {appointments.length === 0 ? (
-        <Card><EmptyState message="No appointments on this day." /></Card>
+        <PaCard><PaEmptyState message="No appointments on this day." /></PaCard>
       ) : (
         appointments.map((a) => (
-          <Card key={a.id} style={{ marginBottom: spacing.sm }}>
-            <View style={styles.apptRow}>
-              <Text style={styles.apptPatient}>{a.patient?.name ?? 'Patient'}</Text>
-              <Text style={styles.apptTime}> ({a.start_time?.slice(0, 5)} - {a.end_time?.slice(0, 5)})</Text>
-              <View style={{ flex: 1 }} />
-              <Badge status={a.status} />
-            </View>
-            <Text style={styles.apptMeta}>Clinic: <Text style={styles.apptMetaValue}>{a.clinic?.name}</Text></Text>
-            {a.reason ? <Text style={styles.apptMeta}>Reason: <Text style={styles.apptMetaValue}>{a.reason}</Text></Text> : null}
-          </Card>
+          <PaCard key={a.id} style={{ marginBottom: 8, padding: 0, paddingHorizontal: 16 }}>
+            <PaRow
+              title={`${a.start_time?.slice(0, 5)} · ${a.patient?.name ?? 'Patient'}`}
+              subtitle={`${a.clinic?.name ?? 'Clinic'}${a.reason ? ' · ' + a.reason : ''}`}
+              right={<PaBadge status={a.status} />}
+              onPress={() => openAppointment(a)}
+            />
+          </PaCard>
         ))
       )}
     </ScrollView>
@@ -119,23 +130,16 @@ export default function DoctorCalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray50 },
-  monthHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-  monthArrow: { fontSize: 26, color: colors.gray500, paddingHorizontal: spacing.sm },
-  today: { fontFamily: font.regular, fontSize: 11, color: colors.gray500 },
-  monthTitle: { fontFamily: font.bold, fontSize: 17, color: colors.secondary },
+  container: { flex: 1, backgroundColor: pa.paper },
+  monthHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  monthArrow: { fontSize: 26, color: pa.muted, paddingHorizontal: 8 },
+  monthTitle: { ...type.h3, color: pa.ink },
   weekRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  weekday: { flex: 1, textAlign: 'center', fontFamily: font.medium, fontSize: 12, color: colors.gray500 },
-  dayCell: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 999 },
-  dayCellSelected: { backgroundColor: colors.primary },
-  dayText: { fontFamily: font.regular, fontSize: 13, color: colors.gray700 },
-  dayTextSelected: { color: colors.white, fontFamily: font.bold },
-  selectedBanner: { backgroundColor: colors.gray100, borderRadius: 8, paddingVertical: spacing.sm, alignItems: 'center', marginTop: spacing.md, marginBottom: spacing.lg },
-  selectedText: { fontFamily: font.medium, fontSize: 13, color: colors.gray700 },
-  sectionTitle: { fontFamily: font.bold, fontSize: 16, color: colors.secondary, marginBottom: spacing.sm },
-  apptRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-  apptPatient: { fontFamily: font.semibold, fontSize: 14, color: colors.primary },
-  apptTime: { fontFamily: font.regular, fontSize: 12, color: colors.gray500 },
-  apptMeta: { fontFamily: font.regular, fontSize: 12, color: colors.gray500, marginTop: 4 },
-  apptMetaValue: { fontFamily: font.medium, color: colors.gray700 },
+  weekday: { flex: 1, textAlign: 'center', fontFamily: paFonts.bold, fontSize: 11, color: pa.muted },
+  dayCell: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
+  dayCellSelected: { backgroundColor: pa.ink },
+  dayText: { fontFamily: paFonts.regular, fontSize: 13, color: pa.inkSoft },
+  dayTextSelected: { color: '#fff', fontFamily: paFonts.bold },
+  selectedBanner: { backgroundColor: pa.lineSoft, paddingVertical: 8, alignItems: 'center', marginTop: 16, marginBottom: 16 },
+  selectedText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.inkSoft },
 });

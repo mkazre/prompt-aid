@@ -83,14 +83,14 @@ class AuthController extends Controller
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
-            'user' => new UserResource($user->load(['patientProfile', 'driverProfile', 'doctorProfile'])),
+            'user' => new UserResource($user->load(['patientProfile', 'driverProfile', 'doctorProfile', 'thirdPartyProfile'])),
             'token' => $token,
         ]);
     }
 
     public function me(Request $request)
     {
-        return new UserResource($request->user()->load(['patientProfile', 'driverProfile', 'doctorProfile']));
+        return new UserResource($request->user()->load(['patientProfile', 'driverProfile', 'doctorProfile', 'thirdPartyProfile']));
     }
 
     public function logout(Request $request)

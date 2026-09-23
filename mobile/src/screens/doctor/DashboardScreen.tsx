@@ -1,17 +1,24 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, apiErrorMessage } from '../../api/client';
 import { Appointment, DoctorStats } from '../../api/types';
-import { Avatar, Badge, Card, EmptyState, IconAction, SectionTitle, StatCard, WeeklyBarChart } from '../../components/UI';
-import { colors, font, spacing } from '../../theme';
+import { PaAvatar, PaBadge, PaCard, PaEmptyState, PaRow, PaSectionLabel } from '../../components/pa';
+import { PaChipButton, PaStatCell, PaStatGrid } from '../../components/pa/doctor-extras';
+import { pa, paFonts, type } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
+import { DoctorStackParamList } from '../../navigation/DoctorTabs';
+
+type Nav = NativeStackNavigationProp<DoctorStackParamList>;
 
 export default function DoctorDashboardScreen() {
   const { user } = useAuth();
+  const navigation = useNavigation<Nav>();
   const [stats, setStats] = useState<DoctorStats | null>(null);
   const [today, setToday] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -34,11 +41,22 @@ export default function DoctorDashboardScreen() {
   );
 
   async function updateStatus(id: number, status: string) {
+    setUpdatingId(id);
     try {
       await api.post(`/doctor/appointments/${id}/status`, { status });
-      load();
+      await load();
     } catch (e) {
       Alert.alert('Could not update', apiErrorMessage(e));
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  function openAppointment(appointment: Appointment) {
+    if (appointment.mode === 'video' && appointment.meet_url) {
+      navigation.navigate('ConsultRoom', { appointment });
+    } else {
+      navigation.navigate('DoctorEncounter', { appointment });
     }
   }
 
@@ -49,85 +67,64 @@ export default function DoctorDashboardScreen() {
     return 'Good evening';
   })();
 
+  const waiting = today.filter((a) => a.status === 'checked_in').length;
+
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
+      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={pa.signal} />}
     >
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>{greeting},</Text>
           <Text style={styles.name}>Dr. {user?.name?.replace(/^Dr\.?\s*/i, '')}</Text>
         </View>
-        <Avatar name={user?.name} seed={user?.id} size={48} />
+        <PaAvatar name={user?.name} size={48} />
       </View>
 
-      <View style={styles.statsRow}>
-        <StatCard
-          label="Total Patients"
-          value={stats?.total_patients ?? 0}
-          sublabel="Total visited patients"
-          icon="🧑‍⚕️"
-          iconBg={colors.dangerLight}
-        />
-        <StatCard
-          label="Total Appointments"
-          value={stats?.total_appointments ?? 0}
-          sublabel="Total visited appointment"
-          icon="📅"
-          iconBg={colors.successLight}
-        />
-      </View>
+      <PaStatGrid>
+        <PaStatCell label="Booked" value={stats?.total_appointments ?? today.length} />
+        <PaStatCell label="Waiting" value={waiting} valueColor={waiting > 0 ? pa.signal : pa.ink} />
+      </PaStatGrid>
 
-      <SectionTitle>Weekly total appointments</SectionTitle>
-      <Card>{stats ? <WeeklyBarChart data={stats.weekly_appointments} /> : null}</Card>
-
-      <View style={{ marginTop: spacing.lg }}>
-        <SectionTitle>Today's Appointments</SectionTitle>
-        {today.length === 0 ? (
-          <Card><EmptyState message="No appointments today." /></Card>
-        ) : (
-          today.map((a) => (
-            <Card key={a.id} style={{ marginBottom: spacing.sm }}>
-              <View style={styles.apptRow}>
-                <Text style={styles.apptPatient}>{a.patient?.name ?? 'Patient'}</Text>
-                <Text style={styles.apptTime}>({a.start_time?.slice(0, 5)} - {a.end_time?.slice(0, 5)})</Text>
-                <View style={{ flex: 1 }} />
-                <Badge status={a.status} />
-              </View>
-              {a.reason ? <Text style={styles.apptReason}>{a.reason}</Text> : null}
-              <View style={styles.apptActions}>
-                {a.status === 'pending' && (
-                  <IconAction icon="✅" label="Confirm" color={colors.success} onPress={() => updateStatus(a.id, 'confirmed')} />
-                )}
-                {a.status === 'confirmed' && (
-                  <IconAction icon="🟢" label="Check In" color={colors.primary} onPress={() => updateStatus(a.id, 'checked_in')} />
-                )}
-                {a.status === 'checked_in' && (
-                  <IconAction icon="🏁" label="Complete" color={colors.success} onPress={() => updateStatus(a.id, 'completed')} />
-                )}
-                {!['completed', 'cancelled', 'no_show'].includes(a.status) && (
-                  <IconAction icon="✖️" label="Cancel" color={colors.danger} onPress={() => updateStatus(a.id, 'cancelled')} />
-                )}
-              </View>
-            </Card>
-          ))
-        )}
-      </View>
+      <PaSectionLabel style={{ marginBottom: 8 }}>Today's appointments</PaSectionLabel>
+      {today.length === 0 ? (
+        <PaCard><PaEmptyState message="No appointments today." /></PaCard>
+      ) : (
+        today.map((a) => (
+          <PaCard key={a.id} style={{ marginBottom: 10, padding: 0, paddingHorizontal: 16 }}>
+            <PaRow
+              title={`${a.start_time?.slice(0, 5)} · ${a.patient?.name ?? 'Patient'}`}
+              subtitle={a.reason ?? (a.visit_type === 'telemed' ? 'Video' : a.visit_type === 'home' ? 'Home visit' : 'Clinic')}
+              right={<PaBadge status={a.status} />}
+              onPress={() => openAppointment(a)}
+            />
+            <View style={styles.actions}>
+              {a.status === 'pending' && (
+                <PaChipButton title="Confirm" tone="go" loading={updatingId === a.id} onPress={() => updateStatus(a.id, 'confirmed')} />
+              )}
+              {a.status === 'confirmed' && (
+                <PaChipButton title="Check in" loading={updatingId === a.id} onPress={() => updateStatus(a.id, 'checked_in')} />
+              )}
+              {a.status === 'checked_in' && (
+                <PaChipButton title="Complete" tone="go" loading={updatingId === a.id} onPress={() => updateStatus(a.id, 'completed')} />
+              )}
+              {!['completed', 'cancelled', 'no_show'].includes(a.status) && (
+                <PaChipButton title="Cancel" tone="stop" loading={updatingId === a.id} onPress={() => updateStatus(a.id, 'cancelled')} />
+              )}
+            </View>
+          </PaCard>
+        ))
+      )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray50 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
-  greeting: { fontFamily: font.regular, fontSize: 14, color: colors.gray600 },
-  name: { fontFamily: font.bold, fontSize: 22, color: colors.secondary, marginTop: 2 },
-  statsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
-  apptRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
-  apptPatient: { fontFamily: font.semibold, fontSize: 14, color: colors.primary },
-  apptTime: { fontFamily: font.regular, fontSize: 12, color: colors.gray500 },
-  apptReason: { fontFamily: font.regular, fontSize: 12, color: colors.gray600, marginTop: 4 },
-  apptActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.gray100, paddingTop: spacing.sm },
+  container: { flex: 1, backgroundColor: pa.paper },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  greeting: { fontFamily: paFonts.regular, fontSize: 14, color: pa.muted },
+  name: { ...type.h2, color: pa.ink, marginTop: 2 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 14, paddingTop: 2 },
 });

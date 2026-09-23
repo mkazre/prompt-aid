@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api, apiErrorMessage } from '../../api/client';
 import { Doctor } from '../../api/types';
-import { Badge, Card, Input, PrimaryButton, SectionTitle } from '../../components/UI';
-import { colors, font, radius, spacing } from '../../theme';
+import { PaAvatar, PaBadge, PaButton, PaCard, PaInput, PaSectionLabel } from '../../components/pa';
+import { pa, paFonts, paRadius, type } from '../../theme';
 
 export default function DoctorDetailScreen({ route, navigation }: any) {
   const { doctorId } = route.params;
@@ -46,7 +46,7 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
         reason: reason || undefined,
       });
       Alert.alert('Booked!', 'Your appointment is pending confirmation.', [
-        { text: 'View my appointments', onPress: () => navigation.navigate('Appointments') },
+        { text: 'View my appointments', onPress: () => navigation.getParent()?.navigate('Appointments') },
       ]);
     } catch (e) {
       Alert.alert('Booking failed', apiErrorMessage(e));
@@ -57,69 +57,76 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
 
   if (!doctor) return null;
 
+  const clinic = doctor.clinics.find((c) => c.id === clinicId);
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <Card>
-        <View style={styles.headerRow}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <View style={styles.row}>
+        <PaAvatar name={doctor.name} size={72} round={false} />
+        <View style={{ flex: 1 }}>
           <Text style={styles.name}>{doctor.name}</Text>
-          <Badge
-            status={doctor.is_accepting_appointments ? 'available' : 'unavailable'}
-            label={doctor.is_accepting_appointments ? 'Accepting appointments' : 'Not accepting new patients'}
-          />
+          <Text style={styles.spec}>{doctor.specialization}</Text>
+          <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+            <PaBadge tone="go" label={`${doctor.rating_avg.toFixed(1)} · ${doctor.rating_count}`} />
+          </View>
         </View>
-        <Text style={styles.spec}>{doctor.specialization} · {doctor.experience_years} yrs experience</Text>
-        <Text style={styles.meta}>★ {doctor.rating_avg.toFixed(1)} ({doctor.rating_count} reviews)</Text>
-        {doctor.availability_summary ? <Text style={styles.schedule}>🕐 {doctor.availability_summary}</Text> : null}
-        <Text style={styles.bio}>{doctor.bio}</Text>
-      </Card>
+      </View>
 
-      <SectionTitle>Book an appointment</SectionTitle>
-      <Card>
-        <Text style={styles.fee}>Consultation fee: R{doctor.consultation_fee}</Text>
+      {doctor.availability_summary ? <Text style={styles.meta}>{doctor.availability_summary}</Text> : null}
+      {doctor.bio ? <Text style={styles.bio}>{doctor.bio}</Text> : null}
 
-        {!doctor.is_accepting_appointments ? (
-          <Text style={styles.mutedText}>
-            This doctor is not currently accepting new appointments. Please check back later or browse other available doctors.
-          </Text>
-        ) : (
-          <>
-            <Text style={styles.label}>Clinic</Text>
-            <View style={styles.chipRow}>
-              {doctor.clinics.map((c) => (
-                <Chip key={c.id} label={c.name} active={clinicId === c.id} onPress={() => setClinicId(c.id)} />
+      {!doctor.is_accepting_appointments ? (
+        <PaCard style={{ marginTop: 18 }}>
+          <Text style={styles.muted}>This doctor is not currently accepting new appointments.</Text>
+        </PaCard>
+      ) : (
+        <>
+          <PaSectionLabel style={{ marginTop: 18, marginBottom: 8 }}>Clinic</PaSectionLabel>
+          <View style={styles.chipRow}>
+            {doctor.clinics.map((c) => (
+              <Chip key={c.id} label={c.name} active={clinicId === c.id} onPress={() => setClinicId(c.id)} />
+            ))}
+          </View>
+
+          <PaInput label="Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
+
+          <PaSectionLabel style={{ marginBottom: 8 }}>Available times{loadingSlots ? ' (loading…)' : ''}</PaSectionLabel>
+          {slots.length ? (
+            <View style={styles.slotGrid}>
+              {slots.map((s) => (
+                <Pressable key={s} onPress={() => setSlot(s)} style={[styles.slotCell, slot === s && styles.slotCellActive]}>
+                  <Text style={[styles.slotText, slot === s && styles.slotTextActive]}>{s}</Text>
+                </Pressable>
               ))}
             </View>
+          ) : (
+            <Text style={styles.muted}>{loadingSlots ? 'Loading…' : 'No slots available this day — try another date.'}</Text>
+          )}
 
-            <Input label="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} placeholder="2026-09-20" />
+          <PaInput label="Reason for visit (optional)" value={reason} onChangeText={setReason} placeholder="Briefly describe your symptoms" multiline />
 
-            <Text style={styles.label}>Available time slots</Text>
-            {loadingSlots ? (
-              <Text style={styles.mutedText}>Loading slots...</Text>
-            ) : slots.length ? (
-              <View style={styles.chipRow}>
-                {slots.map((s) => (
-                  <Chip key={s} label={s} active={slot === s} onPress={() => setSlot(s)} />
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.mutedText}>No slots available this day — try another date.</Text>
-            )}
+          {clinic ? (
+            <Pressable
+              onPress={() => navigation.getParent()?.navigate('Rides', { screen: 'ShuttleRequest', params: { to: clinic.name } })}
+              style={styles.shuttleBanner}
+            >
+              <Text style={styles.shuttleTitle}>Add a shuttle</Text>
+              <Text style={styles.shuttleSub}>Fetch from home, return after — get a fare quote.</Text>
+            </Pressable>
+          ) : null}
 
-            <Input label="Reason for visit (optional)" value={reason} onChangeText={setReason} placeholder="Briefly describe your symptoms" multiline />
-
-            <PrimaryButton title="Confirm booking" onPress={handleBook} loading={booking} disabled={!slot} />
-          </>
-        )}
-      </Card>
+          <PaButton title="Confirm booking" onPress={handleBook} loading={booking} disabled={!slot} style={{ marginTop: 16 }} />
+        </>
+      )}
     </ScrollView>
   );
 }
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
-    <Text onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
-      {label}
-    </Text>
+    <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -130,27 +137,24 @@ function defaultDate() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray50 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
-  schedule: { fontFamily: font.regular, fontSize: 12, color: colors.gray500, marginTop: 6 },
-  name: { fontFamily: font.bold, fontSize: 20, color: colors.secondary },
-  spec: { fontFamily: font.regular, color: colors.gray600, marginTop: 2 },
-  meta: { fontFamily: font.medium, color: colors.accent, marginTop: 6 },
-  bio: { fontFamily: font.regular, color: colors.gray700, marginTop: spacing.sm, lineHeight: 20 },
-  fee: { fontFamily: font.semibold, color: colors.secondary, marginBottom: spacing.md },
-  label: { fontFamily: font.medium, fontSize: 12, color: colors.gray600, marginBottom: 6, marginTop: spacing.sm },
-  mutedText: { fontFamily: font.regular, color: colors.gray500, fontSize: 13 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing.sm },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.gray300,
-    borderRadius: radius.full,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    fontFamily: font.medium,
-    fontSize: 13,
-    color: colors.gray700,
-    overflow: 'hidden',
-  },
-  chipActive: { backgroundColor: colors.primary, color: colors.white, borderColor: colors.primary },
+  container: { flex: 1, backgroundColor: pa.paper },
+  row: { flexDirection: 'row', gap: 14, marginBottom: 14 },
+  name: { fontFamily: paFonts.black, fontSize: 18, color: pa.ink },
+  spec: { fontFamily: paFonts.regular, fontSize: 13, color: pa.muted, marginTop: 3 },
+  meta: { ...type.small, marginBottom: 8 },
+  bio: { fontFamily: paFonts.regular, fontSize: 14, color: pa.inkSoft, lineHeight: 20, marginBottom: 8 },
+  muted: { fontFamily: paFonts.regular, color: pa.muted, fontSize: 13 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  chip: { borderWidth: 1, borderColor: pa.line, borderRadius: paRadius.sm, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: pa.surface },
+  chipActive: { backgroundColor: pa.beaconWash, borderColor: pa.ink },
+  chipText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
+  chipTextActive: { color: pa.ink },
+  slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+  slotCell: { width: '30%', paddingVertical: 10, borderWidth: 1, borderColor: pa.line, backgroundColor: pa.surface, alignItems: 'center' },
+  slotCellActive: { backgroundColor: pa.ink, borderColor: pa.ink },
+  slotText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
+  slotTextActive: { color: '#fff' },
+  shuttleBanner: { backgroundColor: pa.beaconWash, borderWidth: 1, borderColor: pa.beaconLine, padding: 13, marginBottom: 14 },
+  shuttleTitle: { fontFamily: paFonts.black, fontSize: 13, color: pa.ink },
+  shuttleSub: { fontFamily: paFonts.regular, fontSize: 12, color: pa.inkSoft, marginTop: 2 },
 });

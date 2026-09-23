@@ -9,6 +9,7 @@ import {
   Lato_900Black,
 } from '@expo-google-fonts/lato';
 import { AuthProvider } from './src/context/AuthContext';
+import { CartProvider } from './src/context/CartContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -37,8 +38,10 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
-      <RootNavigator />
+      <CartProvider>
+        <StatusBar style="dark" />
+        <RootNavigator />
+      </CartProvider>
     </AuthProvider>
   );
 }

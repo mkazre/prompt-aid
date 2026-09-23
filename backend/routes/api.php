@@ -35,6 +35,7 @@ Route::get('/pharmacies/{pharmacy}', [PharmacyController::class, 'show']);
 Route::get('/products', [PharmacyController::class, 'products']);
 
 Route::post('/rides/quote', [RideController::class, 'quote']);
+Route::post('/rides/quote-by-address', [RideController::class, 'quoteByAddress']);
 
 // --- Authenticated (any role) ---
 Route::middleware('auth:sanctum')->group(function () {
