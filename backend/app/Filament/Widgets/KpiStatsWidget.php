@@ -22,7 +22,7 @@ class KpiStatsWidget extends StatsOverviewWidget
 
     /**
      * Last 7 days of daily counts for a query, used to draw the little
-     * sparkline on each stat card — mirrors KiviCare's dashboard cards.
+     * sparkline on each stat card
      *
      * @return array<int, float>
      */

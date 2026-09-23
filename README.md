@@ -1,8 +1,10 @@
 # Prompt Aid
 
-A clinic, doctor, patient and driver (patient-shuttle) platform — feature scope modeled on
-**KiviCare**, matched to its own visual system (see [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)),
-plus an Uber-style ride-hailing layer to shuttle patients to and from appointments.
+A clinic, doctor, patient and driver (patient-shuttle) platform, with a multi-vendor
+pharmacy marketplace, lab/diagnostics partner network and an Uber-style ride-hailing
+layer to shuttle patients to and from appointments. Design system: see
+[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). Rebuild in progress against `new-ui/` — see
+`new-ui/*/HANDOVER.md` for the full specification and phased build order.
 
 Brand: **Prompt Aid** — logo/favicon sourced from `assets_demo/`.
 

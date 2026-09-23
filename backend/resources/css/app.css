@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
+@import '../css/promptaid.css';
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -6,97 +6,112 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
-/* Prompt Aid design system — matched to KiviCare's own look & feel (Hope UI):
-   Heebo for headings, Roboto for body (KiviCare's own font pairing), blue
-   primary, navy secondary, teal accent. See /DESIGN_SYSTEM.md */
+/* Prompt Aid design system — "clinical dispatch": the precision of a medical
+   chart plus the urgency of a control room. Derived from the logo (black
+   ring, red cross, yellow motion streak). Lato throughout, near-square
+   corners, hairline rules, tabular numerals. See /DESIGN_SYSTEM.md.
+
+   These Tailwind tokens are repointed to the same palette promptaid.css
+   defines as CSS custom properties (--pa-*), so every existing utility
+   class (bg-primary-500, rounded-[10px], etc.) picks up the new brand
+   automatically — new pages use the .pa-* classes directly. */
 @theme {
-    --font-sans: 'Roboto', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-heading: 'Heebo', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-heading: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-    --color-primary-50: #eef1fd;
-    --color-primary-100: #dbe1fb;
-    --color-primary-200: #b7c3f7;
-    --color-primary-300: #8fa2f2;
-    --color-primary-400: #647eed;
-    --color-primary-500: #3a57e8;
-    --color-primary-600: #2f46ba;
-    --color-primary-700: #24358c;
-    --color-primary-800: #1a2761;
-    --color-primary-900: #101838;
+    /* primary = signal (the logo's red cross) */
+    --color-primary-50: #fbedec;
+    --color-primary-100: #f6d6d3;
+    --color-primary-200: #eeb0aa;
+    --color-primary-300: #e28880;
+    --color-primary-400: #da544a;
+    --color-primary-500: #d0211c;
+    --color-primary-600: #9e1813;
+    --color-primary-700: #7a120f;
+    --color-primary-800: #5c0d0b;
+    --color-primary-900: #3d0908;
 
-    --color-secondary-50: #e6ecf3;
-    --color-secondary-100: #ccd9e6;
-    --color-secondary-500: #001f4d;
-    --color-secondary-600: #001a40;
-    --color-secondary-900: #000d20;
+    /* secondary = ink (near-black, headings/dark surfaces) */
+    --color-secondary-50: #ececeb;
+    --color-secondary-100: #d9d7d5;
+    --color-secondary-200: #b3b0ac;
+    --color-secondary-300: #8d8983;
+    --color-secondary-400: #504c47;
+    --color-secondary-500: #101012;
+    --color-secondary-600: #0b0b0c;
+    --color-secondary-900: #000000;
 
-    --color-accent-50: #e5f6f7;
-    --color-accent-100: #cceded;
-    --color-accent-500: #079aa2;
-    --color-accent-600: #067b81;
+    /* accent = beacon (the logo's yellow motion streak) — fill/border/focus only, never text on light */
+    --color-accent-50: #fef6da;
+    --color-accent-100: #fcebb0;
+    --color-accent-500: #f2c200;
+    --color-accent-600: #c9a000;
 
-    --color-success-500: #1aa053;
-    --color-warning-500: #f16a1b;
-    --color-danger-500: #c03221;
+    --color-success-500: #1f7a4c;
+    --color-warning-500: #f2c200;
+    --color-danger-500: #9e1813;
+
+    --radius-pa: 2px;
 }
 
 @layer base {
     body {
-        @apply bg-gray-50 text-gray-900 antialiased;
+        @apply bg-[var(--pa-paper)] text-[var(--pa-ink)] antialiased;
     }
     h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
     }
 }
 
 @layer components {
-    /* Buttons, inputs and cards all share the same 10px corner radius so a
-       form (input + button side by side) reads as one consistent system —
-       matching Hope UI/KiviCare's own component library, not a pill-vs-box
-       mismatch. */
+    /* Legacy component classes, restyled to the new shape language (near-
+       square corners, hairline borders instead of soft shadows) so every
+       page built before the rebuild still reads as on-brand. New pages
+       should use the .pa-* classes from promptaid.css directly instead of
+       these. */
     .btn-primary {
-        @apply inline-flex items-center justify-center gap-2 rounded-[10px] bg-primary-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_11px_rgba(58,87,232,0.35)] transition hover:bg-primary-600 hover:shadow-[0_4px_14px_rgba(58,87,232,0.45)] focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 disabled:opacity-50;
+        @apply inline-flex items-center justify-center gap-2 rounded-[2px] bg-primary-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 disabled:opacity-50;
     }
     .btn-outline {
-        @apply inline-flex items-center justify-center gap-2 rounded-[10px] border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-secondary-500 transition hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50;
+        @apply inline-flex items-center justify-center gap-2 rounded-[2px] border border-secondary-100 bg-white px-6 py-3 text-sm font-bold text-secondary-500 transition hover:border-secondary-500;
     }
     .btn-accent {
-        @apply inline-flex items-center justify-center gap-2 rounded-[10px] bg-accent-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_11px_rgba(7,154,162,0.35)] transition hover:bg-accent-600;
+        @apply inline-flex items-center justify-center gap-2 rounded-[2px] bg-accent-500 px-6 py-3 text-sm font-bold text-secondary-500 transition hover:bg-white hover:border hover:border-accent-500;
     }
     .card {
-        @apply rounded-[14px] border border-gray-100 bg-white p-6 shadow-[0_2px_16px_-4px_rgba(136,152,170,0.25)] transition;
+        @apply rounded-[2px] border border-secondary-100 bg-white p-6 transition;
     }
     .card-hover {
-        @apply hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-8px_rgba(58,87,232,0.25)] hover:border-primary-100;
+        @apply hover:border-primary-500;
     }
     .badge {
-        @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+        @apply inline-flex items-center rounded-[2px] px-2 py-1 text-[10px] font-black uppercase tracking-wide;
     }
     .badge-success { @apply bg-success-500/10 text-success-500; }
-    .badge-warning { @apply bg-warning-500/10 text-warning-500; }
+    .badge-warning { @apply bg-warning-500/20 text-[#7A5C00]; }
     .badge-danger { @apply bg-danger-500/10 text-danger-500; }
-    .badge-info { @apply bg-accent-500/10 text-accent-600; }
+    .badge-info { @apply bg-secondary-100 text-secondary-400; }
     .input {
-        @apply block w-full rounded-[10px] border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100;
+        @apply block w-full rounded-[2px] border border-secondary-100 bg-[var(--pa-surface-2)] px-4 py-2.5 text-sm text-secondary-500 placeholder-secondary-300 transition focus:border-secondary-500 focus:outline-none focus:ring-2 focus:ring-accent-500/60;
     }
     .avatar-ring {
-        @apply ring-4 ring-white shadow-[0_4px_14px_rgba(0,0,0,0.12)];
+        @apply ring-4 ring-white;
     }
     .section-eyebrow {
-        @apply inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-600;
+        @apply inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-secondary-300;
     }
 
-    /* KiviCare's signature marketing CTA: sharp corners, a "+" icon set off
-       by a thin vertical divider, used for hero/section calls to action —
-       distinct from the rounded .btn-primary used inside forms and cards. */
-    .btn-kivi {
-        @apply relative inline-flex items-center gap-3 bg-secondary-500 px-7 py-4 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-primary-500;
+    /* Signature marketing CTA: sharp corners, a "+" icon set off by a thin
+       vertical divider, used for hero/section calls to action. */
+    .btn-cta {
+        @apply relative inline-flex items-center gap-3 rounded-[2px] bg-secondary-500 px-7 py-4 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-primary-500;
     }
-    .btn-kivi span:first-child {
+    .btn-cta span:first-child {
         @apply relative pr-3;
     }
-    .btn-kivi span:first-child::after {
+    .btn-cta span:first-child::after {
         content: '';
         @apply absolute top-1/2 -right-0.5 h-3 w-px -translate-y-1/2 bg-white/30;
     }

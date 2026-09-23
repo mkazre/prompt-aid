@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "backgroundColor": "#F8F9FA",
+    "backgroundColor": "#F5F2EC",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "health.promptaid.app",
@@ -18,7 +18,7 @@
     "android": {
       "package": "health.promptaid.app",
       "adaptiveIcon": {
-        "backgroundColor": "#001F4D",
+        "backgroundColor": "#101012",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -38,10 +38,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 220,
-          "resizeMode": "contain",
-          "backgroundColor": "#F8F9FA"
+          "image": "./assets/splash.jpg",
+          "resizeMode": "cover",
+          "backgroundColor": "#FFFFFF"
         }
       ]
     ],

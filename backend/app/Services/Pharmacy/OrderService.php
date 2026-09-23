@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
- * Multi-vendor pharmacy marketplace checkout. Mirrors KiviCare's
+ * Multi-vendor pharmacy marketplace checkout. Similar to a
  * WooCommerce/Dokan add-on but built natively: each Pharmacy is a vendor
  * with its own product catalog, commission rate and delivery fee. An order
  * containing any prescription-only product is held (`awaiting_prescription_

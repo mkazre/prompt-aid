@@ -39,15 +39,15 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('15s')
             ->renderHook(PanelsRenderHook::BODY_END, fn (): string => view('filament.notification-sound')->render())
             ->colors([
-                'primary' => Color::hex('#3A57E8'),
-                'secondary' => Color::hex('#001F4D'),
-                'info' => Color::hex('#079AA2'),
-                'success' => Color::hex('#1AA053'),
-                'warning' => Color::hex('#F16A1B'),
-                'danger' => Color::hex('#C03221'),
-                'gray' => Color::hex('#6C757D'),
+                'primary' => Color::hex('#D0211C'),
+                'secondary' => Color::hex('#101012'),
+                'info' => Color::hex('#1F4E7A'),
+                'success' => Color::hex('#1F7A4C'),
+                'warning' => Color::hex('#F2C200'),
+                'danger' => Color::hex('#C8102E'),
+                'gray' => Color::hex('#6E6A62'),
             ])
-            ->font('Inter')
+            ->font('Lato')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
