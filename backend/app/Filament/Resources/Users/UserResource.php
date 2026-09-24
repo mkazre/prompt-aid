@@ -19,6 +19,13 @@ use UnitEnum;
 
 class UserResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'users';
+    }
+
     protected static ?string $model = User::class;
 
     // Creating staff accounts / changing roles & passwords is a
@@ -36,9 +43,28 @@ class UserResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Users & Access';
 
+    // Creating/editing/deleting staff accounts (including who gets which
+    // role) is a super_admin power regardless of what a custom Role might
+    // later be checked to grant — never let ChecksPermissions' plain
+    // hasPermission() check decide this on its own.
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        return (auth()->user()?->isSuperAdmin() ?? false) && (bool) auth()->user()?->hasPermission(static::permissionKey().'.view');
+    }
+
+    public static function canCreate(): bool
+    {
+        return (auth()->user()?->isSuperAdmin() ?? false) && (bool) auth()->user()?->hasPermission(static::permissionKey().'.create');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return (auth()->user()?->isSuperAdmin() ?? false) && (bool) auth()->user()?->hasPermission(static::permissionKey().'.edit');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return (auth()->user()?->isSuperAdmin() ?? false) && (bool) auth()->user()?->hasPermission(static::permissionKey().'.delete');
     }
 
     public static function form(Schema $schema): Schema

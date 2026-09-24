@@ -2,6 +2,7 @@
 
 namespace App\PageBuilder\Blocks\Content;
 
+use App\Filament\Support\MediaLibraryPicker;
 use App\PageBuilder\Blocks\AbstractBlock;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
@@ -32,6 +33,7 @@ class ImageBlock extends AbstractBlock
     {
         return [
             FileUpload::make('src')->label('Image')->image()->disk('public')->directory('page-builder')->required(),
+            MediaLibraryPicker::for('src'),
             TextInput::make('alt')->label('Alt text')->required(),
             TextInput::make('link')->label('Link URL (optional)')->url(),
         ];

@@ -17,6 +17,13 @@ use UnitEnum;
 
 class MenuResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'menus';
+    }
+
     protected static ?string $model = Menu::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBars3;

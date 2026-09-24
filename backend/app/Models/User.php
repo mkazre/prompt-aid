@@ -41,6 +41,7 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'password',
         'role',
+        'role_id',
         'avatar',
         'status',
     ];
@@ -93,6 +94,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Clinic::class, 'clinic_admin_id');
     }
 
+    public function assignedRole(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
     public function thirdPartyProfile(): HasOne
     {
         return $this->hasOne(ThirdPartyProfile::class);
@@ -136,6 +142,29 @@ class User extends Authenticatable implements FilamentUser
     public function isPatient(): bool
     {
         return $this->role === self::ROLE_PATIENT;
+    }
+
+    /**
+     * Fine-grained navigation/CRUD permission check for the Staff panel,
+     * layered on top of (never replacing) the `role` enum's panel access
+     * and tenant scoping. Super admins always pass. When `role_id` is set,
+     * the assigned Role's granted keys decide; otherwise we fall back to
+     * the enum role's default grant set so existing accounts without a
+     * `role_id` keep behaving the way they always have.
+     */
+    public function hasPermission(string $key): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($this->role_id) {
+            return $this->assignedRole?->grants($key) ?? false;
+        }
+
+        $defaults = \App\Support\Permissions::defaultsForEnumRole($this->role);
+
+        return $defaults === '*' || in_array($key, $defaults, true);
     }
 
     /**

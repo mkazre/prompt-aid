@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Filament\Support\MediaLibraryPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -33,12 +34,21 @@ class UserForm
                         'patient' => 'Patient',
                     ])
                     ->required()
-                    ->default('patient'),
+                    ->default('patient')
+                    ->helperText('Which panel this account can log into, and the tenant scoping (clinic/doctor) applied to clinical data — unrelated to the fine-grained permissions below.'),
+                Select::make('role_id')
+                    ->label('Custom role (permissions)')
+                    ->relationship('assignedRole', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->nullable()
+                    ->helperText('Optional. Grants the exact set of navigation/CRUD permissions defined on that Role. Leave blank to use the sensible defaults for the Role above (see Roles & Permissions).'),
                 Select::make('status')
                     ->options(['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended'])
                     ->required()
                     ->default('active'),
                 FileUpload::make('avatar')->image()->directory('avatars')->circleCropper(),
+                MediaLibraryPicker::for('avatar'),
             ]);
     }
 }

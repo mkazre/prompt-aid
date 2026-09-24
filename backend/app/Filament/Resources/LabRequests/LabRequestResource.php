@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Auth;
 
 class LabRequestResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'lab-requests';
+    }
+
     protected static ?string $model = LabRequest::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;

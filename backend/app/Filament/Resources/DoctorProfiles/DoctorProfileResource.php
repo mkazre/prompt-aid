@@ -20,6 +20,13 @@ use Illuminate\Support\Facades\Auth;
 
 class DoctorProfileResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'doctor-profiles';
+    }
+
     protected static ?string $model = DoctorProfile::class;
 
     public static function getEloquentQuery(): Builder

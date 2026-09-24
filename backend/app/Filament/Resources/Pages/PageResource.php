@@ -18,6 +18,13 @@ use UnitEnum;
 
 class PageResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'pages';
+    }
+
     protected static ?string $model = Page::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentDuplicate;

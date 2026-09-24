@@ -24,6 +24,13 @@ use UnitEnum;
  */
 class TriageSubmissionResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'triage-submissions';
+    }
+
     protected static ?string $model = TriageSubmission::class;
 
     // System-wide safety monitor, not tied to any one clinic — super_admin only.
@@ -42,7 +49,7 @@ class TriageSubmissionResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return (bool) auth()->user()?->isSuperAdmin();
+        return (bool) auth()->user()?->isSuperAdmin() && (bool) auth()->user()?->hasPermission(static::permissionKey().'.view');
     }
 
     public static function canCreate(): bool

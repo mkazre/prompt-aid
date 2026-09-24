@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Clinics\Schemas;
 
+use App\Filament\Support\MediaLibraryPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
@@ -50,7 +51,9 @@ class ClinicForm
                     ->columns(2)
                     ->components([
                         FileUpload::make('logo')->image()->directory('clinics/logos'),
+                        MediaLibraryPicker::for('logo'),
                         FileUpload::make('cover_image')->image()->directory('clinics/covers'),
+                        MediaLibraryPicker::for('cover_image'),
                         TagsInput::make('specialties')->columnSpanFull(),
                     ]),
             ]);

@@ -17,6 +17,13 @@ use UnitEnum;
 
 class MedicalSchemeResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'medical-schemes';
+    }
+
     protected static ?string $model = MedicalScheme::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
@@ -27,7 +34,8 @@ class MedicalSchemeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return (bool) (auth()->user()?->isSuperAdmin() || auth()->user()?->isClinicAdmin());
+        return (bool) (auth()->user()?->isSuperAdmin() || auth()->user()?->isClinicAdmin())
+            && (bool) auth()->user()?->hasPermission(static::permissionKey().'.view');
     }
 
     public static function form(Schema $schema): Schema

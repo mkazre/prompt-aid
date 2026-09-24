@@ -17,6 +17,13 @@ use UnitEnum;
 
 class ServiceCategoryResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'service-categories';
+    }
+
     protected static ?string $model = ServiceCategory::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;

@@ -18,6 +18,13 @@ use UnitEnum;
 
 class AuditLogResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'audit-logs';
+    }
+
     protected static ?string $model = AuditLog::class;
 
     // System-wide security trail — super_admin only.
@@ -36,7 +43,7 @@ class AuditLogResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return (bool) auth()->user()?->isSuperAdmin();
+        return (bool) auth()->user()?->isSuperAdmin() && (bool) auth()->user()?->hasPermission(static::permissionKey().'.view');
     }
 
     public static function canCreate(): bool

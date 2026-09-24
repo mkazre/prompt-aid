@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Auth;
 
 class ClinicResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'clinics';
+    }
+
     protected static ?string $model = Clinic::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;

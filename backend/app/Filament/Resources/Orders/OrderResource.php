@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'orders';
+    }
+
     protected static ?string $model = Order::class;
 
     public static function getEloquentQuery(): Builder

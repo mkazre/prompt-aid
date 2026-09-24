@@ -17,6 +17,13 @@ use Filament\Tables\Table;
 
 class EncounterResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'encounters';
+    }
+
     use \App\Filament\Concerns\ScopesToClinicOrDoctor;
 
     protected static ?string $model = Encounter::class;

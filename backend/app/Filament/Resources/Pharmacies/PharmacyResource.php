@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Auth;
 
 class PharmacyResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'pharmacies';
+    }
+
     protected static ?string $model = Pharmacy::class;
 
     public static function getEloquentQuery(): Builder

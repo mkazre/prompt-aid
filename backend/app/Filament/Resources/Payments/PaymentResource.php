@@ -17,6 +17,13 @@ use Filament\Tables\Table;
 
 class PaymentResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'payments';
+    }
+
     use \App\Filament\Concerns\ScopesToClinicOrDoctor;
 
     protected static ?string $model = Payment::class;

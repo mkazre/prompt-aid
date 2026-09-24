@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Support\MediaLibraryPicker;
 use App\Models\Setting;
 use App\Models\ThemeSetting;
 use BackedEnum;
@@ -62,6 +63,7 @@ class ThemeSettings extends Page
                         Tab::make('Brand assets')
                             ->schema([
                                 FileUpload::make('brand.logo')->label('Logo')->image()->disk('public')->directory('theme'),
+                                MediaLibraryPicker::for('brand.logo'),
                                 FileUpload::make('brand.favicon')->label('Favicon')->disk('public')->directory('theme'),
                             ])->columns(2),
                         Tab::make('Shape')

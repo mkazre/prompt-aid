@@ -17,6 +17,13 @@ use Filament\Tables\Table;
 
 class ServiceResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'services';
+    }
+
     use \App\Filament\Concerns\ScopesToClinicOrDoctor;
 
     protected static ?string $model = Service::class;

@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Auth;
 
 class ThirdPartyProfileResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'third-party-profiles';
+    }
+
     protected static ?string $model = ThirdPartyProfile::class;
 
     public static function getEloquentQuery(): Builder

@@ -29,6 +29,11 @@ class MediaLibrary extends Page
 
     protected string $view = 'filament.pages.media-library';
 
+    public static function canAccess(): bool
+    {
+        return (bool) auth()->user()?->hasPermission('media-library.view');
+    }
+
     public function getFiles(): array
     {
         $files = [];
@@ -37,7 +42,10 @@ class MediaLibrary extends Page
             foreach (Storage::disk('public')->files($dir) as $path) {
                 $files[] = [
                     'path' => $path,
-                    'url' => Storage::disk('public')->url($path),
+                    // Cache-bust on the file's mtime so a crop (which
+                    // overwrites the same path) shows immediately instead
+                    // of the browser's cached copy of the old crop.
+                    'url' => Storage::disk('public')->url($path).'?v='.Storage::disk('public')->lastModified($path),
                     'size' => Storage::disk('public')->size($path),
                 ];
             }
@@ -48,13 +56,67 @@ class MediaLibrary extends Page
 
     public function deleteFile(string $path): void
     {
-        if (! str_starts_with($path, 'page-builder/') && ! str_starts_with($path, 'theme/')) {
-            abort(403);
-        }
+        $this->assertManaged($path);
 
         Storage::disk('public')->delete($path);
 
         Notification::make()->title('File deleted')->success()->send();
+    }
+
+    /**
+     * Crop in place: (x, y, width, height) are pixel coordinates in the
+     * original image, as produced by Cropper.js's getData(true).
+     */
+    public function cropFile(string $path, int $x, int $y, int $width, int $height): void
+    {
+        $this->assertManaged($path);
+
+        if (! extension_loaded('gd') || $width < 1 || $height < 1) {
+            Notification::make()->title('Could not crop image')->danger()->send();
+
+            return;
+        }
+
+        $fullPath = Storage::disk('public')->path($path);
+        $source = @imagecreatefromstring((string) file_get_contents($fullPath));
+
+        if (! $source) {
+            Notification::make()->title('Could not read image')->danger()->send();
+
+            return;
+        }
+
+        $cropped = imagecrop($source, ['x' => $x, 'y' => $y, 'width' => $width, 'height' => $height]);
+
+        if ($cropped === false) {
+            imagedestroy($source);
+            Notification::make()->title('Crop failed')->danger()->send();
+
+            return;
+        }
+
+        ob_start();
+
+        match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+            'png' => imagepng($cropped),
+            'webp' => imagewebp($cropped),
+            'gif' => imagegif($cropped),
+            default => imagejpeg($cropped, null, 90),
+        };
+
+        Storage::disk('public')->put($path, (string) ob_get_clean());
+
+        imagedestroy($source);
+        imagedestroy($cropped);
+
+        Notification::make()->title('Image cropped')->success()->send();
+    }
+
+    protected function assertManaged(string $path): void
+    {
+        if (! str_starts_with($path, 'page-builder/') && ! str_starts_with($path, 'theme/')) {
+            abort(403);
+        }
     }
 
     protected function getHeaderActions(): array

@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Auth;
 
 class RideResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'rides';
+    }
+
     protected static ?string $model = Ride::class;
 
     // Ride dispatch is a logistics function, not a clinical one — clinic
@@ -32,7 +39,22 @@ class RideResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return (bool) Auth::user()?->isSuperAdmin();
+        return (bool) Auth::user()?->isSuperAdmin() && (bool) Auth::user()?->hasPermission(static::permissionKey().'.view');
+    }
+
+    public static function canCreate(): bool
+    {
+        return (bool) Auth::user()?->isSuperAdmin() && (bool) Auth::user()?->hasPermission(static::permissionKey().'.create');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return (bool) Auth::user()?->isSuperAdmin() && (bool) Auth::user()?->hasPermission(static::permissionKey().'.edit');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return (bool) Auth::user()?->isSuperAdmin() && (bool) Auth::user()?->hasPermission(static::permissionKey().'.delete');
     }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;

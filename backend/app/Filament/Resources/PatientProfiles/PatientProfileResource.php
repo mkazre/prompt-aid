@@ -18,6 +18,13 @@ use Filament\Tables\Table;
 
 class PatientProfileResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'patient-profiles';
+    }
+
     use \App\Filament\Concerns\ScopesToClinicOrDoctor;
 
     protected static ?string $model = PatientProfile::class;

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Pharmacies\Schemas;
 
+use App\Filament\Support\MediaLibraryPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -26,6 +27,7 @@ class PharmacyForm
                 TextInput::make('slug')
                     ->required(),
                 FileUpload::make('logo')->image()->directory('pharmacies/logos'),
+                MediaLibraryPicker::for('logo'),
                 Textarea::make('description')
                     ->columnSpanFull(),
                 TextInput::make('phone')

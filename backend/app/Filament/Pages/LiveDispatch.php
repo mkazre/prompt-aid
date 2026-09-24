@@ -26,6 +26,11 @@ class LiveDispatch extends Page
 
     protected string $view = 'filament.pages.live-dispatch';
 
+    public static function canAccess(): bool
+    {
+        return (bool) auth()->user()?->hasPermission('live-dispatch.view');
+    }
+
     /**
      * @return Collection<int, Ride>
      */

@@ -17,6 +17,13 @@ use UnitEnum;
 
 class PageTemplateResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'page-templates';
+    }
+
     protected static ?string $model = PageTemplate::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;

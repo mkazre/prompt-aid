@@ -20,6 +20,13 @@ use UnitEnum;
 
 class ClaimResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'claims';
+    }
+
     protected static ?string $model = Claim::class;
 
     /**
@@ -60,7 +67,8 @@ class ClaimResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return (bool) (auth()->user()?->isSuperAdmin() || auth()->user()?->isClinicAdmin());
+        return (bool) (auth()->user()?->isSuperAdmin() || auth()->user()?->isClinicAdmin())
+            && (bool) auth()->user()?->hasPermission(static::permissionKey().'.view');
     }
 
     public static function form(Schema $schema): Schema

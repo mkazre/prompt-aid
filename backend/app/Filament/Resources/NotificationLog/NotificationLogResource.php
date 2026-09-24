@@ -21,6 +21,13 @@ use UnitEnum;
  */
 class NotificationLogResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'notification-log';
+    }
+
     protected static ?string $model = DatabaseNotification::class;
 
     public static function getEloquentQuery(): Builder
@@ -38,7 +45,7 @@ class NotificationLogResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return (bool) auth()->user()?->isSuperAdmin();
+        return (bool) auth()->user()?->isSuperAdmin() && (bool) auth()->user()?->hasPermission(static::permissionKey().'.view');
     }
 
     public static function table(Table $table): Table

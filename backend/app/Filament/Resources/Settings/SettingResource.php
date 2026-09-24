@@ -17,6 +17,13 @@ use Filament\Tables\Table;
 
 class SettingResource extends Resource
 {
+    use \App\Filament\Concerns\ChecksPermissions;
+
+    protected static function permissionKey(): string
+    {
+        return 'settings';
+    }
+
     protected static ?string $model = Setting::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
