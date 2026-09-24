@@ -19,10 +19,24 @@
   --pa-beacon: #F2C200;
   --pa-beacon-wash: #FEF6DA;
   --pa-go: #1F7A4C;
-  --pa-radius: 2px;
+  --pa-radius: 0px;
 }
 
-.fi-body { font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }
+/* Force light mode regardless of the OS/browser's prefers-color-scheme —
+   Filament's `dark:` classes are media-query driven, not just tied to the
+   panel's darkMode() toggle, so a system in dark mode renders Filament's
+   dark palette (near-black body/sidebar) even with darkMode(false) set on
+   the panel. Overriding every dark: variant individually isn't practical,
+   so we force color-scheme and the handful of containers that otherwise
+   show through as dark chrome. */
+html, .fi-body {
+  color-scheme: light !important;
+}
+.fi-body {
+  background: var(--pa-surface) !important;
+  color: var(--pa-ink) !important;
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
 
 /* Flatten Filament's default shadow-heavy look to the hairline-border,
    near-square-corner language the mockups use throughout. */
@@ -38,9 +52,36 @@
   border: 1px solid var(--pa-line) !important;
 }
 
+/* Square every corner site-wide — buttons, inputs, badges, modals,
+   dropdowns, tables, avatars, the lot — except elements that are
+   deliberately circular (status dots, the round user-avatar bubble). */
+.fi-btn,
+.fi-icon-btn,
+.fi-input,
+.fi-select-input,
+.fi-textarea,
+.fi-badge,
+.fi-modal-window,
+.fi-dropdown-panel,
+.fi-ta-ctn,
+.fi-fo-component-ctn,
+.fi-wi-stats-overview-stat,
+.fi-section,
+.fi-card,
+.fi-tabs,
+.fi-tabs-item,
+.fi-pagination-item,
+.fi-notification {
+  border-radius: var(--pa-radius) !important;
+}
+
 /* Sidebar: white background to match the logo, red link text, black on
    hover/active. */
-.fi-sidebar {
+.fi-sidebar,
+.fi-sidebar-header,
+.fi-sidebar-header-ctn,
+.fi-sidebar-nav,
+.fi-sidebar-footer {
   background: var(--pa-surface) !important;
   border-inline-end: 1px solid var(--pa-line) !important;
 }
