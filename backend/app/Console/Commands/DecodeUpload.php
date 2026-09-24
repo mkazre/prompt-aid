@@ -15,20 +15,28 @@ use Illuminate\Support\Facades\Storage;
  */
 class DecodeUpload extends Command
 {
-    protected $signature = 'deploy:decode {sourceGlob} {target} {expectedBytes}';
+    protected $signature = 'deploy:decode {sourceDir} {target} {expectedBytes}';
 
-    protected $description = 'Decode base64 chunk(s) from storage/app/deploy (sorted glob) into a real project path';
+    protected $description = 'Decode base64 chunk(s) from a storage/app/deploy subdirectory (all files, sorted by name) into a real project path';
 
     public function handle(): int
     {
-        $pattern = storage_path('app/deploy/'.$this->argument('sourceGlob'));
-        $files = glob($pattern);
-        sort($files);
+        $dir = storage_path('app/deploy/'.$this->argument('sourceDir'));
         $target = base_path($this->argument('target'));
         $expected = (int) $this->argument('expectedBytes');
 
+        if (! is_dir($dir)) {
+            $this->error("Source directory not found: {$dir}");
+
+            return self::FAILURE;
+        }
+
+        $files = array_values(array_diff(scandir($dir), ['.', '..']));
+        sort($files);
+        $files = array_map(fn ($f) => $dir.DIRECTORY_SEPARATOR.$f, $files);
+
         if (empty($files)) {
-            $this->error("No source files matched: {$pattern}");
+            $this->error("No source files in: {$dir}");
 
             return self::FAILURE;
         }
