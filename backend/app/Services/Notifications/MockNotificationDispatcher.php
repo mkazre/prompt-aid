@@ -20,6 +20,21 @@ class MockNotificationDispatcher implements NotificationDispatcherInterface
         return $this->log($user, 'sms', null, $body);
     }
 
+    public function smsToPhone(string $phone, string $body, ?string $label = null): bool
+    {
+        NotificationLog::query()->create([
+            'user_id' => null,
+            'channel' => 'sms',
+            'subject' => $label ? "To {$label} ({$phone})" : "To {$phone}",
+            'body' => $body,
+            'status' => 'sent',
+        ]);
+
+        Log::info("[MockNotification][sms] to {$phone}".($label ? " ({$label})" : '').": {$body}");
+
+        return true;
+    }
+
     public function email(User $user, string $subject, string $body): bool
     {
         return $this->log($user, 'email', $subject, $body);

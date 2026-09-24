@@ -12,6 +12,12 @@ interface NotificationDispatcherInterface
     public function sms(User $user, string $body): bool;
 
     /**
+     * Send (or simulate sending) an SMS to a phone number that isn't a
+     * registered user — e.g. an emergency contact given during triage.
+     */
+    public function smsToPhone(string $phone, string $body, ?string $label = null): bool;
+
+    /**
      * Send (or simulate sending) an email to the user and log it.
      */
     public function email(User $user, string $subject, string $body): bool;

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmergencyResultsController;
 use App\Http\Controllers\PageBuilderPreviewController;
 use App\Http\Controllers\PageBuilderRenderController;
 use App\Http\Controllers\PageController;
@@ -36,8 +37,9 @@ Route::get('/for-providers', [StaticPageController::class, 'forProviders'])->nam
 Route::post('/for-providers', [StaticPageController::class, 'forProvidersSubmit'])->name('for-providers.submit');
 
 Route::get('/emergency', [StaticPageController::class, 'emergency'])->name('emergency');
-Route::get('/emergency-results', [StaticPageController::class, 'emergencyResults'])->name('emergency.results');
+Route::get('/emergency-results', [EmergencyResultsController::class, 'show'])->name('emergency.results');
 Route::post('/emergency/submit', [\App\Http\Controllers\TriageSubmissionController::class, 'store'])->name('emergency.submit');
+Route::post('/emergency/alert-contact', [EmergencyResultsController::class, 'alertContact'])->name('emergency.alert-contact');
 
 // About, How It Works, FAQ, Privacy, Terms and the POPIA notice are pure
 // content — real page-builder pages (see SeedSitePages), editable from

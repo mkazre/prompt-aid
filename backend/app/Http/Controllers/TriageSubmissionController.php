@@ -28,6 +28,9 @@ class TriageSubmissionController extends Controller
             'observations' => ['nullable', 'array'],
             'reasons' => ['nullable', 'array'],
             'facility_types' => ['nullable', 'array'],
+            'pickup_lat' => ['nullable', 'numeric'],
+            'pickup_lng' => ['nullable', 'numeric'],
+            'pickup_address' => ['nullable', 'string', 'max:255'],
         ]);
 
         $submission = TriageSubmission::query()->create([

@@ -61,7 +61,7 @@
   </label></div></div>
     <div class="pa-locrow" style="margin-top:20px">
       <span class="pa-tick-beacon"></span>
-      <span style="flex:1"><strong>Finding you…</strong> <span id="pa-locstatus">14 Waterford Drive, Fourways · accurate to 12 m</span></span>
+      <span style="flex:1"><strong id="pa-loclabel">Finding you…</strong> <span id="pa-locstatus">Waiting for your browser's location permission</span></span>
       <a class="pa-btn-ghost pa-btn-sm" href="#" id="pa-locmanual">Enter address instead</a>
     </div>
   <div class="pa-spread" style="margin-top:26px;border-top:1px solid var(--pa-line);padding-top:20px"><a class="pa-btn-ghost" href="{{ url('/') }}">Cancel</a><button class="pa-btn pa-btn-lg" data-next>Continue</button></div>
@@ -215,10 +215,42 @@
     ageBand: 'adult', pregnant: false,
     symptoms: [], discriminators: [],
     observations: { mobility:'walking', breathing:'normal', consciousness:'alert',
-                    bleeding:'none', temperature:'normal', trauma:'no', pain:6 }
+                    bleeding:'none', temperature:'normal', trauma:'no', pain:6 },
+    lat: null, lng: null, address: null
   };
   var stepEls = [].slice.call(document.querySelectorAll('.pa-triage-step'));
   var current = 1;
+
+  /* --- real browser geolocation, so the results page can rank real
+     facilities by real distance instead of guessing --- */
+  var locLabel = document.getElementById('pa-loclabel');
+  var locStatus = document.getElementById('pa-locstatus');
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      state.lat = pos.coords.latitude;
+      state.lng = pos.coords.longitude;
+      locLabel.textContent = 'Location found.';
+      locStatus.textContent = 'Accurate to ' + Math.round(pos.coords.accuracy) + ' m';
+    }, function () {
+      locLabel.textContent = 'Could not find you.';
+      locStatus.textContent = 'Enter your address instead, or continue without one.';
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  } else {
+    locLabel.textContent = 'Location unavailable.';
+    locStatus.textContent = 'Your browser does not support location — enter an address instead.';
+  }
+  var locManual = document.getElementById('pa-locmanual');
+  if (locManual) locManual.addEventListener('click', function (e) {
+    e.preventDefault();
+    var addr = window.prompt('Enter the address to search near:', state.address || '');
+    if (addr) {
+      state.address = addr;
+      state.lat = null;
+      state.lng = null;
+      locLabel.textContent = 'Address entered.';
+      locStatus.textContent = addr;
+    }
+  });
 
   function show(n) {
     current = n;
@@ -303,8 +335,8 @@
   /* --- verdict --- */
   function submitTriageResult(res) {
     var token = document.querySelector('meta[name="csrf-token"]');
-    if (!token) return;
-    fetch('{{ route('emergency.submit') }}', {
+    if (!token) return Promise.resolve(null);
+    return fetch('{{ route('emergency.submit') }}', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token.content, Accept: 'application/json' },
       body: JSON.stringify({
@@ -316,14 +348,26 @@
         observations: state.observations,
         reasons: res.reasons,
         facility_types: res.facilityTypes,
+        pickup_lat: state.lat,
+        pickup_lng: state.lng,
+        pickup_address: state.address,
       }),
-    }).catch(function () { /* fire-and-forget: never blocks or interrupts the patient */ });
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; /* never blocks or interrupts the patient */ });
   }
 
   function render() {
     var res = T.assess(state);
     var m = res.meta;
-    submitTriageResult(res);
+    submitTriageResult(res).then(function (server) {
+      if (server && server.reference) {
+        res.reference = server.reference;
+        var refEl = document.getElementById('pa-verdict-ref');
+        if (refEl) refEl.textContent = server.reference;
+        var link = document.getElementById('pa-results-link');
+        if (link) link.href = '{{ route('emergency.results') }}?level=' + res.level + '&ref=' + encodeURIComponent(server.reference);
+      }
+    });
     document.querySelectorAll('#pa-satsbar span').forEach(function (s) {
       s.classList.toggle('on', s.className.indexOf('s-' + res.level) > -1);
     });
@@ -339,7 +383,7 @@
       '<div class="pa-verdict ' + res.level + '">' +
         '<div class="lvl">South African Triage Scale · result</div>' +
         '<h2>' + m.label + ' — ' + m.name + '</h2>' +
-        '<p>Target time to be seen: <strong>' + m.targetLabel + '</strong>. Reference <strong>' + res.reference + '</strong> — show this at reception.</p>' +
+        '<p>Target time to be seen: <strong>' + m.targetLabel + '</strong>. Reference <strong id="pa-verdict-ref">' + res.reference + '</strong> — show this at reception.</p>' +
       '</div>' +
       (res.callAmbulance ? '<a class="pa-emergency-cta" style="margin-top:2px" href="tel:10177">Call an ambulance now · 10177</a>' : '') +
       '<div class="pa-card" style="margin-top:20px">' +
@@ -356,7 +400,8 @@
         '</div></div>' +
       '<div class="pa-spread" style="margin-top:24px">' +
         '<button class="pa-btn-ghost" data-back>Change my answers</button>' +
-        '<a class="pa-btn pa-btn-lg" href="{{ route('emergency.results') }}?level=' + res.level + '">See the nearest help</a>' +
+        '<a class="pa-btn pa-btn-lg" id="pa-results-link" href="{{ route('emergency.results') }}?level=' + res.level +
+          (state.lat ? '&lat=' + state.lat + '&lng=' + state.lng : '') + '">See the nearest help</a>' +
       '</div>';
   }
 

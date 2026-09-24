@@ -21,6 +21,7 @@ class TriageSubmission extends Model
     protected $fillable = [
         'reference', 'level', 'user_id', 'age_band', 'pregnant', 'symptoms',
         'discriminators', 'observations', 'reasons', 'facility_types', 'ip', 'staff_notified',
+        'pickup_lat', 'pickup_lng', 'pickup_address', 'emergency_contact_name', 'emergency_contact_phone', 'contact_alerted_at',
     ];
 
     protected function casts(): array
@@ -33,6 +34,7 @@ class TriageSubmission extends Model
             'reasons' => 'array',
             'facility_types' => 'array',
             'staff_notified' => 'boolean',
+            'contact_alerted_at' => 'datetime',
         ];
     }
 
