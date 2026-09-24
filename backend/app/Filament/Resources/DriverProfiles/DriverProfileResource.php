@@ -14,10 +14,25 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class DriverProfileResource extends Resource
 {
     protected static ?string $model = DriverProfile::class;
+
+    // Ride dispatch is a logistics function, not a clinical one.
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        return Auth::user()?->isSuperAdmin() ? $query : $query->whereRaw('1 = 0');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return (bool) Auth::user()?->isSuperAdmin();
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;
     protected static string|UnitEnum|null $navigationGroup = 'Ride Service';

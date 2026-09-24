@@ -14,10 +14,26 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class RideResource extends Resource
 {
     protected static ?string $model = Ride::class;
+
+    // Ride dispatch is a logistics function, not a clinical one — clinic
+    // staff/doctors have no legitimate need to see the ride marketplace.
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        return Auth::user()?->isSuperAdmin() ? $query : $query->whereRaw('1 = 0');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return (bool) Auth::user()?->isSuperAdmin();
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
     protected static string|UnitEnum|null $navigationGroup = 'Ride Service';

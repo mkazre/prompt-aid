@@ -17,7 +17,19 @@ use Filament\Tables\Table;
 
 class PaymentResource extends Resource
 {
+    use \App\Filament\Concerns\ScopesToClinicOrDoctor;
+
     protected static ?string $model = Payment::class;
+
+    protected static function clinicScope(): string
+    {
+        return 'invoice.clinic_id';
+    }
+
+    protected static function doctorScope(): string
+    {
+        return 'invoice.appointment.doctor_profile_id';
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
     protected static string|UnitEnum|null $navigationGroup = 'Billing';

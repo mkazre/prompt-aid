@@ -13,11 +13,24 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
+
+    // Creating staff accounts / changing roles & passwords is a
+    // super_admin function — clinic_admin/doctor manage their clinic's
+    // people via DoctorProfileResource/PatientProfileResource instead,
+    // which are scoped to their own clinic and don't expose auth data.
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        return Auth::user()?->isSuperAdmin() ? $query : $query->whereRaw('1 = 0');
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
 

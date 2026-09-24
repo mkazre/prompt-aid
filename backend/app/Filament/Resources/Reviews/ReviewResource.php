@@ -17,6 +17,8 @@ use Filament\Tables\Table;
 
 class ReviewResource extends Resource
 {
+    use \App\Filament\Concerns\ScopesToClinicOrDoctor;
+
     protected static ?string $model = Review::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedStar;

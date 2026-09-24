@@ -12,6 +12,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 /**
@@ -23,6 +25,14 @@ use UnitEnum;
 class TriageSubmissionResource extends Resource
 {
     protected static ?string $model = TriageSubmission::class;
+
+    // System-wide safety monitor, not tied to any one clinic — super_admin only.
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        return Auth::user()?->isSuperAdmin() ? $query : $query->whereRaw('1 = 0');
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedExclamationTriangle;
 

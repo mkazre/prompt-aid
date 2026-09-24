@@ -21,6 +21,13 @@ class InvoiceResource extends Resource
 
     protected static ?string $model = Invoice::class;
 
+    // Invoice has clinic_id directly but not doctor_profile_id — scope
+    // doctors through the appointment that generated the invoice instead.
+    protected static function doctorScope(): string
+    {
+        return 'appointment.doctor_profile_id';
+    }
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCurrencyDollar;
     protected static string|UnitEnum|null $navigationGroup = 'Billing';
 

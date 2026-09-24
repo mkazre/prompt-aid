@@ -8,7 +8,9 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 /**
@@ -20,6 +22,13 @@ use UnitEnum;
 class NotificationLogResource extends Resource
 {
     protected static ?string $model = DatabaseNotification::class;
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        return Auth::user()?->isSuperAdmin() ? $query : $query->whereRaw('1 = 0');
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBellAlert;
 

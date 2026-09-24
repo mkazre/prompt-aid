@@ -12,11 +12,26 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 class RideSeriesResource extends Resource
 {
     protected static ?string $model = RideSeriesModel::class;
+
+    // Ride dispatch is a logistics function, not a clinical one.
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        return Auth::user()?->isSuperAdmin() ? $query : $query->whereRaw('1 = 0');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return (bool) Auth::user()?->isSuperAdmin();
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowPath;
 
