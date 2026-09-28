@@ -59,6 +59,7 @@ class Permissions
         'emergency-contacts' => 'System',
         'notification-log' => 'System',
         'settings' => 'System',
+        'triage-config' => 'System',
 
         'triage-submissions' => 'Overview',
     ];

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmergencyContact;
+use App\Models\TriageConfig;
 use App\Models\User;
 use App\Support\StaffNotifier;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class StaticPageController extends Controller
         return view('pages.emergency', [
             'emergencyContacts' => $emergencyContacts,
             'primaryEmergencyContact' => $emergencyContacts->firstWhere('is_primary', true),
+            'triageConfig' => TriageConfig::current(),
         ]);
     }
 

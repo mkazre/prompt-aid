@@ -13,6 +13,14 @@
                      regardless of the score. A discriminator can only
                      raise the level, never lower it.
 
+   SYMPTOMS/DISCRIMINATORS/WEIGHTS/META/CAPABILITY are admin-editable
+   from the Filament Triage Config page (app/Models/TriageConfig.php)
+   and injected server-side as window.PromptAidTriageConfig by
+   emergency.blade.php, BEFORE this file loads, so the page can build
+   its UI synchronously on load rather than waiting on a fetch. The
+   literals below are only the fallback used if that global is ever
+   missing or empty (e.g. the config table has no rows yet).
+
    Port target: app/Services/Triage/SatsEngine.php
    Keep this file and the PHP implementation in sync, and unit-test the
    discriminator table — it is the part with clinical consequence.
@@ -21,7 +29,8 @@
   'use strict';
 
   var LEVELS = ['green', 'yellow', 'orange', 'red'];      // ascending severity
-  var META = {
+
+  var DEFAULT_META = {
     red:    { label: 'Red',    name: 'Emergency',    target: 0,   targetLabel: 'Immediately',        colour: '#C8102E' },
     orange: { label: 'Orange', name: 'Very urgent',  target: 10,  targetLabel: 'Within 10 minutes',  colour: '#E4701E' },
     yellow: { label: 'Yellow', name: 'Urgent',       target: 60,  targetLabel: 'Within 60 minutes',  colour: '#F2C200' },
@@ -29,7 +38,7 @@
   };
 
   /* --- TEWS-lite weights. Adult bands; paediatric multiplier below. --- */
-  var WEIGHTS = {
+  var DEFAULT_WEIGHT_CATEGORIES = {
     mobility:      { walking: 0, with_help: 1, cannot_walk: 2 },
     breathing:     { normal: 0, short_on_effort: 1, short_at_rest: 2, struggling: 3 },
     consciousness: { alert: 0, drowsy: 1, responds_to_pain: 2, unresponsive: 3 },
@@ -38,15 +47,15 @@
     trauma:        { no: 0, yes: 1 }
   };
 
-  function painWeight(score) {
-    if (score >= 8) return 3;
-    if (score >= 5) return 2;
-    if (score >= 3) return 1;
-    return 0;
-  }
+  var DEFAULT_PAIN_THRESHOLDS = [
+    { min: 8, weight: 3 },
+    { min: 5, weight: 2 },
+    { min: 3, weight: 1 },
+    { min: 0, weight: 0 }
+  ];
 
   /* --- Discriminators. Any match forces at least the stated level. --- */
-  var DISCRIMINATORS = [
+  var DEFAULT_DISCRIMINATORS = [
     // --- RED ---
     { id: 'not_breathing',    level: 'red', label: 'Not breathing or gasping' },
     { id: 'unresponsive',     level: 'red', label: 'Cannot be woken' },
@@ -79,7 +88,7 @@
   ];
 
   /* --- Symptom categories offered after the colour choice. --- */
-  var SYMPTOMS = [
+  var DEFAULT_SYMPTOMS = [
     { id: 'breathing',  label: 'Breathing',        system: 'respiratory', floor: 'orange' },
     { id: 'chest',      label: 'Chest or heart',   system: 'cardiac',     floor: 'orange' },
     { id: 'bleeding',   label: 'Bleeding',         system: 'trauma',      floor: 'yellow' },
@@ -101,7 +110,7 @@
   ];
 
   /* --- Which facility types can actually treat each system. --- */
-  var CAPABILITY = {
+  var DEFAULT_CAPABILITY = {
     respiratory: ['emergency', 'clinic', 'doctor'],
     cardiac:     ['emergency'],
     trauma:      ['emergency', 'clinic'],
@@ -120,6 +129,27 @@
     urology:     ['doctor', 'clinic', 'pharmacy']
   };
 
+  /* --- Pull the admin-configured values in, defending against a missing
+     or partially-empty global at every step so the page never breaks. --- */
+  var cfg = root.PromptAidTriageConfig || {};
+
+  var META = (cfg.meta && Object.keys(cfg.meta).length) ? cfg.meta : DEFAULT_META;
+  var SYMPTOMS = (cfg.symptoms && cfg.symptoms.length) ? cfg.symptoms : DEFAULT_SYMPTOMS;
+  var DISCRIMINATORS = (cfg.discriminators && cfg.discriminators.length) ? cfg.discriminators : DEFAULT_DISCRIMINATORS;
+  var CAPABILITY = (cfg.capability && Object.keys(cfg.capability).length) ? cfg.capability : DEFAULT_CAPABILITY;
+
+  var weightsCfg = (cfg.weights && Object.keys(cfg.weights).length) ? cfg.weights : {};
+  var WEIGHTS = (weightsCfg.categories && Object.keys(weightsCfg.categories).length) ? weightsCfg.categories : DEFAULT_WEIGHT_CATEGORIES;
+  var PAIN_THRESHOLDS = (weightsCfg.pain_thresholds && weightsCfg.pain_thresholds.length) ? weightsCfg.pain_thresholds : DEFAULT_PAIN_THRESHOLDS;
+
+  function painWeight(score) {
+    var sorted = PAIN_THRESHOLDS.slice().sort(function (a, b) { return b.min - a.min; });
+    for (var i = 0; i < sorted.length; i++) {
+      if (score >= sorted[i].min) return sorted[i].weight;
+    }
+    return 0;
+  }
+
   function rank(level) { return LEVELS.indexOf(level); }
   function escalate(current, candidate) {
     return rank(candidate) > rank(current) ? candidate : current;
@@ -134,7 +164,6 @@
    *   symptoms     : [symptomId],
    *   discriminators: [discriminatorId],
    *   observations : { mobility, breathing, consciousness, bleeding, temperature, trauma, pain }
-   * }
    */
   function assess(input) {
     input = input || {};
@@ -161,7 +190,7 @@
     /* 2 — symptom floors */
     (input.symptoms || []).forEach(function (id) {
       var s = SYMPTOMS.filter(function (x) { return x.id === id; })[0];
-      if (s && rank(s.floor) > rank(level)) {
+      if (s && s.floor && rank(s.floor) > rank(level)) {
         level = s.floor;
         reasons.push(s.label + ' is never below ' + META[s.floor].label);
       }

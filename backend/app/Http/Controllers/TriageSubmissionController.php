@@ -72,4 +72,27 @@ class TriageSubmissionController extends Controller
 
         return response()->json(['reference' => $submission->reference]);
     }
+
+    /**
+     * The authenticated patient's own most recent pre-triage result, for the
+     * mobile home screen's triage-status card. Unauthenticated/guest
+     * submissions (user_id null) are never returned here.
+     */
+    public function latest(Request $request)
+    {
+        $submission = TriageSubmission::query()
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->first();
+
+        if (! $submission) {
+            return response()->json(['data' => null]);
+        }
+
+        return response()->json(['data' => [
+            'reference' => $submission->reference,
+            'level' => $submission->level,
+            'created_at' => $submission->created_at,
+        ]]);
+    }
 }

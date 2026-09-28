@@ -1,6 +1,7 @@
 @php
   $noTriage = true;
   $secondaryEmergencyContacts = $emergencyContacts->where('is_primary', false);
+  $triageConfigForJs = $triageConfig;
 @endphp
 <x-layout title="Emergency triage · Prompt Aid">
 <div class="pa-pagehead"><div class="inner">
@@ -204,6 +205,7 @@
     <div class="pa-note-stop">This is a pre-triage aid, not a diagnosis. A practitioner performs the formal SATS assessment on arrival and may reach a different colour.</div>
   </aside>
 </div>
+<script>window.PromptAidTriageConfig = @json($triageConfigForJs);</script>
 <script src="{{ asset('assets/js/triage.js') }}"></script>
 <script>window.PromptAidPrimaryEmergency = { label: @json($primaryEmergencyContact?->label), phone: @json($primaryEmergencyContact?->phone), tel: @json($primaryEmergencyContact?->tel_url) };</script>
 <script>

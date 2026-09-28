@@ -11,6 +11,7 @@ use App\Http\Controllers\ShopPageController;
 use App\Http\Controllers\ShuttlePageController;
 use App\Http\Controllers\StaticPageController;
 use App\Http\Controllers\ThirdPartyPageController;
+use App\Http\Controllers\TriageConfigController;
 use App\Http\Controllers\WebAppointmentController;
 use App\Http\Controllers\WebAuthController;
 use App\Http\Controllers\WebRideController;
@@ -40,6 +41,7 @@ Route::get('/emergency', [StaticPageController::class, 'emergency'])->name('emer
 Route::get('/emergency-results', [EmergencyResultsController::class, 'show'])->name('emergency.results');
 Route::post('/emergency/submit', [\App\Http\Controllers\TriageSubmissionController::class, 'store'])->name('emergency.submit');
 Route::post('/emergency/alert-contact', [EmergencyResultsController::class, 'alertContact'])->name('emergency.alert-contact');
+Route::get('/assets/triage-config.json', [TriageConfigController::class, 'show'])->name('triage-config.json');
 
 // About, How It Works, FAQ, Privacy, Terms and the POPIA notice are pure
 // content — real page-builder pages (see SeedSitePages), editable from

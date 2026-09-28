@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClinicController;
 use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\EmergencyContactController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\LabRequestController;
 use App\Http\Controllers\Api\PharmacyController;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/ping', fn () => response()->json(['ok' => true, 'app' => 'Prompt Aid API']));
 
 Route::post('/triage/submit', [TriageSubmissionController::class, 'store']);
+Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
 
 // --- Public ---
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -64,6 +66,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/ride-series/{rideSeries}/resume', [RideController::class, 'resumeSeries']);
 
         Route::get('/lab-requests', [LabRequestController::class, 'patientIndex']);
+
+        Route::get('/triage/latest', [TriageSubmissionController::class, 'latest']);
 
         Route::post('/prescriptions', [PharmacyController::class, 'uploadPrescription']);
         Route::get('/prescriptions', [PharmacyController::class, 'myPrescriptions']);
