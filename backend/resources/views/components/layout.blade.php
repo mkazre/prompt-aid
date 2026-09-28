@@ -39,7 +39,10 @@
 
 <header class="pa-header"><div class="inner">
   <a class="logo" href="{{ url('/') }}"><img src="{{ $logoUrl }}" alt="Prompt Aid" /></a>
-  <nav class="pa-nav">
+  <button type="button" class="pa-nav-toggle" id="pa-nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="pa-nav">
+    <span></span><span></span><span></span>
+  </button>
+  <nav class="pa-nav" id="pa-nav">
     @php $headerLinks = \App\Models\Menu::tree('header'); @endphp
     @forelse ($headerLinks as $link)
       <a href="{{ $link['route'] && \Illuminate\Support\Facades\Route::has($link['route']) ? route($link['route']) : ($link['url'] ?? '#') }}" target="{{ $link['target'] ?? '_self' }}">{{ $link['label'] }}</a>
@@ -97,6 +100,26 @@
     ->values();
 @endphp
 <script>window.PromptAidEmergencyContacts = @json($layoutEmergencyContactsForJs);</script>
+<script>
+(function () {
+  'use strict';
+  var toggle = document.getElementById('pa-nav-toggle');
+  var nav = document.getElementById('pa-nav');
+  if (!toggle || !nav) return;
+  toggle.addEventListener('click', function () {
+    var open = nav.classList.toggle('is-open');
+    toggle.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  nav.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') {
+      nav.classList.remove('is-open');
+      toggle.classList.remove('is-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+})();
+</script>
 <script src="{{ asset('assets/js/promptaid.js') }}"></script>
 @stack('scripts')
 </body>

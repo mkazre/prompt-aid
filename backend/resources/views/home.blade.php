@@ -1,7 +1,7 @@
 <x-layout title="Find a doctor, fill a script, get a lift · Prompt Aid">
 <section class="pa-hero">
-  <div class="pa-container" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:56px;align-items:center">
-    <div style="padding:76px 0;animation:pa-rise .5s ease both">
+  <div class="pa-container pa-hero-grid">
+    <div class="pa-hero-copy" style="animation:pa-rise .5s ease both">
       <div class="pa-row" style="margin-bottom:24px"><span class="pa-tick"></span><span class="pa-eyebrow">Care, medicine and transport · South Africa</span></div>
       <h1 style="font-size:clamp(36px,4.6vw,64px);margin-bottom:22px">Find a doctor, fill a script,<br />and get a lift there.</h1>
       <p style="font-size:17px;color:var(--pa-ink-soft);max-width:540px;margin-bottom:32px">One account for clinics, pharmacies, labs and specialists — plus a medical shuttle that fetches you from home and brings you back.</p>
@@ -13,7 +13,7 @@
         <div><div class="pa-num" style="font-size:30px">{{ $stats['schemes'] }}</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">schemes billed direct</div></div>
       </div>
     </div>
-    <div style="padding:40px 0">
+    <div class="pa-hero-widget">
       <div class="pa-pop" data-pa-tabs>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--pa-line)">
           <button class="pa-tab is-on" data-pa-target="care" style="border:0;border-radius:0;padding:15px 8px">Book care</button>
