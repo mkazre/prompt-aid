@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PatientProfile extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     protected $fillable = [
         'user_id', 'dob', 'gender', 'blood_group', 'address', 'lat', 'lng',

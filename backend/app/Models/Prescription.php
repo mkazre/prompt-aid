@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Prescription extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     protected $fillable = ['encounter_id', 'notes'];
 

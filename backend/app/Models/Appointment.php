@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Appointment extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     public const STATUS_PENDING = 'pending';
 

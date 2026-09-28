@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DoctorProfile extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     protected $fillable = [
         'user_id', 'specialization', 'qualification', 'experience_years', 'bio',

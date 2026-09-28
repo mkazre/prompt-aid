@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LabRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     public const STATUS_REQUESTED = 'requested';
 

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Encounter extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     protected $fillable = [
         'appointment_id', 'vitals', 'chief_complaint', 'diagnosis', 'notes', 'follow_up_date',

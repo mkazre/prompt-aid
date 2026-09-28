@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TriageSubmission extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     public const LEVEL_RED = 'red';
 

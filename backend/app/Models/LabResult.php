@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LabResult extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     protected $fillable = ['lab_request_id', 'uploaded_by', 'label', 'file_path', 'summary', 'visible_to_patient', 'critical'];
 
