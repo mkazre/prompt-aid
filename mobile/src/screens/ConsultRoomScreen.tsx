@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useMemo } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Appointment } from '../api/types';
 import { PaButton } from '../components/pa';
@@ -21,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
  * permission for Meet.
  */
 export default function ConsultRoomScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
   const { appointment } = useRoute<any>().params as { appointment: Appointment };
@@ -65,7 +67,7 @@ export default function ConsultRoomScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 48 }}>
       <View style={styles.eyebrowRow}>
         <View style={styles.blip} />
         <Text style={styles.eyebrow}>{opensLabel ?? 'Video consult'}</Text>

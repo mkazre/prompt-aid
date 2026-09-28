@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiErrorMessage, useAuth } from '../context/AuthContext';
 import { PrimaryButton } from '../components/UI';
 import { colors, font, radius, spacing } from '../theme';
@@ -23,6 +24,7 @@ const DOCUMENT_TYPES: { key: 'id' | 'medical_aid_card'; label: string }[] = [
  * with the same POST /auth/register call.
  */
 export default function RegisterDocumentScreen({ route }: any) {
+  const insets = useSafeAreaInsets();
   const { account, medical, scheme } = route.params;
   const { register } = useAuth();
   const [documentType, setDocumentType] = useState<'id' | 'medical_aid_card'>('id');
@@ -67,7 +69,7 @@ export default function RegisterDocumentScreen({ route }: any) {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.gray50 }} contentContainerStyle={styles.container}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.gray50 }} contentContainerStyle={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
       <Text style={styles.title}>ID or medical aid card</Text>
       <Text style={styles.subtitle}>Optional — a photo speeds up verification at a clinic or pharmacy.</Text>
 

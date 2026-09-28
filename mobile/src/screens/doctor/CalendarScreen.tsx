@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api } from '../../api/client';
@@ -18,6 +19,7 @@ function toKey(d: Date) {
 }
 
 export default function DoctorCalendarScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const [cursor, setCursor] = useState(new Date());
   const [selected, setSelected] = useState(new Date());
@@ -64,7 +66,7 @@ export default function DoctorCalendarScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 48 }}>
       <PaCard>
         <View style={styles.monthHeader}>
           <Pressable onPress={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} hitSlop={12}>

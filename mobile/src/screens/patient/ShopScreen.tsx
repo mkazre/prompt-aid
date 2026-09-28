@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { Product } from '../../api/types';
@@ -18,6 +19,7 @@ const CATEGORY_OPTIONS = ['All', 'Prescription', 'OTC', 'Devices', 'Vitamins'];
  * simplified view over free-text categories seeded on the backend.
  */
 export default function ShopScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -44,7 +46,7 @@ export default function ShopScreen({ navigation }: any) {
   }, [products, category]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <View style={styles.headerRow}>
         <Text style={type.h2}>Pharmacy &amp; tests</Text>
         <Pressable onPress={() => navigation.navigate('Checkout')} style={styles.cartBadge}>

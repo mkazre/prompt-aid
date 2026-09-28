@@ -187,8 +187,8 @@ export function PaRow({
   return (
     <Pressable onPress={onPress} style={rowStyles.row}>
       <View style={{ flex: 1 }}>
-        <Text style={rowStyles.title}>{title}</Text>
-        {subtitle ? <Text style={rowStyles.subtitle}>{subtitle}</Text> : null}
+        <Text style={rowStyles.title} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
+        {subtitle ? <Text style={rowStyles.subtitle} numberOfLines={1} ellipsizeMode="tail">{subtitle}</Text> : null}
       </View>
       {right}
     </Pressable>

@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { Order } from '../../api/types';
@@ -20,6 +21,7 @@ const FILTERS: { key: string; label: string }[] = [
 ];
 
 export default function PharmacyOrdersScreen({ navigation }: { navigation: NavProp }) {
+  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('');
@@ -37,7 +39,7 @@ export default function PharmacyOrdersScreen({ navigation }: { navigation: NavPr
   useFocusEffect(useCallback(() => { load(filter); }, [load, filter]));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <Text style={type.h2}>Orders</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={{ paddingRight: 16 }}>
         {FILTERS.map((f) => (

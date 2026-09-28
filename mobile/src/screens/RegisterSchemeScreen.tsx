@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../api/client';
 import { MedicalScheme } from '../api/types';
 import { Input, PrimaryButton } from '../components/UI';
@@ -10,6 +11,7 @@ import { colors, font, radius, spacing } from '../theme';
  * Step 3 — medical scheme membership. Skippable: some patients pay cash.
  */
 export default function RegisterSchemeScreen({ navigation, route }: any) {
+  const insets = useSafeAreaInsets();
   const { account, medical } = route.params;
   const [schemes, setSchemes] = useState<MedicalScheme[]>([]);
   const [schemeId, setSchemeId] = useState<number | null>(null);
@@ -43,7 +45,7 @@ export default function RegisterSchemeScreen({ navigation, route }: any) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.gray50 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
         <Text style={styles.title}>Medical scheme</Text>
         <Text style={styles.subtitle}>Optional — paying cash? Skip this and add it later from your profile.</Text>
 

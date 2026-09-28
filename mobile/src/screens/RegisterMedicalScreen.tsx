@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input, PrimaryButton } from '../components/UI';
 import { colors, font, spacing } from '../theme';
 
@@ -8,6 +9,7 @@ import { colors, font, spacing } from '../theme';
  * "Continue" and "Skip" both just forward whatever was typed.
  */
 export default function RegisterMedicalScreen({ navigation, route }: any) {
+  const insets = useSafeAreaInsets();
   const { account } = route.params;
   const [allergies, setAllergies] = useState('');
   const [chronicConditions, setChronicConditions] = useState('');
@@ -26,7 +28,7 @@ export default function RegisterMedicalScreen({ navigation, route }: any) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.gray50 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
         <Text style={styles.title}>Medical details</Text>
         <Text style={styles.subtitle}>Optional, but helps a doctor treat you faster in an emergency.</Text>
 

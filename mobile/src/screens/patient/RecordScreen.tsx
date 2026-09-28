@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { LabRequest, Order } from '../../api/types';
@@ -21,6 +22,7 @@ interface TimelineEntry {
  * on the patient profile as alert chips.
  */
 export default function RecordScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [labRequests, setLabRequests] = useState<LabRequest[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -73,7 +75,7 @@ export default function RecordScreen({ navigation }: any) {
   }, [labRequests, orders]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 40 }}>
       <Text style={[type.h2, { marginBottom: 12 }]}>My record</Text>
 
       {alerts.length > 0 && (

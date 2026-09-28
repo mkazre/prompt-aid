@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, apiErrorMessage } from '../../api/client';
@@ -13,6 +14,7 @@ import { DoctorStackParamList } from '../../navigation/DoctorTabs';
 type Nav = NativeStackNavigationProp<DoctorStackParamList>;
 
 export default function DoctorDashboardScreen() {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const navigation = useNavigation<Nav>();
   const [stats, setStats] = useState<DoctorStats | null>(null);
@@ -72,7 +74,7 @@ export default function DoctorDashboardScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+      contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 48 }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={pa.signal} />}
     >
       <View style={styles.header}>

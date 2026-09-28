@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { Doctor } from '../../api/types';
@@ -7,6 +8,7 @@ import { PaAvatar, PaBadge, PaEmptyState, PaInput } from '../../components/pa';
 import { pa, paFonts, paRadius } from '../../theme';
 
 export default function FindCareScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function FindCareScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.head}>
+      <View style={[styles.head, { paddingTop: insets.top + 14 }]}>
         <Text style={styles.title}>Find care</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
@@ -58,7 +60,7 @@ export default function FindCareScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: pa.paper },
-  head: { paddingTop: 56, paddingBottom: 14, paddingHorizontal: 16, backgroundColor: pa.surface, borderBottomWidth: 1, borderBottomColor: pa.line },
+  head: { paddingBottom: 14, paddingHorizontal: 16, backgroundColor: pa.surface, borderBottomWidth: 1, borderBottomColor: pa.line },
   title: { fontFamily: paFonts.black, fontSize: 20, color: pa.ink, textAlign: 'center' },
   count: { fontSize: 12, color: pa.muted, marginTop: 4, marginBottom: 10 },
   countStrong: { color: pa.ink, fontFamily: paFonts.bold },

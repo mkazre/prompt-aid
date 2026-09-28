@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { api, apiErrorMessage } from '../../api/client';
@@ -13,6 +14,7 @@ import { pa, paFonts, paRadius, type } from '../../theme';
 const ACTIVE_STATUSES = ['accepted', 'driver_enroute', 'arrived', 'in_progress'];
 
 export default function DriverHomeScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { user, refreshMe } = useAuth();
   const [available, setAvailable] = useState(user?.driver_profile?.availability === 'available');
   const [toggling, setToggling] = useState(false);
@@ -97,7 +99,7 @@ export default function DriverHomeScreen({ navigation }: any) {
         ) : (
           <View style={styles.mapPlaceholder} />
         )}
-        <View style={styles.mapOverlay}>
+        <View style={[styles.mapOverlay, { top: insets.top + 14 }]}>
           <View>
             <Text style={styles.overlayLabel}>Today</Text>
             <Text style={styles.overlayNum}>R {todaysEarnings.toFixed(0)}</Text>
@@ -187,7 +189,6 @@ const styles = StyleSheet.create({
   mapOverlay: {
     position: 'absolute',
     left: 14,
-    top: 14,
     right: 14,
     backgroundColor: pa.paper,
     paddingHorizontal: 14,

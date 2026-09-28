@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { Appointment, LabRequest, LatestTriage, PrescriptionUpload } from '../../api/types';
@@ -9,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { META } from '../../services/triage';
 
 export default function HomeScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [nextAppt, setNextAppt] = useState<Appointment | null>(null);
   const [labResults, setLabResults] = useState<LabRequest[]>([]);
@@ -46,7 +48,7 @@ export default function HomeScreen({ navigation }: any) {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ padding: 16, paddingTop: 56, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
     >
       <View style={styles.greetRow}>

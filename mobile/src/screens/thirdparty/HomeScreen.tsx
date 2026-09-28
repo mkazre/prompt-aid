@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api, apiErrorMessage } from '../../api/client';
 import { LabRequest } from '../../api/types';
@@ -9,6 +10,7 @@ import { PaBadge, PaButton, PaCard, PaEmptyState, PaEyebrow } from '../../compon
 import { PaChipRow, categoryEmoji, categoryLabel, categoryNoun, elapsedLabel } from '../../components/pa/partner-extras';
 
 export default function ThirdPartyHomeScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const profile = user?.third_party_profile;
   const [available, setAvailable] = useState<LabRequest[]>([]);
@@ -53,7 +55,7 @@ export default function ThirdPartyHomeScreen({ navigation }: any) {
   const filtered = filter === 'urgent' ? available.filter((r) => r.priority === 'urgent') : available;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
       <PaEyebrow>{categoryLabel(profile?.category)} PARTNER QUEUE</PaEyebrow>
       <Text style={styles.title}>Hi {user?.name?.split(' ')[0]} {categoryEmoji(profile?.category)}</Text>
       <Text style={styles.subtitle}>

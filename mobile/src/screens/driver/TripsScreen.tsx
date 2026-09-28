@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { Ride } from '../../api/types';
@@ -14,6 +15,7 @@ type Filter = 'today' | 'scheduled' | 'history';
  * grouped section, since `/driver/rides` only returns this driver's most
  * recent page of rides, not a full per-series roll-up. */
 export default function TripsScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const [rides, setRides] = useState<Ride[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<Filter>('today');
@@ -45,7 +47,7 @@ export default function TripsScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={type.h2}>Trips</Text>
       </View>
       <View style={{ paddingHorizontal: 16 }}>
@@ -92,5 +94,5 @@ function formatWhen(r: Ride) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: pa.paper },
-  header: { paddingHorizontal: 16, paddingTop: 16, marginBottom: 8 },
+  header: { paddingHorizontal: 16, marginBottom: 8 },
 });

@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { Ride } from '../../api/types';
@@ -16,6 +17,7 @@ import { pa, paFonts, paRadius, type } from '../../theme';
  * available and lets the driver open one to accept or pass.
  */
 export default function OffersScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const [rides, setRides] = useState<Ride[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +35,7 @@ export default function OffersScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={type.h2}>Offers</Text>
       </View>
       <FlatList
@@ -66,7 +68,7 @@ export default function OffersScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: pa.paper },
-  header: { paddingHorizontal: 16, paddingTop: 16 },
+  header: { paddingHorizontal: 16 },
   card: { backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, borderRadius: paRadius.sm, padding: 14, marginBottom: 10 },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   eyebrowDot: { width: 6, height: 6, backgroundColor: pa.sats.orange },
