@@ -58,6 +58,7 @@ class Permissions
         'audit-logs' => 'System',
         'emergency-contacts' => 'System',
         'notification-log' => 'System',
+        'provider-applications' => 'System',
         'settings' => 'System',
         'triage-config' => 'System',
 

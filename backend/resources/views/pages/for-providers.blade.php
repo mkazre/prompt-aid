@@ -35,7 +35,7 @@
       @if (session('success'))
         <div class="pa-note" style="margin-bottom:16px;border-color:var(--pa-go);color:var(--pa-go)">{{ session('success') }}</div>
       @endif
-      <form method="POST" action="{{ route('for-providers.submit') }}">
+      <form method="POST" action="{{ route('for-providers.submit') }}" enctype="multipart/form-data">
         @csrf
         <div class="pa-formrow"><label class="pa-label">Practice or business name</label><input class="pa-field" name="business_name" required value="{{ old('business_name') }}" placeholder="Sunninghill Family Clinic" /></div>
         <div class="pa-formrow"><label class="pa-label">Type</label><select class="pa-field" name="type" required>
@@ -47,10 +47,13 @@
           <option value="Shuttle driver or fleet">Shuttle driver or fleet</option>
         </select></div>
         <div class="pa-formrow"><label class="pa-label">Registration number</label><input class="pa-field" name="registration_no" value="{{ old('registration_no') }}" placeholder="HPCSA / SAPC / practice no." /></div>
+        <div class="pa-formrow"><label class="pa-label">HPCSA / SAPC number</label><input class="pa-field" name="hpcsa_sapc_no" value="{{ old('hpcsa_sapc_no') }}" placeholder="If applicable to your profession" /></div>
         <div class="pa-formrow"><label class="pa-label">Contact person</label><input class="pa-field" name="contact_name" required value="{{ old('contact_name') }}" placeholder="Full name" /></div>
         <div class="pa-formrow"><label class="pa-label">Email</label><input class="pa-field" type="email" name="email" required value="{{ old('email') }}" placeholder="you@practice.co.za" /></div>
         <div class="pa-formrow"><label class="pa-label">Mobile</label><input class="pa-field" name="phone" required value="{{ old('phone') }}" placeholder="082 000 0000" /></div>
+        <div class="pa-formrow"><label class="pa-label">Registration certificate / HPCSA or SAPC proof</label><input class="pa-field" type="file" name="documents[]" multiple accept=".pdf,.jpg,.jpeg,.png" /></div>
         @error('business_name')<div style="color:var(--pa-signal);font-size:12px;margin-bottom:10px">{{ $message }}</div>@enderror
+        @error('documents.*')<div style="color:var(--pa-signal);font-size:12px;margin-bottom:10px">{{ $message }}</div>@enderror
         <label class="pa-check"><input type="checkbox" name="terms_accepted" value="1" style="margin-right:6px">I accept the <a href="{{ route('terms') }}">provider terms</a> and the <a href="{{ route('legal-popia') }}">POPIA operator agreement</a>.</label>
         @error('terms_accepted')<div style="color:var(--pa-signal);font-size:12px;margin:6px 0">{{ $message }}</div>@enderror
         <button type="submit" class="pa-btn pa-btn-block pa-btn-lg" style="margin-top:16px">Send application</button>
