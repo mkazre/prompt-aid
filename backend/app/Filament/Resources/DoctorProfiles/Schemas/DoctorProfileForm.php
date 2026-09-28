@@ -39,6 +39,12 @@ class DoctorProfileForm
                     ->label('Accepting new appointments')
                     ->helperText('Turn this off to hide the "book now" option from patients while you are away, fully booked, etc. Your profile stays visible either way.')
                     ->default(true),
+                Select::make('availability')
+                    ->label('Live matching status')
+                    ->helperText('Whether this doctor is currently online for instant video/in-person matching.')
+                    ->options(['offline' => 'Offline', 'available' => 'Available', 'busy' => 'Busy'])
+                    ->required()
+                    ->default('offline'),
             ]);
     }
 }

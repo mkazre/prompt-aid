@@ -4,9 +4,11 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClinicController;
 use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\DoctorMatchController;
 use App\Http\Controllers\Api\EmergencyContactController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\LabRequestController;
+use App\Http\Controllers\Api\MedicalSchemeController;
 use App\Http\Controllers\Api\PharmacyController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
@@ -24,6 +26,7 @@ Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
 // --- Public ---
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/medical-schemes', [MedicalSchemeController::class, 'index']);
 
 Route::get('/clinics', [ClinicController::class, 'index']);
 Route::get('/clinics/{clinic}', [ClinicController::class, 'show']);
@@ -49,6 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:'.User::ROLE_PATIENT)->group(function () {
         Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show']);
         Route::post('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
+
+        Route::post('/request-doctor', [DoctorMatchController::class, 'store']);
 
         Route::apiResource('invoices', InvoiceController::class)->only(['index', 'show']);
         Route::post('/invoices/{id}/pay', [InvoiceController::class, 'pay']);
@@ -84,6 +89,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/patients', [DoctorController::class, 'patients']);
         Route::get('/lab-requests', [LabRequestController::class, 'doctorIndex']);
         Route::post('/lab-requests', [LabRequestController::class, 'store']);
+
+        Route::get('/requests/available', [DoctorMatchController::class, 'available']);
+        Route::post('/requests/{appointment}/accept', [DoctorMatchController::class, 'accept']);
+        Route::post('/availability', [DoctorMatchController::class, 'toggleAvailability']);
     });
 
     // --- Third-party (lab/imaging partner) ---

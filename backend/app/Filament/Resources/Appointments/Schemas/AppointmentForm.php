@@ -28,8 +28,9 @@ class AppointmentForm
                             ->relationship('doctor', 'specialization')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->user?->name.' — '.$record->specialization)
                             ->searchable()
-                            ->required(),
-                        Select::make('clinic_id')->relationship('clinic', 'name')->searchable()->required(),
+                            // Nullable while an on-demand request is still awaiting a match.
+                            ->nullable(),
+                        Select::make('clinic_id')->relationship('clinic', 'name')->searchable()->nullable(),
                         Select::make('service_id')->relationship('service', 'name')->searchable(),
                         DatePicker::make('date')->required(),
                         TimePicker::make('start_time')->required(),
@@ -41,8 +42,10 @@ class AppointmentForm
                             ->options([
                                 'pending' => 'Pending', 'confirmed' => 'Confirmed', 'checked_in' => 'Checked In',
                                 'completed' => 'Completed', 'cancelled' => 'Cancelled', 'no_show' => 'No Show',
+                                'matching' => 'Awaiting Match',
                             ])
                             ->required()->default('pending'),
+                        TextInput::make('requested_specialty')->label('Requested specialty (on-demand)'),
                         Textarea::make('reason')->columnSpanFull(),
                         Textarea::make('cancel_reason')->columnSpanFull(),
                     ]),

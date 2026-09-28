@@ -32,11 +32,20 @@ class DoctorProfilesTable
                 IconColumn::make('is_accepting_appointments')
                     ->label('Accepting')
                     ->boolean(),
+                TextColumn::make('availability')
+                    ->label('Live')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'available' => 'success',
+                        'busy' => 'warning',
+                        default => 'gray',
+                    }),
                 TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')->options(['active' => 'Active', 'inactive' => 'Inactive', 'pending_approval' => 'Pending Approval']),
                 TernaryFilter::make('is_accepting_appointments')->label('Accepting appointments'),
+                SelectFilter::make('availability')->options(['available' => 'Available', 'busy' => 'Busy', 'offline' => 'Offline']),
             ])
             ->recordActions([
                 EditAction::make(),

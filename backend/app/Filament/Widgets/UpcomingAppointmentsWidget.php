@@ -46,6 +46,7 @@ class UpcomingAppointmentsWidget extends TableWidget
                         'completed', 'confirmed' => 'success',
                         'pending', 'checked_in' => 'warning',
                         'cancelled', 'no_show' => 'danger',
+                        'matching' => 'info',
                         default => 'gray',
                     }),
             ])

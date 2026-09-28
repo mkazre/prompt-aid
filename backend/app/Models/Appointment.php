@@ -23,6 +23,10 @@ class Appointment extends Model
 
     public const STATUS_NO_SHOW = 'no_show';
 
+    // Awaiting a doctor to be auto/self-matched on the on-demand video/in-person
+    // path; doctor_profile_id and clinic_id are still null in this state.
+    public const STATUS_MATCHING = 'matching';
+
     public const MODE_IN_PERSON = 'in_person';
 
     public const MODE_VIDEO = 'video';
@@ -30,7 +34,7 @@ class Appointment extends Model
     protected $fillable = [
         'booking_ref', 'patient_profile_id', 'doctor_profile_id', 'clinic_id', 'service_id',
         'date', 'start_time', 'end_time', 'visit_type', 'status', 'reason', 'cancel_reason', 'ride_requested',
-        'mode', 'meet_url', 'meet_event_id', 'meet_created_at',
+        'mode', 'meet_url', 'meet_event_id', 'meet_created_at', 'requested_specialty',
     ];
 
     protected function casts(): array

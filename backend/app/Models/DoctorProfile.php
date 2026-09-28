@@ -12,15 +12,25 @@ class DoctorProfile extends Model
 {
     use HasFactory, \App\Concerns\Auditable;
 
+    public const AVAILABLE = 'available';
+
+    public const BUSY = 'busy';
+
+    public const OFFLINE = 'offline';
+
     protected $fillable = [
         'user_id', 'specialization', 'qualification', 'experience_years', 'bio',
         'consultation_fee', 'registration_no', 'signature', 'rating_avg', 'rating_count', 'status',
-        'is_accepting_appointments',
+        'is_accepting_appointments', 'availability', 'current_lat', 'current_lng', 'location_updated_at',
     ];
 
-    protected $casts = [
-        'is_accepting_appointments' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_accepting_appointments' => 'boolean',
+            'location_updated_at' => 'datetime',
+        ];
+    }
 
     /**
      * Whether patients should be shown this doctor as bookable right now:
@@ -29,6 +39,15 @@ class DoctorProfile extends Model
     public function isAvailableForBooking(): bool
     {
         return $this->status === 'active' && $this->is_accepting_appointments;
+    }
+
+    /**
+     * Whether this doctor can be matched into an on-demand video/in-person
+     * request right now (the "Uber-style" instant-match path).
+     */
+    public function isAvailableForMatching(): bool
+    {
+        return $this->status === 'active' && $this->is_accepting_appointments && $this->availability === self::AVAILABLE;
     }
 
     /**

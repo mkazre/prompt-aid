@@ -30,8 +30,10 @@ class AppointmentsTable
                         'completed', 'confirmed' => 'success',
                         'pending', 'checked_in' => 'warning',
                         'cancelled', 'no_show' => 'danger',
+                        'matching' => 'info',
                         default => 'gray',
                     }),
+                TextColumn::make('requested_specialty')->label('Requested specialty')->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('ride_requested')->boolean()->label('Shuttle'),
                 TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -39,6 +41,7 @@ class AppointmentsTable
                 SelectFilter::make('status')->options([
                     'pending' => 'Pending', 'confirmed' => 'Confirmed', 'checked_in' => 'Checked In',
                     'completed' => 'Completed', 'cancelled' => 'Cancelled', 'no_show' => 'No Show',
+                    'matching' => 'Awaiting Match',
                 ]),
                 SelectFilter::make('visit_type')->options(['clinic' => 'At Clinic', 'telemed' => 'Telemedicine', 'home' => 'Home Visit']),
                 SelectFilter::make('clinic_id')->relationship('clinic', 'name')->label('Clinic'),
