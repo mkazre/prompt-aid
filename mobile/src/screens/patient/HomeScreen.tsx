@@ -2,25 +2,28 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
-import { Appointment, LabRequest, PrescriptionUpload } from '../../api/types';
-import { PaAvatar, PaBadge, PaQuickAction } from '../../components/pa';
+import { Appointment, LabRequest, LatestTriage, PrescriptionUpload } from '../../api/types';
+import { PaAvatar, PaBadge, PaQuickAction, PaSatsChip } from '../../components/pa';
 import { pa, paFonts } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
+import { META } from '../../services/triage';
 
 export default function HomeScreen({ navigation }: any) {
   const { user } = useAuth();
   const [nextAppt, setNextAppt] = useState<Appointment | null>(null);
   const [labResults, setLabResults] = useState<LabRequest[]>([]);
   const [prescriptions, setPrescriptions] = useState<PrescriptionUpload[]>([]);
+  const [latestTriage, setLatestTriage] = useState<LatestTriage | null>(null);
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, labRes, presRes] = await Promise.all([
+      const [apptRes, labRes, presRes, triageRes] = await Promise.all([
         api.get('/appointments'),
         api.get('/lab-requests').catch(() => ({ data: { data: [] } })),
         api.get('/prescriptions').catch(() => ({ data: [] })),
+        api.get('/triage/latest').catch(() => ({ data: { data: null } })),
       ]);
       const upcoming = (apptRes.data.data as Appointment[])
         .filter((a) => !['completed', 'cancelled', 'no_show'].includes(a.status) && a.date >= new Date().toISOString().slice(0, 10))
@@ -30,10 +33,13 @@ export default function HomeScreen({ navigation }: any) {
       setLabResults(results.slice(0, 2));
       const pending = (Array.isArray(presRes.data) ? presRes.data : presRes.data.data ?? []) as PrescriptionUpload[];
       setPrescriptions(pending.filter((p) => p.status === 'pending_review').slice(0, 1));
+      setLatestTriage((triageRes.data?.data as LatestTriage | null) ?? null);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const triageIsRecent = latestTriage && Date.now() - new Date(latestTriage.created_at).getTime() < 24 * 60 * 60 * 1000;
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -61,6 +67,16 @@ export default function HomeScreen({ navigation }: any) {
         </View>
         <Text style={styles.emergencyArrow}>→</Text>
       </Pressable>
+
+      {triageIsRecent && latestTriage ? (
+        <Pressable style={styles.triageCard} onPress={() => navigation.navigate('TriageStart', { selfReported: undefined })}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.triageEyebrow}>Your last triage result</Text>
+            <Text style={styles.triageMeta}>{META[latestTriage.level].name} · {new Date(latestTriage.created_at).toLocaleDateString()}</Text>
+          </View>
+          <PaSatsChip level={latestTriage.level} />
+        </Pressable>
+      ) : null}
 
       {nextAppt ? (
         <View style={styles.apptCard}>
@@ -132,6 +148,9 @@ const styles = StyleSheet.create({
   emergencyTitle: { fontFamily: paFonts.black, fontSize: 15, color: '#fff' },
   emergencySub: { fontFamily: paFonts.regular, fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   emergencyArrow: { color: '#fff', fontSize: 16 },
+  triageCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, padding: 14, marginBottom: 14 },
+  triageEyebrow: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: pa.muted, marginBottom: 3 },
+  triageMeta: { fontFamily: paFonts.bold, fontSize: 14, color: pa.ink },
   apptCard: { backgroundColor: pa.ink, padding: 18, marginBottom: 14 },
   apptEyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   beaconDot: { width: 6, height: 6, backgroundColor: pa.beacon },

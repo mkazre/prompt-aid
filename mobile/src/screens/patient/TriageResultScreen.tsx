@@ -6,34 +6,37 @@ import { pa, paFonts, type } from '../../theme';
 import { PaButton, PaCard } from '../../components/pa';
 import { PaVerdictBanner } from '../../components/pa/triage-extras';
 import { assess, TriageLevel } from '../../services/triage';
+import { useEmergencyContacts } from '../../services/emergencyContacts';
 import type { TriageStackParamList } from './TriageStartScreen';
 
 type Props = NativeStackScreenProps<TriageStackParamList, 'TriageResult'>;
 
-const ADVICE: Record<TriageLevel, string[]> = {
-  red: [
-    'Call 10177 now, or 112 from a mobile.',
-    'Do not drive yourself.',
-    'Stay with the patient and keep them still.',
-    'If they stop breathing, start chest compressions — push hard and fast in the centre of the chest.',
-  ],
-  orange: [
-    'Get to an emergency department within 10 minutes.',
-    'Do not eat or drink anything in case a procedure is needed.',
-    'Bring your ID, medical aid card and any medicine you take.',
-    'For burns, run cool water over the area for 20 minutes. No ice, no butter, no toothpaste.',
-  ],
-  yellow: [
-    'You should be seen within the hour.',
-    'A clinic or GP can handle this — an emergency department will keep you waiting behind the red and orange cases.',
-    'Write down when the symptoms started and anything that makes them worse.',
-  ],
-  green: [
-    'This can be booked normally, today or tomorrow.',
-    'A pharmacist can advise on minor complaints without an appointment.',
-    'Come back to this tool if anything changes — it only takes a minute.',
-  ],
-};
+function adviceFor(primaryPhone: string): Record<TriageLevel, string[]> {
+  return {
+    red: [
+      `Call ${primaryPhone} now, or 112 from a mobile.`,
+      'Do not drive yourself.',
+      'Stay with the patient and keep them still.',
+      'If they stop breathing, start chest compressions — push hard and fast in the centre of the chest.',
+    ],
+    orange: [
+      'Get to an emergency department within 10 minutes.',
+      'Do not eat or drink anything in case a procedure is needed.',
+      'Bring your ID, medical aid card and any medicine you take.',
+      'For burns, run cool water over the area for 20 minutes. No ice, no butter, no toothpaste.',
+    ],
+    yellow: [
+      'You should be seen within the hour.',
+      'A clinic or GP can handle this — an emergency department will keep you waiting behind the red and orange cases.',
+      'Write down when the symptoms started and anything that makes them worse.',
+    ],
+    green: [
+      'This can be booked normally, today or tomorrow.',
+      'A pharmacist can advise on minor complaints without an appointment.',
+      'Come back to this tool if anything changes — it only takes a minute.',
+    ],
+  };
+}
 
 /**
  * Fire-and-forget submission to the real backend endpoint built this
@@ -73,6 +76,7 @@ function submitTriageResult(params: {
 
 export default function TriageResultScreen({ navigation, route }: Props) {
   const { selfReported, ageBand, pregnant, symptoms, discriminators, observations } = route.params;
+  const { primary } = useEmergencyContacts();
 
   const result = useMemo(
     () => assess({ selfReported, ageBand, pregnant, symptoms, discriminators, observations }),
@@ -94,7 +98,7 @@ export default function TriageResultScreen({ navigation, route }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result.level]);
 
-  const advice = ADVICE[result.level];
+  const advice = adviceFor(primary.phone)[result.level];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -107,7 +111,7 @@ export default function TriageResultScreen({ navigation, route }: Props) {
 
       <View style={{ padding: 16 }}>
         {result.callAmbulance ? (
-          <PaButton title="Call an ambulance now · 10177" onPress={() => Linking.openURL('tel:10177')} style={{ marginBottom: 16, backgroundColor: pa.signal }} />
+          <PaButton title={`Call an ambulance now · ${primary.phone}`} onPress={() => Linking.openURL(primary.tel_url)} style={{ marginBottom: 16, backgroundColor: pa.signal }} />
         ) : null}
 
         <PaCard style={{ marginBottom: 16 }}>

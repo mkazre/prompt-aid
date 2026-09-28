@@ -343,6 +343,21 @@ export interface Invoice {
   payments?: InvoicePayment[];
 }
 
+export interface EmergencyContact {
+  id: number;
+  label: string;
+  phone: string;
+  tel_url: string;
+  is_primary: boolean;
+  sort_order: number;
+}
+
+export interface LatestTriage {
+  reference: string;
+  level: 'red' | 'orange' | 'yellow' | 'green';
+  created_at: string;
+}
+
 export interface Paginated<T> {
   data: T[];
   links?: unknown;

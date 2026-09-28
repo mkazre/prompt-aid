@@ -11,6 +11,7 @@ import {
   Observations,
   TriageLevel,
 } from '../../services/triage';
+import { useEmergencyContacts } from '../../services/emergencyContacts';
 import type { TriageStackParamList } from './TriageStartScreen';
 
 type Props = NativeStackScreenProps<TriageStackParamList, 'TriageFlags'>;
@@ -31,6 +32,7 @@ const DISCRIMINATOR_LEVELS: TriageLevel[] = ['red', 'orange', 'yellow'];
 
 export default function TriageFlagsScreen({ navigation, route }: Props) {
   const { selfReported, ageBand, pregnant, symptoms } = route.params;
+  const { primary } = useEmergencyContacts();
   const [discriminators, setDiscriminators] = useState<string[]>([]);
   const [mobility, setMobility] = useState<MobilityValue>('walking');
   const [breathing, setBreathing] = useState<BreathingValue>('normal');
@@ -65,8 +67,8 @@ export default function TriageFlagsScreen({ navigation, route }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <View style={styles.headRow}>
         <Text style={styles.headTitle}>Triage</Text>
-        <Text style={styles.callLink} onPress={() => Linking.openURL('tel:10177')}>
-          10177
+        <Text style={styles.callLink} onPress={() => Linking.openURL(primary.tel_url)}>
+          {primary.phone}
         </Text>
       </View>
 

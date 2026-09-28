@@ -5,6 +5,7 @@ import { pa, paFonts, type } from '../../theme';
 import { PaButton, PaEyebrow } from '../../components/pa';
 import { PaChoiceChip, PaSatsBar, PaSymptomTile } from '../../components/pa/triage-extras';
 import { AgeBand, SYMPTOMS, TriageLevel } from '../../services/triage';
+import { useEmergencyContacts } from '../../services/emergencyContacts';
 
 /**
  * Route params shared by the whole triage flow. The engineer wiring this
@@ -49,6 +50,7 @@ const AGE_OPTIONS: { key: AgeBand; label: string }[] = [
 
 export default function TriageStartScreen({ navigation, route }: Props) {
   const selfReported = route.params?.selfReported;
+  const { primary } = useEmergencyContacts();
   const [who, setWho] = useState<(typeof WHO_OPTIONS)[number]>('Me');
   const [ageBand, setAgeBand] = useState<AgeBand>('adult');
   const [pregnant, setPregnant] = useState(false);
@@ -66,8 +68,8 @@ export default function TriageStartScreen({ navigation, route }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <View style={styles.headRow}>
         <Text style={styles.headTitle}>Triage</Text>
-        <Text style={styles.callLink} onPress={() => Linking.openURL('tel:10177')}>
-          10177
+        <Text style={styles.callLink} onPress={() => Linking.openURL(primary.tel_url)}>
+          {primary.phone}
         </Text>
       </View>
 
