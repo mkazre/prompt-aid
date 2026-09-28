@@ -4,7 +4,10 @@ namespace App\Filament\Resources\Claims;
 
 use App\Filament\Resources\Claims\Pages\EditClaim;
 use App\Filament\Resources\Claims\Pages\ListClaims;
+use App\Filament\Resources\Claims\Pages\ViewClaim;
+use App\Filament\Resources\Claims\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\Claims\Schemas\ClaimForm;
+use App\Filament\Resources\Claims\Schemas\ClaimInfolist;
 use App\Filament\Resources\Claims\Tables\ClaimsTable;
 use App\Models\Claim;
 use App\Models\Invoice;
@@ -76,6 +79,11 @@ class ClaimResource extends Resource
         return ClaimForm::configure($schema);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return ClaimInfolist::configure($schema);
+    }
+
     public static function table(Table $table): Table
     {
         return ClaimsTable::configure($table);
@@ -83,13 +91,16 @@ class ClaimResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            DocumentsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
     {
         return [
             'index' => ListClaims::route('/'),
+            'view' => ViewClaim::route('/{record}'),
             'edit' => EditClaim::route('/{record}/edit'),
         ];
     }

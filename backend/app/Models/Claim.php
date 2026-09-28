@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Claim extends Model
@@ -23,8 +25,8 @@ class Claim extends Model
     public const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
-        'claimable_type', 'claimable_id', 'scheme_membership_id', 'status', 'rejection_reason',
-        'submitted_at', 'scheme_ref', 'amount_claimed', 'amount_paid', 'response',
+        'claimable_type', 'claimable_id', 'scheme_membership_id', 'status', 'resubmission_count',
+        'rejection_reason', 'submitted_at', 'scheme_ref', 'amount_claimed', 'amount_paid', 'response',
     ];
 
     protected function casts(): array
@@ -48,5 +50,19 @@ class Claim extends Model
     public function membership(): BelongsTo
     {
         return $this->belongsTo(SchemeMembership::class, 'scheme_membership_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ClaimDocument::class);
+    }
+
+    /**
+     * The Auditable trait writes here on every status change — this is
+     * the source for the status-history timeline on the claim's view page.
+     */
+    public function auditLogs(): MorphMany
+    {
+        return $this->morphMany(AuditLog::class, 'auditable')->orderBy('created_at');
     }
 }

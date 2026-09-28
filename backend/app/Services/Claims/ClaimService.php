@@ -35,9 +35,24 @@ class ClaimService
             'status' => Claim::STATUS_SUBMITTED,
             'submitted_at' => now(),
             'scheme_ref' => $schemeRef ?? $claim->scheme_ref,
+            // A fresh submission cycle — any leftover reason from a prior
+            // rejection no longer describes the claim's current state.
+            'rejection_reason' => null,
         ]);
 
         return $claim->fresh();
+    }
+
+    /**
+     * A rejected/part_paid claim going back to the scheme. Same submission
+     * logic as submit(), plus a bump to resubmission_count so the audit
+     * timeline can tell a resubmission apart from the original submission.
+     */
+    public function resubmit(Claim $claim, ?string $schemeRef = null): Claim
+    {
+        $claim->increment('resubmission_count');
+
+        return $this->submit($claim, $schemeRef);
     }
 
     public function updateOutcome(Claim $claim, string $status, ?float $amountPaid = null, ?string $rejectionReason = null): Claim
