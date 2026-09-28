@@ -343,6 +343,11 @@ export interface Invoice {
   payments?: InvoicePayment[];
 }
 
+export interface MedicalScheme {
+  id: number;
+  name: string;
+}
+
 export interface EmergencyContact {
   id: number;
   label: string;

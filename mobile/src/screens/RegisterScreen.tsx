@@ -15,14 +15,24 @@ export default function RegisterScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
-    setLoading(true);
-    try {
-      await register({ name, email: email.trim(), phone: phone || undefined, password, role });
-    } catch (e) {
-      Alert.alert('Could not create account', apiErrorMessage(e, 'Please check your details and try again.'));
-    } finally {
-      setLoading(false);
+    const account = { name, email: email.trim(), phone: phone || undefined, password };
+
+    // Drivers have no medical/scheme/document fields to collect, so their
+    // signup stays a single step; patients continue into the wizard and
+    // only hit the API once, on its final screen.
+    if (role === 'driver') {
+      setLoading(true);
+      try {
+        await register({ ...account, role });
+      } catch (e) {
+        Alert.alert('Could not create account', apiErrorMessage(e, 'Please check your details and try again.'));
+      } finally {
+        setLoading(false);
+      }
+      return;
     }
+
+    navigation.navigate('RegisterMedical', { account });
   }
 
   return (

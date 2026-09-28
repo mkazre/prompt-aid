@@ -30,6 +30,7 @@
       <button type="submit" class="pa-btn pa-btn-block pa-btn-lg" style="margin-top:16px">Create account</button>
     </form>
     <div style="font-size:13px;color:var(--pa-muted);text-align:center;margin-top:16px">Already registered? <a href="{{ route('login') }}">Log in</a></div>
+    <div style="font-size:13px;color:var(--pa-muted);text-align:center;margin-top:6px">Signing up as a patient? Try our <a href="{{ route('register.wizard.account') }}">guided signup</a> to add your scheme and health details.</div>
   </div>
 </div>
 </x-layout>

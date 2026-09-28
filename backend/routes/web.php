@@ -15,6 +15,7 @@ use App\Http\Controllers\PageBuilderPreviewController;
 use App\Http\Controllers\PageBuilderRenderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PharmacyPageController;
+use App\Http\Controllers\RegistrationWizardController;
 use App\Http\Controllers\RideTrackingController;
 use App\Http\Controllers\ShopPageController;
 use App\Http\Controllers\ShuttlePageController;
@@ -81,6 +82,20 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [WebAuthController::class, 'login'])->name('login.store');
     Route::get('/register', [WebAuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [WebAuthController::class, 'register'])->name('register.store');
+
+    // Patient-only signup wizard — separate flow from the flat /register
+    // above (which stays as-is for drivers and anyone linking straight to
+    // it). See RegistrationWizardController for why.
+    Route::prefix('join')->name('register.wizard.')->group(function () {
+        Route::get('/', [RegistrationWizardController::class, 'showAccount'])->name('account');
+        Route::post('/', [RegistrationWizardController::class, 'storeAccount'])->name('account.store');
+        Route::get('/medical', [RegistrationWizardController::class, 'showMedical'])->name('medical');
+        Route::post('/medical', [RegistrationWizardController::class, 'storeMedical'])->name('medical.store');
+        Route::get('/scheme', [RegistrationWizardController::class, 'showScheme'])->name('scheme');
+        Route::post('/scheme', [RegistrationWizardController::class, 'storeScheme'])->name('scheme.store');
+        Route::get('/documents', [RegistrationWizardController::class, 'showDocuments'])->name('documents');
+        Route::post('/documents', [RegistrationWizardController::class, 'storeDocuments'])->name('documents.store');
+    });
 });
 
 Route::middleware('auth')->group(function () {
@@ -119,5 +134,5 @@ Route::middleware('auth')->group(function () {
 // exclusion is baked into the route's own pattern rather than relying on
 // "runs after everything else" alone.
 Route::get('/{path}', [PageBuilderRenderController::class, 'render'])
-    ->where('path', '^(?!(login|register|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets)(/|$)).+$')
+    ->where('path', '^(?!(login|register|join|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets)(/|$)).+$')
     ->name('page-builder.render');

@@ -6,6 +6,9 @@ import { useAuth } from '../context/AuthContext';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import RegisterMedicalScreen from '../screens/RegisterMedicalScreen';
+import RegisterSchemeScreen from '../screens/RegisterSchemeScreen';
+import RegisterDocumentScreen from '../screens/RegisterDocumentScreen';
 import PatientTabs from './PatientTabs';
 import DriverTabs from './DriverTabs';
 import ThirdPartyTabs from './ThirdPartyTabs';
@@ -21,6 +24,9 @@ function AuthStack() {
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="RegisterMedical" component={RegisterMedicalScreen} />
+      <Stack.Screen name="RegisterScheme" component={RegisterSchemeScreen} />
+      <Stack.Screen name="RegisterDocument" component={RegisterDocumentScreen} />
     </Stack.Navigator>
   );
 }
