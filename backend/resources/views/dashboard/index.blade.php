@@ -1,8 +1,10 @@
 <x-layout title="My care · Prompt Aid">
-<div class="pa-container" style="padding-top:32px;padding-bottom:80px">
+<div class="pa-account">
+<x-account-nav active="overview" />
+<div>
   <div class="pa-spread" style="margin-bottom:22px">
     <div><h1 style="font-size:32px">My care</h1><p class="pa-muted" style="margin:6px 0 0">Everything booked, ordered and recorded in one place.</p></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn" href="{{ route('doctors.index') }}">Book care</a></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn-ghost" href="{{ route('account.profile') }}">Profile</a><a class="pa-btn" href="{{ route('doctors.index') }}">Book care</a></div>
   </div>
 
   @php
@@ -149,6 +151,7 @@
       <button class="pa-btn pa-btn-lg">Request ride</button>
     </form>
   </div>
+</div>
 </div>
 
 <script>

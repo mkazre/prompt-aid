@@ -1,5 +1,14 @@
 <?php
 
+use App\Http\Controllers\Account\AppointmentsController as AccountAppointmentsController;
+use App\Http\Controllers\Account\InvoicesController as AccountInvoicesController;
+use App\Http\Controllers\Account\OrdersController as AccountOrdersController;
+use App\Http\Controllers\Account\PrescriptionsController as AccountPrescriptionsController;
+use App\Http\Controllers\Account\ProfileController as AccountProfileController;
+use App\Http\Controllers\Account\RecordController as AccountRecordController;
+use App\Http\Controllers\Account\ResultsController as AccountResultsController;
+use App\Http\Controllers\Account\RidesController as AccountRidesController;
+use App\Http\Controllers\Account\SettingsController as AccountSettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmergencyResultsController;
 use App\Http\Controllers\PageBuilderPreviewController;
@@ -78,6 +87,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/appointments', [WebAppointmentController::class, 'store'])->name('appointments.store');
+
+    Route::prefix('account')->name('account.')->group(function () {
+        Route::get('/appointments', [AccountAppointmentsController::class, 'index'])->name('appointments');
+        Route::post('/appointments/{appointment}/cancel', [AccountAppointmentsController::class, 'cancel'])->name('appointments.cancel');
+        Route::get('/prescriptions', [AccountPrescriptionsController::class, 'index'])->name('prescriptions');
+        Route::get('/results', [AccountResultsController::class, 'index'])->name('results');
+        Route::get('/record', [AccountRecordController::class, 'index'])->name('record');
+        Route::get('/orders', [AccountOrdersController::class, 'index'])->name('orders');
+        Route::get('/rides', [AccountRidesController::class, 'index'])->name('rides');
+        Route::get('/invoices', [AccountInvoicesController::class, 'index'])->name('invoices');
+        Route::get('/profile', [AccountProfileController::class, 'edit'])->name('profile');
+        Route::post('/profile', [AccountProfileController::class, 'update'])->name('profile.update');
+        Route::get('/settings', [AccountSettingsController::class, 'edit'])->name('settings');
+        Route::post('/settings/password', [AccountSettingsController::class, 'updatePassword'])->name('settings.password');
+    });
     Route::post('/rides', [WebRideController::class, 'store'])->name('rides.store');
     Route::post('/rides/{ride}/return', [WebRideController::class, 'requestReturn'])->name('rides.return');
     Route::get('/rides/{ride}/track', [RideTrackingController::class, 'show'])->name('rides.track');
@@ -95,5 +119,5 @@ Route::middleware('auth')->group(function () {
 // exclusion is baked into the route's own pattern rather than relying on
 // "runs after everything else" alone.
 Route::get('/{path}', [PageBuilderRenderController::class, 'render'])
-    ->where('path', '^(?!(login|register|dashboard|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets)(/|$)).+$')
+    ->where('path', '^(?!(login|register|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets)(/|$)).+$')
     ->name('page-builder.render');
