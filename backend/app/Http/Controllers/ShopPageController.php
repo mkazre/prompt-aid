@@ -11,7 +11,7 @@ class ShopPageController extends Controller
     {
         $products = Product::query()
             ->where('is_active', true)
-            ->with('pharmacy')
+            ->with(['pharmacy', 'serviceCategories'])
             ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
             ->when($request->filled('c'), fn ($q) => $q->where('kind', $request->string('c')))
             ->orderBy('name')
@@ -23,6 +23,6 @@ class ShopPageController extends Controller
 
     public function show(Product $product)
     {
-        return view('pages.product-single', ['product' => $product->load('pharmacy')]);
+        return view('pages.product-single', ['product' => $product->load('pharmacy', 'serviceCategories')]);
     }
 }

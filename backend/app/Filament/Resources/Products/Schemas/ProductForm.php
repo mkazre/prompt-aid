@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -22,7 +23,9 @@ class ProductForm
                     ->required(),
                 TextInput::make('slug')
                     ->required(),
-                TextInput::make('category'),
+                CheckboxList::make('serviceCategories')
+                    ->relationship('serviceCategories', 'name')
+                    ->columns(2),
                 Textarea::make('description')
                     ->columnSpanFull(),
                 FileUpload::make('image')

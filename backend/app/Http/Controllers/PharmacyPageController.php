@@ -19,9 +19,17 @@ class PharmacyPageController extends Controller
 
     public function show(Pharmacy $pharmacy)
     {
+        // Grouped by category name below (a product can carry several), so
+        // the categories are eager loaded here rather than sorted in SQL.
+        $products = $pharmacy->products()
+            ->where('is_active', true)
+            ->with('serviceCategories')
+            ->get()
+            ->sortBy(fn ($product) => $product->serviceCategories->first()?->name ?? '');
+
         return view('pharmacies.show', [
             'pharmacy' => $pharmacy,
-            'products' => $pharmacy->products()->where('is_active', true)->orderBy('category')->get(),
+            'products' => $products,
         ]);
     }
 

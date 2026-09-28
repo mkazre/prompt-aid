@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ServicesTable
@@ -20,7 +21,10 @@ class ServicesTable
                 TextColumn::make('doctor.user.name')->label('Doctor')->searchable()->placeholder('Any doctor'),
                 TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('category')->badge(),
+                TextColumn::make('serviceCategories.name')
+                    ->label('Categories')
+                    ->badge()
+                    ->listWithLineBreaks(),
                 TextColumn::make('price')
                     ->money('ZAR')
                     ->sortable(),
@@ -39,7 +43,10 @@ class ServicesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('serviceCategories')
+                    ->relationship('serviceCategories', 'name')
+                    ->label('Category')
+                    ->multiple(),
             ])
             ->recordActions([
                 EditAction::make(),

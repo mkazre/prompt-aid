@@ -5,6 +5,7 @@ namespace App\Services\Rides;
 use App\Models\PatientProfile;
 use App\Models\Ride;
 use App\Models\RideSeries;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -55,7 +56,9 @@ class RideSeriesService
     {
         // A scheduled-ahead return leg skips auto-assignment for the same
         // reason materialised series rides do — "closest driver right now"
-        // means nothing for a pickup that isn't happening yet.
+        // means nothing for a pickup that isn't happening yet. An immediate
+        // (unscheduled) return leg is admin-configurable like any other
+        // right-now ride.
         $returnLeg = $this->dispatch->requestRide(
             patient: $outbound->patient,
             pickupAddress: $outbound->dropoff_address,
@@ -66,7 +69,7 @@ class RideSeriesService
             dropoffLng: (float) $outbound->pickup_lng,
             appointmentId: $outbound->appointment_id,
             vehicleType: $outbound->vehicle_type,
-            autoAssign: ! $scheduledFor,
+            autoAssign: $scheduledFor ? false : (bool) Setting::get('ride_auto_assign_scheduled', true),
         );
 
         $returnLeg->update([
@@ -138,6 +141,11 @@ class RideSeriesService
             $pickup = $series->pickup;
             $dropoff = $series->dropoff;
 
+            // Default fallback deliberately differs from the other two
+            // dispatch settings: materialised rides are always days ahead,
+            // so until an admin visits Ride Dispatch settings and saves an
+            // explicit choice, this keeps the pre-existing "never auto-assign
+            // a driver to a future-dated ride" behaviour unchanged.
             $ride = $this->dispatch->requestRide(
                 patient: $series->patient,
                 pickupAddress: $pickup['address'] ?? '',
@@ -147,7 +155,7 @@ class RideSeriesService
                 dropoffLat: (float) ($dropoff['lat'] ?? 0),
                 dropoffLng: (float) ($dropoff['lng'] ?? 0),
                 vehicleType: $series->vehicle_type,
-                autoAssign: false,
+                autoAssign: (bool) Setting::get('ride_auto_assign_scheduled', false),
             );
 
             $ride->update([

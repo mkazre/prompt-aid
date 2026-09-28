@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Services\Schemas;
 
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -24,7 +25,9 @@ class ServiceForm
                     ->label('Doctor (optional)'),
                 TextInput::make('name')
                     ->required(),
-                TextInput::make('category'),
+                CheckboxList::make('serviceCategories')
+                    ->relationship('serviceCategories', 'name')
+                    ->columns(2),
                 Textarea::make('description')
                     ->columnSpanFull(),
                 TextInput::make('price')

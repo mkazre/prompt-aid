@@ -9,6 +9,7 @@ use BackedEnum;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -16,6 +17,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 /**
@@ -36,6 +38,13 @@ class ThemeSettings extends Page
 
     public ?array $data = [];
 
+    // Ride dispatch behaviour is a platform-wide toggle, not a per-tenant
+    // one — same audience restriction as the rest of this settings page.
+    public static function canAccess(): bool
+    {
+        return (bool) Auth::user()?->isSuperAdmin();
+    }
+
     public function mount(): void
     {
         $this->form->fill([
@@ -44,6 +53,9 @@ class ThemeSettings extends Page
             'shape' => ThemeSetting::get('shape', ['container_width' => 1280]),
             'support_phone' => Setting::get('support_phone'),
             'support_email' => Setting::get('support_email'),
+            'ride_auto_assign_shuttle' => Setting::get('ride_auto_assign_shuttle', true),
+            'ride_auto_assign_appointment' => Setting::get('ride_auto_assign_appointment', true),
+            'ride_auto_assign_scheduled' => Setting::get('ride_auto_assign_scheduled', true),
         ]);
     }
 
@@ -77,7 +89,27 @@ class ThemeSettings extends Page
                                     ->schema([
                                         TextInput::make('support_phone')->label('Support phone')->tel(),
                                         TextInput::make('support_email')->label('Support email')->email(),
+                                        TextInput::make('call_center_whatsapp')
+                                            ->label('Call centre WhatsApp number')
+                                            ->helperText('Receives a WhatsApp alert whenever a patient submits a red/orange triage result.')
+                                            ->tel(),
                                     ])->columns(2),
+                            ]),
+                        Tab::make('Ride Dispatch')
+                            ->schema([
+                                Section::make()
+                                    ->description('When off, rides in that context are left unassigned for a driver to self-assign from the open queue instead of auto-matching the nearest available driver.')
+                                    ->schema([
+                                        Toggle::make('ride_auto_assign_shuttle')
+                                            ->label('Auto-assign shuttle requests')
+                                            ->default(true),
+                                        Toggle::make('ride_auto_assign_appointment')
+                                            ->label('Auto-assign appointment-linked rides')
+                                            ->default(true),
+                                        Toggle::make('ride_auto_assign_scheduled')
+                                            ->label('Auto-assign scheduled / return-leg rides')
+                                            ->default(true),
+                                    ]),
                             ]),
                     ])
                     ->columnSpanFull(),
@@ -99,6 +131,13 @@ class ThemeSettings extends Page
         if (! empty($data['support_email'])) {
             Setting::set('support_email', $data['support_email']);
         }
+        if (! empty($data['call_center_whatsapp'])) {
+            Setting::set('call_center_whatsapp', $data['call_center_whatsapp']);
+        }
+
+        Setting::set('ride_auto_assign_shuttle', (bool) ($data['ride_auto_assign_shuttle'] ?? true));
+        Setting::set('ride_auto_assign_appointment', (bool) ($data['ride_auto_assign_appointment'] ?? true));
+        Setting::set('ride_auto_assign_scheduled', (bool) ($data['ride_auto_assign_scheduled'] ?? true));
 
         Notification::make()->title('Theme settings saved')->success()->send();
     }

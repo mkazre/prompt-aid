@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ride;
+use App\Models\Setting;
 use App\Services\Rides\RideDispatchService;
 use App\Services\Rides\RideSeriesService;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class WebRideController extends Controller
             $data['dropoff_address'], $data['dropoff_lat'], $data['dropoff_lng'],
             null,
             $data['vehicle_type'] ?? 'sedan',
+            (bool) Setting::get('ride_auto_assign_shuttle', true),
         );
 
         if (! empty($data['wait_and_return'])) {

@@ -7,6 +7,7 @@ use App\Http\Resources\RideResource;
 use App\Http\Resources\RideSeriesResource;
 use App\Models\Ride;
 use App\Models\RideReview;
+use App\Models\Setting;
 use App\Services\Rides\RideDispatchService;
 use App\Services\Rides\RideSeriesService;
 use Illuminate\Http\Request;
@@ -72,12 +73,21 @@ class RideController extends Controller
             'wait_and_return' => ['nullable', 'boolean'],
         ]);
 
+        $appointmentId = $data['appointment_id'] ?? null;
+
+        // Appointment-linked and standalone shuttle bookings are admin-configurable
+        // independently, even though they share this one endpoint.
+        $autoAssign = $appointmentId
+            ? (bool) Setting::get('ride_auto_assign_appointment', true)
+            : (bool) Setting::get('ride_auto_assign_shuttle', true);
+
         $ride = $this->dispatch->requestRide(
             $request->user()->patientProfile,
             $data['pickup_address'], $data['pickup_lat'], $data['pickup_lng'],
             $data['dropoff_address'], $data['dropoff_lat'], $data['dropoff_lng'],
-            $data['appointment_id'] ?? null,
+            $appointmentId,
             $data['vehicle_type'] ?? 'sedan',
+            $autoAssign,
         );
 
         if (! empty($data['wait_and_return'])) {

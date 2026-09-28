@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ProductsTable
@@ -22,7 +23,10 @@ class ProductsTable
                     ->searchable(),
                 TextColumn::make('slug')
                     ->searchable(),
-                TextColumn::make('category')->badge(),
+                TextColumn::make('serviceCategories.name')
+                    ->label('Categories')
+                    ->badge()
+                    ->listWithLineBreaks(),
                 ImageColumn::make('image')->defaultImageUrl(fn () => 'https://picsum.photos/seed/product/80/80'),
                 TextColumn::make('price')
                     ->money('ZAR')
@@ -45,7 +49,10 @@ class ProductsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('serviceCategories')
+                    ->relationship('serviceCategories', 'name')
+                    ->label('Category')
+                    ->multiple(),
             ])
             ->recordActions([
                 EditAction::make(),

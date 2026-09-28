@@ -2,9 +2,15 @@
 
 namespace App\Filament\Resources\Rides\Tables;
 
+use App\Models\DriverProfile;
+use App\Models\Ride;
+use App\Services\Rides\RideDispatchService;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -45,6 +51,31 @@ class RidesTable
                 ]),
             ])
             ->recordActions([
+                // Manual fallback for unassigned rides regardless of which
+                // auto-assign/self-assign queue mode is active for that ride's
+                // context — a super_admin can always step in and pick a driver.
+                Action::make('assignDriver')
+                    ->label('Assign driver')
+                    ->icon('heroicon-o-user-plus')
+                    ->visible(fn (Ride $record): bool => $record->driver_profile_id === null)
+                    ->schema([
+                        Select::make('driver_profile_id')
+                            ->label('Driver')
+                            ->options(fn (): array => DriverProfile::query()
+                                ->where('availability', DriverProfile::AVAILABLE)
+                                ->where('status', 'active')
+                                ->with('user')
+                                ->get()
+                                ->mapWithKeys(fn (DriverProfile $driver): array => [$driver->id => "{$driver->user->name} ({$driver->vehicle_type})"])
+                                ->all())
+                            ->required()
+                            ->searchable(),
+                    ])
+                    ->action(function (array $data, Ride $record, RideDispatchService $dispatch): void {
+                        $driver = DriverProfile::query()->findOrFail($data['driver_profile_id']);
+                        $dispatch->assignDriver($record, $driver);
+                        Notification::make()->title('Driver assigned')->success()->send();
+                    }),
                 EditAction::make(),
             ])
             ->toolbarActions([

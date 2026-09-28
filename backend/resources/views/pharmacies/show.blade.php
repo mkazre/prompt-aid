@@ -30,9 +30,9 @@
         @if ($errors->any())
           <div class="pa-note" style="margin-bottom:16px;border-color:var(--pa-signal);color:var(--pa-signal)">{{ $errors->first() }}</div>
         @endif
-        @foreach ($products->groupBy('category') as $category => $items)
+        @foreach ($products->groupBy(fn ($product) => $product->serviceCategories->pluck('name')->join(', ') ?: 'Other') as $category => $items)
           <div class="pa-card" style="margin-bottom:24px">
-            <div class="pa-card-head"><h3>{{ $category ?? 'Other' }}</h3></div>
+            <div class="pa-card-head"><h3>{{ $category ?: 'Other' }}</h3></div>
             @foreach ($items as $product)
               <div class="pa-spread" style="padding:16px 26px;border-bottom:1px solid var(--pa-line-soft)">
                 <div>
