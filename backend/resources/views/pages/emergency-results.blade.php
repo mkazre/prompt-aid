@@ -2,6 +2,10 @@
   $noTriage = true;
   $patient = auth()->user()?->patientProfile ?? null;
   $scheme = $patient?->schemeMemberships?->first()?->scheme?->name;
+  // allergies/chronic_conditions are free-text notes (a plain text column,
+  // not a JSON list) — split on commas for the badge display below.
+  $allergyList = $patient?->allergies ? array_filter(array_map('trim', explode(',', $patient->allergies))) : [];
+  $chronicList = $patient?->chronic_conditions ? array_filter(array_map('trim', explode(',', $patient->chronic_conditions))) : [];
 @endphp
 <x-layout title="Nearest help · Prompt Aid">
 <div class="pa-pagehead"><div class="inner">
@@ -63,8 +67,8 @@
     @if($patient)
       <p style="font-size:13px;color:var(--pa-ink-soft);margin-bottom:10px">When you book with a provider above, this is attached automatically so you do not have to repeat it.</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        @forelse(($patient->allergies ?? []) as $a)<span class="pa-badge is-stop">{{ $a }}</span>@empty<span class="pa-badge">No allergies on file</span>@endforelse
-        @foreach(($patient->chronic_conditions ?? []) as $c)<span class="pa-badge is-wait">{{ $c }}</span>@endforeach
+        @forelse($allergyList as $a)<span class="pa-badge is-stop">{{ $a }}</span>@empty<span class="pa-badge">No allergies on file</span>@endforelse
+        @foreach($chronicList as $c)<span class="pa-badge is-wait">{{ $c }}</span>@endforeach
         @if($scheme)<span class="pa-badge">{{ $scheme }}</span>@endif
       </div>
     @else
