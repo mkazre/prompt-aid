@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Clinic;
 use App\Models\DoctorProfile;
 use App\Models\DriverProfile;
+use App\Models\EmergencyContact;
 use App\Models\MedicalScheme;
 use App\Models\Pharmacy;
 use App\Models\Ride;
@@ -115,7 +116,9 @@ class PageController extends Controller
 
     public function contact()
     {
-        return view('contact');
+        return view('contact', [
+            'primaryEmergencyContact' => EmergencyContact::primary(),
+        ]);
     }
 
     public function contactSubmit(Request $request)

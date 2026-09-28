@@ -1,4 +1,7 @@
-@php $noTriage = true; @endphp
+@php
+  $noTriage = true;
+  $secondaryEmergencyContacts = $emergencyContacts->where('is_primary', false);
+@endphp
 <x-layout title="Emergency triage · Prompt Aid">
 <div class="pa-pagehead"><div class="inner">
   <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Emergency triage</div>
@@ -25,7 +28,7 @@
 <section class="pa-triage-step pa-hide" data-step="1">
   <div class="pa-spread" style="margin-bottom:6px">
     <span class="pa-eyebrow">Step 1 of 4</span>
-    <a href="tel:10177" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call 10177</a>
+    <a href="{{ $primaryEmergencyContact?->tel_url }}" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call {{ $primaryEmergencyContact?->phone }}</a>
   </div>
   <h2 style="font-size:30px;margin-bottom:8px">Who needs help?</h2>
   <p class="pa-muted" style="margin-bottom:24px">Children and infants are scored differently — the same symptoms are more serious in a small body.</p>
@@ -71,7 +74,7 @@
 <section class="pa-triage-step pa-hide" data-step="2">
   <div class="pa-spread" style="margin-bottom:6px">
     <span class="pa-eyebrow">Step 2 of 4</span>
-    <a href="tel:10177" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call 10177</a>
+    <a href="{{ $primaryEmergencyContact?->tel_url }}" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call {{ $primaryEmergencyContact?->phone }}</a>
   </div>
   <h2 style="font-size:30px;margin-bottom:8px">What is happening?</h2>
   <p class="pa-muted" style="margin-bottom:24px">Pick everything that applies. This decides which kind of facility can actually treat you, not just which is closest.</p>
@@ -99,7 +102,7 @@
 <section class="pa-triage-step pa-hide" data-step="3">
   <div class="pa-spread" style="margin-bottom:6px">
     <span class="pa-eyebrow">Step 3 of 4</span>
-    <a href="tel:10177" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call 10177</a>
+    <a href="{{ $primaryEmergencyContact?->tel_url }}" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call {{ $primaryEmergencyContact?->phone }}</a>
   </div>
   <h2 style="font-size:30px;margin-bottom:8px">Is any of this true right now?</h2>
   <p class="pa-muted" style="margin-bottom:24px">These are the red flags. One of them is enough to move you up the queue on its own — be honest, nothing here is a bother.</p>
@@ -112,7 +115,7 @@
 <section class="pa-triage-step pa-hide" data-step="4">
   <div class="pa-spread" style="margin-bottom:6px">
     <span class="pa-eyebrow">Step 4 of 4</span>
-    <a href="tel:10177" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call 10177</a>
+    <a href="{{ $primaryEmergencyContact?->tel_url }}" style="font-size:12px;font-weight:900;color:var(--pa-sats-red)">Worse? Call {{ $primaryEmergencyContact?->phone }}</a>
   </div>
   <h2 style="font-size:30px;margin-bottom:8px">How are they right now?</h2>
   <p class="pa-muted" style="margin-bottom:24px">This is the vital-signs part, in plain language. A nurse will measure the real numbers on arrival.</p>
@@ -185,16 +188,13 @@
   </div>
 
   <aside style="position:sticky;top:96px">
-    <a class="pa-emergency-cta" style="margin-bottom:16px" href="tel:10177">Ambulance · 10177</a>
+    <a class="pa-emergency-cta" style="margin-bottom:16px" href="{{ $primaryEmergencyContact?->tel_url }}">{{ $primaryEmergencyContact?->label }} · {{ $primaryEmergencyContact?->phone }}</a>
     <div class="pa-card" style="margin-bottom:16px">
       <div class="pa-card-head"><h3>Other numbers</h3></div>
-      <a class="pa-spread" href="tel:082911" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
-          <span style="font-size:13px;font-weight:700">Netcare 911</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">082 911</span></a><a class="pa-spread" href="tel:084124" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
-          <span style="font-size:13px;font-weight:700">ER24</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">084 124</span></a><a class="pa-spread" href="tel:0861555777" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
-          <span style="font-size:13px;font-weight:700">Poison Information</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">0861 555 777</span></a><a class="pa-spread" href="tel:116" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
-          <span style="font-size:13px;font-weight:700">Childline</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">116</span></a><a class="pa-spread" href="tel:0800428428" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
-          <span style="font-size:13px;font-weight:700">GBV Command Centre</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">0800 428 428</span></a><a class="pa-spread" href="tel:0800567567" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
-          <span style="font-size:13px;font-weight:700">Suicide Crisis Line</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">0800 567 567</span></a>
+      @foreach($secondaryEmergencyContacts as $contact)
+      <a class="pa-spread" href="{{ $contact->tel_url }}" style="padding:12px 20px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none">
+          <span style="font-size:13px;font-weight:700">{{ $contact->label }}</span><span style="font-size:13px;color:var(--pa-signal);font-weight:900">{{ $contact->phone }}</span></a>
+      @endforeach
     </div>
     <div class="pa-card pa-card-pad" style="margin-bottom:16px">
       <div class="pa-label" style="margin-bottom:10px">Your record travels with you</div>
@@ -205,10 +205,12 @@
   </aside>
 </div>
 <script src="{{ asset('assets/js/triage.js') }}"></script>
+<script>window.PromptAidPrimaryEmergency = { label: @json($primaryEmergencyContact?->label), phone: @json($primaryEmergencyContact?->phone), tel: @json($primaryEmergencyContact?->tel_url) };</script>
 <script>
 (function () {
   'use strict';
   var T = window.PromptAidTriage;
+  var primaryEmergency = window.PromptAidPrimaryEmergency || { label: 'Ambulance', phone: '10177', tel: 'tel:10177' };
   var params = new URLSearchParams(location.search);
   var state = {
     selfReported: params.get('start') || 'yellow',
@@ -373,7 +375,7 @@
     });
 
     var advice = {
-      red: ['Call 10177 now, or 112 from a mobile.', 'Do not drive yourself.', 'Stay with the patient and keep them still.', 'If they stop breathing, start chest compressions — push hard and fast in the centre of the chest.'],
+      red: ['Call ' + primaryEmergency.phone + ' now, or 112 from a mobile.', 'Do not drive yourself.', 'Stay with the patient and keep them still.', 'If they stop breathing, start chest compressions — push hard and fast in the centre of the chest.'],
       orange: ['Get to an emergency department within 10 minutes.', 'Do not eat or drink anything in case a procedure is needed.', 'Bring your ID, medical aid card and any medicine you take.', 'For burns, run cool water over the area for 20 minutes. No ice, no butter, no toothpaste.'],
       yellow: ['You should be seen within the hour.', 'A clinic or GP can handle this — an emergency department will keep you waiting behind the red and orange cases.', 'Write down when the symptoms started and anything that makes them worse.'],
       green: ['This can be booked normally, today or tomorrow.', 'A pharmacist can advise on minor complaints without an appointment.', 'Come back to this tool if anything changes — it only takes a minute.']
@@ -385,7 +387,7 @@
         '<h2>' + m.label + ' — ' + m.name + '</h2>' +
         '<p>Target time to be seen: <strong>' + m.targetLabel + '</strong>. Reference <strong id="pa-verdict-ref">' + res.reference + '</strong> — show this at reception.</p>' +
       '</div>' +
-      (res.callAmbulance ? '<a class="pa-emergency-cta" style="margin-top:2px" href="tel:10177">Call an ambulance now · 10177</a>' : '') +
+      (res.callAmbulance ? '<a class="pa-emergency-cta" style="margin-top:2px" href="' + primaryEmergency.tel + '">Call an ambulance now · ' + primaryEmergency.phone + '</a>' : '') +
       '<div class="pa-card" style="margin-top:20px">' +
         '<div class="pa-card-head"><h3>What to do right now</h3>' +
         '<span class="pa-countdown" style="font-size:22px">' + (m.target === 0 ? 'NOW' : m.target + ' min') + '</span></div>' +

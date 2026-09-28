@@ -23,7 +23,7 @@
   <div>
 
   @if($level === 'red')
-    <a class="pa-emergency-cta" style="margin-bottom:24px" href="tel:10177">This is an emergency — call 10177 now</a>
+    <a class="pa-emergency-cta" style="margin-bottom:24px" href="{{ $primaryEmergencyContact?->tel_url }}">This is an emergency — call {{ $primaryEmergencyContact?->phone }} now</a>
   @endif
 
   @if(! $hasRealLocation)
@@ -53,7 +53,7 @@
     </div>
   @empty
     <div class="pa-card pa-card-pad">
-      <p class="pa-muted">No matching providers are registered on Prompt Aid near you yet. Please call 10177/112, or your nearest emergency department directly.</p>
+      <p class="pa-muted">No matching providers are registered on Prompt Aid near you yet. Please call {{ $primaryEmergencyContact?->phone }}/112, or your nearest emergency department directly.</p>
     </div>
   @endforelse
 
@@ -91,10 +91,10 @@
   </div>
 
   <aside style="position:sticky;top:96px">
-    <a class="pa-emergency-cta" style="margin-bottom:16px" href="tel:10177">Ambulance · 10177</a>
+    <a class="pa-emergency-cta" style="margin-bottom:16px" href="{{ $primaryEmergencyContact?->tel_url }}">{{ $primaryEmergencyContact?->label }} · {{ $primaryEmergencyContact?->phone }}</a>
     <div class="pa-card pa-card-pad" style="margin-bottom:16px">
       <div class="pa-label" style="margin-bottom:10px">Why these results</div>
-      <p style="font-size:13px;color:var(--pa-ink-soft)">We only list providers registered on Prompt Aid, ranked by distance from you. We are not a hospital directory and do not claim to list every emergency department in your area — for a full list of hospitals, call 10177 or 112.</p>
+      <p style="font-size:13px;color:var(--pa-ink-soft)">We only list providers registered on Prompt Aid, ranked by distance from you. We are not a hospital directory and do not claim to list every emergency department in your area — for a full list of hospitals, call {{ $primaryEmergencyContact?->phone }} or 112.</p>
     </div>
     <div class="pa-note-stop">This is a pre-triage aid, not a diagnosis. A practitioner performs the formal SATS assessment on arrival and may reach a different colour.</div>
   </aside>

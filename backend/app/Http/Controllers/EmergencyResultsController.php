@@ -6,6 +6,7 @@ use App\Contracts\GeocodingInterface;
 use App\Contracts\NotificationDispatcherInterface;
 use App\Models\Clinic;
 use App\Models\DoctorProfile;
+use App\Models\EmergencyContact;
 use App\Models\Pharmacy;
 use App\Models\TriageSubmission;
 use App\Services\Rides\RideDispatchService;
@@ -113,6 +114,8 @@ class EmergencyResultsController extends Controller
             ->take(6)
             ->values();
 
+        $emergencyContacts = EmergencyContact::activeOrdered();
+
         return view('pages.emergency-results', [
             'level' => $level,
             'submission' => $submission,
@@ -120,6 +123,8 @@ class EmergencyResultsController extends Controller
             'hasRealLocation' => $hasRealLocation,
             'pickupLat' => $lat,
             'pickupLng' => $lng,
+            'emergencyContacts' => $emergencyContacts,
+            'primaryEmergencyContact' => $emergencyContacts->firstWhere('is_primary', true),
         ]);
     }
 

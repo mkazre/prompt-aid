@@ -45,6 +45,21 @@ class MockNotificationDispatcher implements NotificationDispatcherInterface
         return $this->log($user, 'push', $subject, $body);
     }
 
+    public function whatsApp(string $toPhone, string $body): bool
+    {
+        NotificationLog::query()->create([
+            'user_id' => null,
+            'channel' => 'whatsapp',
+            'subject' => "To {$toPhone}",
+            'body' => $body,
+            'status' => 'sent',
+        ]);
+
+        Log::info("[MockNotification][whatsapp] to {$toPhone}: {$body}");
+
+        return true;
+    }
+
     protected function log(User $user, string $channel, ?string $subject, string $body): bool
     {
         NotificationLog::query()->create([

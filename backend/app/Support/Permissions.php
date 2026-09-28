@@ -56,6 +56,7 @@ class Permissions
         'users' => 'Users & Access',
 
         'audit-logs' => 'System',
+        'emergency-contacts' => 'System',
         'notification-log' => 'System',
         'settings' => 'System',
 

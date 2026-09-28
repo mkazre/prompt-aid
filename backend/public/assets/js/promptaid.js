@@ -44,6 +44,16 @@
 
   var base = document.body.getAttribute('data-pa-root') || '.';
 
+  // Rendered server-side into window.PromptAidEmergencyContacts (see
+  // components/layout.blade.php) from the admin-configurable EmergencyContact
+  // table, so this plain static JS file never hardcodes a phone number.
+  var contacts = window.PromptAidEmergencyContacts || [];
+  var primaryContact = null;
+  for (var pc = 0; pc < contacts.length; pc++) {
+    if (contacts[pc].isPrimary) { primaryContact = contacts[pc]; break; }
+  }
+  if (!primaryContact) primaryContact = contacts[0] || { label: 'Ambulance', phone: '10177', tel: 'tel:10177' };
+
   var levels = [
     ['red',    'RED',    'I need help right now',   'Not breathing properly, chest pain, heavy bleeding, unconscious, fitting, a serious injury.', 'Immediately'],
     ['orange', 'ORANGE', 'This is very urgent',     'Severe pain, a burn, a deep cut, a head knock, sudden weakness, a baby who will not feed.',    'Within 10 minutes'],
@@ -78,12 +88,12 @@
           }).join('') +
         '</div>' +
         '<div class="pa-note-stop" style="margin-top:18px">' +
-          '<strong>If someone is not breathing, call 10177 now.</strong> ' +
+          '<strong>If someone is not breathing, call ' + primaryContact.phone + ' now.</strong> ' +
           'This tool is a pre-triage aid, not a diagnosis. A qualified practitioner performs the formal triage on arrival.' +
         '</div>' +
       '</div>' +
       '<div class="pa-modal-foot">' +
-        '<a class="pa-emergency-cta" style="padding:12px 20px;font-size:15px" href="tel:10177">Call an ambulance · 10177</a>' +
+        '<a class="pa-emergency-cta" style="padding:12px 20px;font-size:15px" href="' + primaryContact.tel + '">Call an ambulance · ' + primaryContact.phone + '</a>' +
         '<button class="pa-btn-ghost" type="button" data-pa-triage-close>No emergency, just browsing</button>' +
       '</div>' +
     '</div>';

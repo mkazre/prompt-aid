@@ -91,6 +91,12 @@
   <span><a href="{{ route('legal-popia') }}">POPIA</a> · <a href="{{ route('terms') }}">Terms</a> · <a href="{{ route('privacy') }}">Privacy</a></span>
 </div></div>
 </footer>
+@php
+  $layoutEmergencyContactsForJs = \App\Models\EmergencyContact::activeOrdered()
+    ->map(fn ($c) => ['label' => $c->label, 'phone' => $c->phone, 'tel' => $c->tel_url, 'isPrimary' => (bool) $c->is_primary])
+    ->values();
+@endphp
+<script>window.PromptAidEmergencyContacts = @json($layoutEmergencyContactsForJs);</script>
 <script src="{{ asset('assets/js/promptaid.js') }}"></script>
 @stack('scripts')
 </body>

@@ -26,4 +26,10 @@ interface NotificationDispatcherInterface
      * Send (or simulate sending) a push notification to the user and log it.
      */
     public function push(User $user, string $subject, string $body): bool;
+
+    /**
+     * Send (or simulate sending) a WhatsApp message to a phone number
+     * (e.g. the call centre) that isn't necessarily a registered user.
+     */
+    public function whatsApp(string $toPhone, string $body): bool;
 }

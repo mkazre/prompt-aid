@@ -1,5 +1,5 @@
 <x-layout title="Contact · Prompt Aid">
-<div class="pa-pagehead"><div class="inner"><div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Contact</div><h1>Contact</h1><p class="pa-muted" style="font-size:15px;margin:6px 0 24px">Emergencies go to 10177 or your nearest casualty. We are not an emergency service.</p></div></div>
+<div class="pa-pagehead"><div class="inner"><div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Contact</div><h1>Contact</h1><p class="pa-muted" style="font-size:15px;margin:6px 0 24px">Emergencies go to {{ $primaryEmergencyContact?->phone }} or your nearest casualty. We are not an emergency service.</p></div></div>
 <div class="pa-container" style="padding-top:36px;padding-bottom:80px;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:40px;align-items:start">
   <div>
     <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:28px">

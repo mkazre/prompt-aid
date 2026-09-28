@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\NotificationDispatcherInterface;
+use App\Models\Setting;
 use App\Models\TriageSubmission;
 use App\Models\User;
 use App\Support\StaffNotifier;
@@ -17,6 +19,8 @@ use Illuminate\Support\Str;
  */
 class TriageSubmissionController extends Controller
 {
+    public function __construct(protected NotificationDispatcherInterface $notifier) {}
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -52,6 +56,17 @@ class TriageSubmissionController extends Controller
                     color: $data['level'] === 'red' ? 'danger' : 'warning',
                 );
                 $submission->update(['staff_notified' => true]);
+            }
+
+            $callCenterNumber = Setting::get('call_center_whatsapp');
+            if (! empty($callCenterNumber)) {
+                $patient = $request->user();
+                $who = $patient ? "{$patient->name} ({$patient->phone})" : 'an unauthenticated patient';
+
+                $this->notifier->whatsApp(
+                    $callCenterNumber,
+                    strtoupper($data['level'])." pre-triage — {$submission->reference}. From {$who}. Always tells the patient to call 10177/112 directly — no dispatch is triggered automatically.",
+                );
             }
         }
 

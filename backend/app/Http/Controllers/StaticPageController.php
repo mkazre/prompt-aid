@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmergencyContact;
 use App\Models\User;
 use App\Support\StaffNotifier;
 use Illuminate\Http\Request;
@@ -21,7 +22,12 @@ class StaticPageController extends Controller
 
     public function emergency()
     {
-        return view('pages.emergency');
+        $emergencyContacts = EmergencyContact::activeOrdered();
+
+        return view('pages.emergency', [
+            'emergencyContacts' => $emergencyContacts,
+            'primaryEmergencyContact' => $emergencyContacts->firstWhere('is_primary', true),
+        ]);
     }
 
     public function forProvidersSubmit(Request $request)
