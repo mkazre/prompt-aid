@@ -6,7 +6,11 @@ import { CAR_ICON, DESTINATION_ICON, PICKUP_ICON } from './mapIconData';
 interface RideMapProps {
   pickup: { lat: number; lng: number };
   dropoff: { lat: number; lng: number };
-  driver?: { lat: number; lng: number } | null;
+  driver?: { lat: number; lng: number; heading?: number | null } | null;
+  /** Road route of the active leg (driver → pickup / drop-off), [[lat,lng],…]. */
+  route?: [number, number][] | null;
+  /** Planned trip route pickup → drop-off. */
+  tripRoute?: [number, number][] | null;
   height?: number;
 }
 
@@ -16,14 +20,22 @@ interface RideMapProps {
  * the website's tracking page. Driver position updates are pushed in via
  * postMessage whenever the parent screen's polling picks up a new location.
  */
-export default function RideMap({ pickup, dropoff, driver, height = 260 }: RideMapProps) {
+export default function RideMap({ pickup, dropoff, driver, route, tripRoute, height = 260 }: RideMapProps) {
   const webviewRef = useRef<WebView>(null);
 
   useEffect(() => {
     if (driver) {
-      webviewRef.current?.postMessage(JSON.stringify({ type: 'driver', lat: driver.lat, lng: driver.lng }));
+      webviewRef.current?.postMessage(JSON.stringify({ type: 'driver', lat: driver.lat, lng: driver.lng, heading: driver.heading ?? null }));
     }
-  }, [driver?.lat, driver?.lng]);
+  }, [driver?.lat, driver?.lng, driver?.heading]);
+
+  useEffect(() => {
+    if (route && route.length > 1) webviewRef.current?.postMessage(JSON.stringify({ type: 'route', points: route }));
+  }, [route]);
+
+  useEffect(() => {
+    if (tripRoute && tripRoute.length > 1) webviewRef.current?.postMessage(JSON.stringify({ type: 'trip', points: tripRoute }));
+  }, [tripRoute]);
 
   const html = `
     <!DOCTYPE html>
@@ -78,10 +90,24 @@ export default function RideMap({ pickup, dropoff, driver, height = 260 }: RideM
         function handle(raw) {
           try {
             const data = JSON.parse(raw);
+            if (data.type === 'route' || data.type === 'trip') {
+              const layer = data.type === 'route' ? 'routeLine' : 'tripLine';
+              if (window[layer]) map.removeLayer(window[layer]);
+              window[layer] = L.polyline(data.points, data.type === 'route'
+                ? { color: '#101012', weight: 5, opacity: 0.85 }
+                : { color: '#D0211C', weight: 4, opacity: 0.55, dashArray: '6 8' }).addTo(map);
+              return;
+            }
             if (data.type === 'driver') {
               const pos = [data.lat, data.lng];
-              if (lastDriverPos && (lastDriverPos[0] !== pos[0] || lastDriverPos[1] !== pos[1])) {
+              if (typeof data.heading === 'number') {
+                lastBearing = data.heading;
+              } else if (lastDriverPos && (lastDriverPos[0] !== pos[0] || lastDriverPos[1] !== pos[1])) {
                 lastBearing = bearingBetween(lastDriverPos, pos);
+              }
+              if (!driverMarker) {
+                // First fix: frame driver + pickup + drop-off.
+                map.fitBounds(L.latLngBounds([pos, pickup, dropoff]), { padding: [40, 40] });
               }
               lastDriverPos = pos;
               if (!driverMarker) {

@@ -283,6 +283,24 @@ class RideController extends Controller
         return new RideResource($ride);
     }
 
+    /** Patient: SOS during a trip — alerts the support team (same as the website button). */
+    public function sos(Request $request, Ride $ride)
+    {
+        abort_unless($request->user()->patientProfile && $ride->patient_profile_id === $request->user()->patientProfile->id, 403);
+
+        $data = $request->validate([
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+        ]);
+
+        $this->dispatch->sos($ride->loadMissing('driver.user'), $request->user(), isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null);
+
+        return response()->json([
+            'message' => 'Our support team has been alerted and can see your trip.',
+            'contacts' => \App\Models\EmergencyContact::activeOrdered()->map(fn ($c) => ['label' => $c->label, 'phone' => $c->phone, 'tel_url' => $c->tel_url, 'is_primary' => (bool) $c->is_primary])->values(),
+        ]);
+    }
+
     /** Patient: rate a completed ride. */
     public function review(Request $request, Ride $ride)
     {

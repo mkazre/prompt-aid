@@ -4,8 +4,8 @@ import { Feather } from '@expo/vector-icons';
 import { pa, paFonts } from '../theme';
 import { Appointment, Product } from '../api/types';
 import { META } from '../services/triage';
-import { WidgetProps } from './types';
-import { FeatherName, accentOf, goTo, headline, iconFor, initials, money, shortDate, timeAgo } from './helpers';
+import { ShortcutTile, WidgetProps } from './types';
+import { FeatherName, accentOf, goTo, safeIcon, headline, iconFor, initials, money, shortDate, timeAgo } from './helpers';
 import { IconCircle, Pill, W, WButton, WCard, WEmpty, WHeader, WRow, s, statusPill, wShadow } from './primitives';
 import { ArticleCard, HealthArticleModal, HealthArticleSummary } from './HealthArticleReader';
 
@@ -21,6 +21,11 @@ const SHORTCUTS: { label: string; icon: FeatherName; color: string; target: stri
 ];
 
 export function SearchShortcuts({ config, navigation }: WidgetProps) {
+  // Tiles come from the admin (Site → App Widgets → Shortcut tiles); the
+  // built-in list is only a fallback for an older backend.
+  const tiles: ShortcutTile[] = Array.isArray(config.settings.shortcuts) && config.settings.shortcuts.length
+    ? config.settings.shortcuts
+    : SHORTCUTS.map((sc) => ({ label: sc.label, icon: sc.icon, color: sc.color, target: sc.target, params: (sc.params as any) ?? null }));
   return (
     <View>
       <Text style={[s.title, { marginBottom: 10 }]}>{config.title}</Text>
@@ -37,10 +42,14 @@ export function SearchShortcuts({ config, navigation }: WidgetProps) {
         </Text>
       </Pressable>
       <View style={p.shortcuts}>
-        {SHORTCUTS.map((sc) => (
-          <Pressable key={sc.label} onPress={() => goTo(navigation, sc.target, sc.params)} style={({ pressed }) => [p.shortcut, pressed && { opacity: 0.7 }]}>
-            <View style={[p.shortcutCircle]}>
-              <Feather name={sc.icon} size={22} color={sc.color} />
+        {tiles.map((sc) => (
+          <Pressable key={sc.label} onPress={() => goTo(navigation, sc.target ?? undefined, sc.params ?? undefined)} style={({ pressed }) => [p.shortcut, pressed && { opacity: 0.7 }]}>
+            <View style={[p.shortcutCircle, sc.color ? { backgroundColor: sc.color + '1A' } : null]}>
+              {sc.icon_image_url ? (
+                <Image source={{ uri: sc.icon_image_url }} style={{ width: 26, height: 26 }} resizeMode="contain" />
+              ) : (
+                <Feather name={safeIcon(sc.icon, 'grid')} size={22} color={sc.color ?? W.ink} />
+              )}
             </View>
             <Text style={p.shortcutLabel} numberOfLines={1}>{sc.label}</Text>
           </Pressable>

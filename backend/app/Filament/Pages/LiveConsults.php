@@ -82,6 +82,14 @@ class LiveConsults extends Page
         });
     }
 
+    public function goBusy(): void
+    {
+        $this->guard(function () {
+            $this->service()->setAvailability($this->doctor(), DoctorProfile::BUSY);
+            Notification::make()->title('You are orange — patients see you as available today at booked slots')->warning()->send();
+        });
+    }
+
     public function goOffline(): void
     {
         $this->guard(function () {

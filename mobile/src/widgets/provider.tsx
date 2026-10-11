@@ -10,34 +10,65 @@ import { IconCircle, Pill, W, WButton, WCard, WEmpty, WHeader, s, statusPill } f
 
 // ---------------------------------------------------------------- doctor
 
+const AVAILABILITY_OPTIONS: { value: 'available' | 'busy' | 'offline'; label: string; hint: string; color: string; bg: string; icon: 'radio' | 'clock' | 'moon' }[] = [
+  { value: 'available', label: 'Green', hint: 'Can see a patient within 30 min — receives instant requests', color: '#1F7A4C', bg: '#E7F3EC', icon: 'radio' },
+  { value: 'busy', label: 'Orange', hint: 'Available today at a booked slot', color: '#B4520F', bg: '#FCEEE2', icon: 'clock' },
+  { value: 'offline', label: 'Red', hint: 'Not available today — patients book a future day', color: '#C8102E', bg: '#FBEAEA', icon: 'moon' },
+];
+
+/**
+ * The doctor's live status (Prompt 4): green / orange / red, shown to
+ * patients on the website and app next to the doctor's name.
+ */
 export function DoctorAvailability({ config, data, ctx }: WidgetProps<{ availability: string; specialization: string | null }>) {
-  const [on, setOn] = useState(data?.availability === 'available');
+  const [value, setValue] = useState(data?.availability ?? 'offline');
   const [busy, setBusy] = useState(false);
-  useEffect(() => setOn(data?.availability === 'available'), [data?.availability]);
+  useEffect(() => setValue(data?.availability ?? 'offline'), [data?.availability]);
   if (!data) return null;
 
-  async function toggle(next: boolean) {
-    setOn(next);
+  async function choose(next: 'available' | 'busy' | 'offline') {
+    if (next === value) return;
+    const prev = value;
+    setValue(next);
     setBusy(true);
     try {
-      await api.post('/doctor/availability', { availability: next ? 'available' : 'offline' });
+      await api.post('/doctor/availability', { availability: next });
       ctx.refresh();
     } catch (e) {
-      setOn(!next);
-      Alert.alert('Could not update availability', apiErrorMessage(e));
+      setValue(prev);
+      Alert.alert('Could not update your status', apiErrorMessage(e));
     } finally {
       setBusy(false);
     }
   }
 
+  const current = AVAILABILITY_OPTIONS.find((o) => o.value === value) ?? AVAILABILITY_OPTIONS[2];
+
   return (
-    <WCard style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <IconCircle name={on ? 'radio' : 'moon'} color={on ? W.green : W.sub} />
-      <View style={{ flex: 1 }}>
-        <Text style={s.rowTitle}>{config.title}</Text>
-        <Text style={s.rowSub}>{on ? `Online for ${data.specialization ?? 'on-demand'} requests` : config.subtitle ?? 'You are offline'}</Text>
+    <WCard>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <IconCircle name={current.icon} color={current.color} />
+        <View style={{ flex: 1 }}>
+          <Text style={s.rowTitle}>{config.title}</Text>
+          <Text style={s.rowSub}>{current.hint}</Text>
+        </View>
       </View>
-      <Switch value={on} disabled={busy} onValueChange={toggle} trackColor={{ true: pa.go, false: '#D9D4C8' }} thumbColor="#fff" />
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {AVAILABILITY_OPTIONS.map((o) => {
+          const on = o.value === value;
+          return (
+            <Pressable
+              key={o.value}
+              disabled={busy}
+              onPress={() => choose(o.value)}
+              style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10, borderWidth: on ? 2 : 1, borderColor: on ? o.color : '#E0DACB', backgroundColor: on ? o.bg : '#fff' }}
+            >
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: o.color, marginBottom: 4 }} />
+              <Text style={{ fontFamily: paFonts.black, fontSize: 12, color: o.color }}>{o.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </WCard>
   );
 }

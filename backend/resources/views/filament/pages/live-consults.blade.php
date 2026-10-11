@@ -6,7 +6,7 @@
         $consult = $s['consult'];
         $availability = $doctor->availability;
         $statusColor = $availability === 'available' ? 'success' : ($availability === 'busy' ? 'warning' : 'gray');
-        $statusLabel = $availability === 'available' ? ($s['fresh'] ? 'Online' : 'Online (connecting…)') : ($availability === 'busy' ? 'Busy — in a consult' : 'Offline');
+        $statusLabel = $availability === 'available' ? ($s['fresh'] ? 'Online' : 'Online (connecting…)') : ($availability === 'busy' ? 'Orange — available today' : 'Offline');
     @endphp
 
     <div
@@ -76,11 +76,9 @@
                             <input type="checkbox" x-bind:checked="shareLocation" x-on:change="toggleLocation()">
                             Share my location (for in-person requests)
                         </label>
-                        @if ($availability === 'available')
-                            <x-filament::button color="gray" wire:click="goOffline" icon="heroicon-o-pause">Go offline</x-filament::button>
-                        @elseif ($availability === 'offline')
-                            <x-filament::button color="success" wire:click="goOnline" icon="heroicon-o-signal">Go online</x-filament::button>
-                        @endif
+                        <x-filament::button :color="$availability === 'available' ? 'success' : 'gray'" :outlined="$availability !== 'available'" wire:click="goOnline" icon="heroicon-o-signal">Green · see now</x-filament::button>
+                        <x-filament::button :color="$availability === 'busy' ? 'warning' : 'gray'" :outlined="$availability !== 'busy'" wire:click="goBusy" icon="heroicon-o-clock">Orange · today</x-filament::button>
+                        <x-filament::button :color="$availability === 'offline' ? 'danger' : 'gray'" :outlined="$availability !== 'offline'" wire:click="goOffline" icon="heroicon-o-pause">Red · offline</x-filament::button>
                     </div>
                 </div>
                 <p style="margin:12px 0 0;font-size:12px;opacity:.7">

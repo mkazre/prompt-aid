@@ -7,7 +7,7 @@ import { pa } from '../theme';
 import { WidgetConfig, WidgetContext } from './types';
 import { resolveWidget } from './registry';
 
-type Screen = 'home' | 'find_care' | 'shop' | 'record' | 'calendar' | 'profile';
+type Screen = 'home' | 'find_care' | 'shop' | 'record' | 'calendar' | 'profile' | 'shuttle' | 'appointments';
 
 /** Screens whose widgets use the viewer's position (distance to doctors/clinics). */
 const LOCATION_SCREENS: Screen[] = ['home', 'find_care'];

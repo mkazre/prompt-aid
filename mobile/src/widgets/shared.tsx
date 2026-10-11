@@ -1,6 +1,7 @@
 import React from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { pa, paFonts } from '../theme';
 import { BarsPayload, StatPayload, WidgetProps } from './types';
 import { accentOf, goTo, initials, safeIcon } from './helpers';
@@ -11,9 +12,11 @@ export function PromoBanner({ config, navigation }: WidgetProps) {
   const st = config.settings;
   const accent = accentOf(st, W.blue);
   const body = st.body ?? config.subtitle;
-  const onPress = st.cta_target ? () => goTo(navigation, st.cta_target) : undefined;
-  return (
-    <Pressable onPress={onPress} disabled={!onPress} style={[b.banner, { backgroundColor: accent }]}>
+  const style: 'solid' | 'gradient' | 'image' = st.style === 'gradient' || st.style === 'image' ? st.style : 'solid';
+  const onPress = st.cta_target ? () => goTo(navigation, st.cta_target, st.cta_params ?? undefined) : undefined;
+
+  const content = (
+    <>
       <View style={b.bubble1} />
       <View style={b.bubble2} />
       <View style={{ flex: 1, paddingRight: 8 }}>
@@ -25,15 +28,53 @@ export function PromoBanner({ config, navigation }: WidgetProps) {
           </View>
         ) : null}
       </View>
-      {st.image_url ? (
+      {style === 'image' ? null : st.image_url ? (
         <Image source={{ uri: st.image_url }} style={b.image} />
       ) : (
         <View style={b.art}>
-          <Feather name="shield" size={44} color="#fff" />
+          {st.icon_image_url ? (
+            <Image source={{ uri: st.icon_image_url }} style={{ width: 56, height: 56 }} resizeMode="contain" />
+          ) : (
+            <Feather name={safeIcon(st.icon, 'shield')} size={44} color="#fff" />
+          )}
         </View>
       )}
+    </>
+  );
+
+  // Banner colour/style, icon and link are all set in Site → App Widgets.
+  if (style === 'image' && st.image_url) {
+    return (
+      <Pressable onPress={onPress} disabled={!onPress}>
+        <ImageBackground source={{ uri: st.image_url }} style={[b.banner, { backgroundColor: accent }]} imageStyle={{ borderRadius: W.radius }}>
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16,16,18,0.55)', borderRadius: W.radius }]} />
+          {content}
+        </ImageBackground>
+      </Pressable>
+    );
+  }
+  if (style === 'gradient') {
+    return (
+      <Pressable onPress={onPress} disabled={!onPress}>
+        <LinearGradient colors={[accent, shade(accent), '#101012']} locations={[0, 0.7, 1.4]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={b.banner}>
+          {content}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
+  return (
+    <Pressable onPress={onPress} disabled={!onPress} style={[b.banner, { backgroundColor: accent }]}>
+      {content}
     </Pressable>
   );
+}
+
+/** Darker variant of a #RRGGBB colour for gradients. */
+function shade(hex: string): string {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return hex;
+  const d = (h: string) => Math.max(0, Math.round(parseInt(h, 16) * 0.6)).toString(16).padStart(2, '0');
+  return `#${d(m[1])}${d(m[2])}${d(m[3])}`;
 }
 
 /** Default tap targets for stat widgets (settings.cta_target overrides). */
@@ -55,7 +96,7 @@ export function StatWidget({ config, data, navigation }: WidgetProps<StatPayload
   return (
     <WCard style={{ flex: 1 }} onPress={target ? () => goTo(navigation, target) : undefined}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <IconCircle name={safeIcon(config.settings.icon, 'bar-chart-2')} color={accent} size={42} />
+        <IconCircle name={safeIcon(config.settings.icon, 'bar-chart-2')} imageUrl={config.settings.icon_image_url} color={accent} size={42} />
         {target ? <Feather name="arrow-up-right" size={16} color={pa.muted2} /> : null}
       </View>
       <Text style={st.value} numberOfLines={1} adjustsFontSizeToFit>{data.value}</Text>

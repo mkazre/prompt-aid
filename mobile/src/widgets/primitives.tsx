@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Image, ActivityIndicator, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { pa, paFonts } from '../theme';
 import { FeatherName, tint } from './helpers';
@@ -59,10 +59,16 @@ export function WHeader({ title, subtitle, action, onAction, style }: { title: s
   );
 }
 
-export function IconCircle({ name, color = W.ink, bg, size = 44, iconSize }: { name: FeatherName; color?: string; bg?: string; size?: number; iconSize?: number }) {
+export function IconCircle({ name, color = W.ink, bg, size = 44, iconSize, imageUrl }: { name: FeatherName; color?: string; bg?: string; size?: number; iconSize?: number; imageUrl?: string | null }) {
+  const inner = iconSize ?? Math.round(size * 0.45);
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg ?? tint(color), alignItems: 'center', justifyContent: 'center' }}>
-      <Feather name={name} size={iconSize ?? Math.round(size * 0.45)} color={color} />
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg ?? tint(color), alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      {imageUrl ? (
+        // Admin-uploaded icon image (Site → App Widgets) instead of a library icon.
+        <Image source={{ uri: imageUrl }} style={{ width: Math.round(size * 0.62), height: Math.round(size * 0.62) }} resizeMode="contain" />
+      ) : (
+        <Feather name={name} size={inner} color={color} />
+      )}
     </View>
   );
 }

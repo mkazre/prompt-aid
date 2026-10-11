@@ -8,6 +8,7 @@ import AddressAutocomplete, { GeoPoint } from '../../components/AddressAutocompl
 import RideMap from '../../components/RideMap';
 import { pa, paFonts } from '../../theme';
 import SuccessModal from '../../components/SuccessModal';
+import WidgetHost from '../../widgets/WidgetHost';
 
 const VEHICLE_LABELS: Record<VehicleType, { label: string; sub: string }> = {
   sedan: { label: 'Standard', sub: 'Sedan, 1–3 seats' },
@@ -147,6 +148,8 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
           if (id) navigation.navigate('RideTrack', { rideId: id });
         }}
       />
+      {/* Admin-managed banners for this screen (Site → App Widgets, screen "Shuttle"). */}
+      <WidgetHost screen="shuttle" style={{ marginHorizontal: 16, marginTop: 12 }} />
       <View style={styles.mapWrap}>
         {pickupCoords && dropoffCoords ? (
           <RideMap pickup={pickupCoords} dropoff={dropoffCoords} height={220} />

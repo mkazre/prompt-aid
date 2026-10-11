@@ -208,6 +208,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rides/{ride}/live', [RideController::class, 'live'])->middleware('throttle:120,1');
     Route::get('/rides/{ride}/cancel-preview', [RideController::class, 'cancelPreview']);
     Route::post('/rides/{ride}/cancel', [RideController::class, 'cancel']);
+    Route::post('/rides/{ride}/sos', [RideController::class, 'sos'])->middleware('throttle:5,1');
 
     // --- Pharmacy vendor only ---
     Route::middleware('role:'.User::ROLE_PHARMACY_ADMIN)->prefix('vendor')->group(function () {

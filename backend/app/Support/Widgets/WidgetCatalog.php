@@ -32,6 +32,8 @@ class WidgetCatalog
         'record' => 'My record',
         'calendar' => 'Calendar',
         'profile' => 'Profile',
+        'shuttle' => 'Shuttle',
+        'appointments' => 'Appointments',
     ];
 
     /**
@@ -45,7 +47,7 @@ class WidgetCatalog
         'threshold' => 'Stock level at or below which a product counts as low (number).',
         'size' => '"half" to sit side by side with the next half-width widget, otherwise full width.',
         'accent' => 'Accent colour as a hex code, e.g. #1F4E7A.',
-        'icon' => 'Feather icon name for the app, e.g. users, calendar, star (see feathericons.com).',
+        'icon' => 'Icon from the Feather library (pick it from the list).',
         'cta_label' => 'Button text, e.g. "Book now" or "Learn more".',
         'cta_target' => 'Where the app button goes: a tab, or tab/screen — e.g. Care, Pharmacy/ScriptUpload, Rides, Profile/Invoices.',
         'web_url' => 'Where the website button goes, e.g. /doctors or https://…',

@@ -2,7 +2,18 @@
  * Config-driven widgets — shapes returned by `GET /app-widgets?include=data`
  * (see backend App\Support\Widgets\WidgetDataService for every payload).
  */
-export type WidgetSettings = Record<string, string | undefined>;
+export type WidgetSettings = Record<string, any>;
+
+/** One tile in the search widget's shortcut row (Site → App Widgets → Shortcut tiles). */
+export interface ShortcutTile {
+  label: string;
+  icon?: string;
+  icon_image_url?: string | null;
+  color?: string | null;
+  target?: string | null;
+  params?: Record<string, any> | null;
+  web_url?: string | null;
+}
 
 export interface WidgetConfig<D = any> {
   key: string;

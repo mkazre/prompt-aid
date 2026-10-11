@@ -6,14 +6,17 @@ use App\Filament\Support\MediaLibraryPicker;
 use App\Models\AppWidget;
 use App\Support\Widgets\WidgetCatalog;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\KeyValue;
+use App\Support\Icons;
+use App\Support\Widgets\WidgetDestinations;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Illuminate\Support\HtmlString;
 
 class AppWidgetForm
 {
@@ -55,32 +58,76 @@ class AppWidgetForm
                         TextInput::make('sort_order')->numeric()->default(0)->required()->helperText('Lower shows first. You can also drag to reorder in the list.'),
                     ]),
 
+                Section::make('Look')
+                    ->description('Colour and icon. Pick an icon from the library, or upload your own image to use instead.')
+                    ->columns(2)
+                    ->schema([
+                        ColorPicker::make('settings.accent')->label('Colour')->helperText('Banner background / icon colour.'),
+                        Select::make('settings.style')->label('Banner style')
+                            ->options(['solid' => 'Solid colour', 'gradient' => 'Gradient', 'image' => 'Photo background'])
+                            ->placeholder('Solid colour')
+                            ->visible(fn (Get $get): bool => WidgetCatalog::isBanner($get('key'))),
+                        Select::make('settings.icon')->label('Icon (from the library)')
+                            ->options(Icons::selectOptions())->allowHtml()->searchable()
+                            ->helperText('287 professional icons — type to search, e.g. heart, calendar, truck.'),
+                        FileUpload::make('settings.icon_image')->label('…or upload an icon image')
+                            ->image()->imageEditor()->directory('app-widgets/icons')->disk('public')->maxSize(1024)
+                            ->helperText('PNG/SVG/JPG up to 1 MB. Used instead of the library icon.'),
+                        Select::make('settings.size')->label('Width')->options(['full' => 'Full width', 'half' => 'Half width (sits beside the next half-width widget)'])->placeholder('Full width'),
+                    ]),
+
                 Section::make('Banner image')
                     ->visible(fn (Get $get): bool => WidgetCatalog::isBanner($get('key')))
                     ->columns(2)
                     ->schema([
                         FileUpload::make('image')->image()->directory('app-widgets')->disk('public'),
                         MediaLibraryPicker::for('image'),
+                        TextInput::make('settings.image_url')->label('…or an image web address')->url()->columnSpanFull(),
                     ]),
 
-                Section::make('Settings')
-                    ->description('Optional per-widget options. Leave a key out to use the default.')
+                Section::make('Text & button')
+                    ->columns(2)
                     ->schema([
-                        KeyValue::make('settings')
-                            ->keyLabel('Setting')
-                            ->valueLabel('Value')
+                        Textarea::make('settings.body')->label('Body text')->rows(2)->columnSpanFull(),
+                        TextInput::make('settings.cta_label')->label('Button text')->placeholder('Learn more'),
+                        Select::make('settings.destination')->label('Button / tap goes to')
+                            ->options(WidgetDestinations::options())->searchable()
+                            ->helperText('Works in the app and on the website.'),
+                        TextInput::make('settings.web_url')->label('Custom website link (optional)')->placeholder('/doctors or https://…'),
+                        TextInput::make('settings.placeholder')->label('Search box text')
+                            ->visible(fn (Get $get): bool => str_contains((string) $get('key'), 'search')),
+                    ]),
+
+                Section::make('Shortcut tiles')
+                    ->description('The round icons under the search box. Drag to reorder.')
+                    ->visible(fn (Get $get): bool => str_contains((string) $get('key'), 'shortcuts'))
+                    ->schema([
+                        Repeater::make('settings.shortcuts')->label('')
+                            ->schema([
+                                TextInput::make('label')->required()->maxLength(30),
+                                Select::make('destination')->label('Goes to')->options(WidgetDestinations::options())->searchable()->required(),
+                                Select::make('icon')->options(Icons::selectOptions())->allowHtml()->searchable(),
+                                FileUpload::make('icon_image')->label('…or icon image')->image()->directory('app-widgets/icons')->disk('public')->maxSize(1024),
+                                ColorPicker::make('color')->label('Icon colour'),
+                            ])
+                            ->columns(5)
+                            ->default(WidgetDestinations::DEFAULT_SHORTCUTS)
                             ->reorderable()
-                            ->helperText(new HtmlString(self::settingsHelp())),
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
+                            ->addActionLabel('Add a shortcut'),
+                    ]),
+
+                Section::make('Data')
+                    ->description('How much each list shows. Leave blank for the default.')
+                    ->collapsed()
+                    ->columns(4)
+                    ->schema([
+                        TextInput::make('settings.limit')->label('Items to show')->numeric()->minValue(1)->maxValue(50),
+                        TextInput::make('settings.days')->label('Look back (days)')->numeric()->minValue(1),
+                        TextInput::make('settings.hours')->label('Only if newer than (hours)')->numeric()->minValue(1),
+                        TextInput::make('settings.threshold')->label('Low-stock level')->numeric()->minValue(0),
                     ]),
             ]);
-    }
-
-    protected static function settingsHelp(): string
-    {
-        $rows = collect(WidgetCatalog::SETTINGS_HELP)
-            ->map(fn (string $help, string $key) => '<strong>'.e($key).'</strong> — '.e($help))
-            ->implode('<br>');
-
-        return 'Recognised settings (each widget uses the ones that apply to it):<br>'.$rows;
     }
 }

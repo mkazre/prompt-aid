@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Widgets\WidgetDestinations;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
@@ -84,7 +85,39 @@ class AppWidget extends Model
      */
     public function publicSettings(): array
     {
-        $settings = $this->settings ?? [];
+        $settings = array_filter($this->settings ?? [], fn ($v) => $v !== null && $v !== '');
+
+        // Destination picked in the admin → app target + website link.
+        if (! empty($settings['destination'])) {
+            $to = WidgetDestinations::resolve($settings);
+            $settings['cta_target'] = $to['app'] ?: ($settings['cta_target'] ?? null);
+            $settings['web_url'] = $to['web'];
+            if ($to['group']) {
+                $settings['cta_params'] = ['group' => $to['group']];
+            }
+        }
+
+        if (! empty($settings['icon_image'])) {
+            $settings['icon_image_url'] = self::mediaUrl($settings['icon_image']);
+        }
+
+        // Shortcut tiles (search widget): defaults until an admin edits them.
+        if (str_contains($this->key, 'shortcuts')) {
+            $tiles = ! empty($settings['shortcuts']) && is_array($settings['shortcuts']) ? $settings['shortcuts'] : WidgetDestinations::DEFAULT_SHORTCUTS;
+            $settings['shortcuts'] = array_values(array_map(function (array $tile) {
+                $to = WidgetDestinations::resolve($tile);
+
+                return [
+                    'label' => (string) ($tile['label'] ?? ''),
+                    'icon' => $tile['icon'] ?? 'grid',
+                    'icon_image_url' => ! empty($tile['icon_image']) ? self::mediaUrl($tile['icon_image']) : null,
+                    'color' => $tile['color'] ?? null,
+                    'target' => $to['app'],
+                    'params' => $to['group'] ? ['group' => $to['group']] : null,
+                    'web_url' => $to['web'],
+                ];
+            }, $tiles));
+        }
 
         if ($this->image) {
             $settings['image_url'] = str_starts_with($this->image, 'http')
@@ -93,6 +126,11 @@ class AppWidget extends Model
         }
 
         return $settings;
+    }
+
+    protected static function mediaUrl(string $path): string
+    {
+        return preg_match('#^(https?:)?//#', $path) ? $path : Storage::disk('public')->url($path);
     }
 
     /** @return array{key: string, title: string, subtitle: ?string, settings: array<string, mixed>} */
