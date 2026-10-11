@@ -3,14 +3,16 @@ import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
-import { Appointment, LabRequest, LatestTriage, PrescriptionUpload } from '../../api/types';
+import { Appointment, Doctor, LabRequest, LatestTriage, PrescriptionUpload } from '../../api/types';
 import { PaAvatar, PaBadge, PaQuickAction, PaSatsChip } from '../../components/pa';
 import { pa, paFonts } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { META } from '../../services/triage';
 import { TriagePromptModal } from '../../components/pa/triage-extras';
-import { navigateForEmergencyAction } from '../../components/pa/care-extras';
-import { STATUS_COLOURS, useSiteContent } from '../../services/siteContent';
+import { PaLiveStatus, navigateForEmergencyAction } from '../../components/pa/care-extras';
+import { STATUS_COLOURS, useSiteContent, websiteUrl } from '../../services/siteContent';
+
+interface TopService { kind: string; group: string; id: number; name: string; rating_avg: number; rating_count: number }
 
 // The PromptAid Emergency Scale opens once per app session, like the website popup.
 let emergencyScaleShown = false;
@@ -24,6 +26,8 @@ export default function HomeScreen({ navigation }: any) {
   const [latestTriage, setLatestTriage] = useState<LatestTriage | null>(null);
   const [loading, setLoading] = useState(false);
   const [scaleOpen, setScaleOpen] = useState(false);
+  const [topDoctors, setTopDoctors] = useState<Doctor[]>([]);
+  const [topServices, setTopServices] = useState<TopService[]>([]);
   const content = useSiteContent();
 
   useEffect(() => {
@@ -36,6 +40,10 @@ export default function HomeScreen({ navigation }: any) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      api.get('/top-rated').then(({ data }) => {
+        setTopDoctors(data.doctors?.data ?? data.doctors ?? []);
+        setTopServices(data.services ?? []);
+      }).catch(() => {});
       const [apptRes, labRes, presRes, triageRes] = await Promise.all([
         api.get('/appointments'),
         api.get('/lab-requests').catch(() => ({ data: { data: [] } })),
@@ -83,6 +91,8 @@ export default function HomeScreen({ navigation }: any) {
       />
 
       <Text style={styles.slogan}>{content.home.eyebrow}</Text>
+      <Text style={styles.headline}>{content.home.title}</Text>
+      {content.home.lead ? <Text style={styles.lead}>{content.home.lead}</Text> : null}
 
       <Pressable style={styles.emergencyBanner} onPress={() => setScaleOpen(true)}>
         <View style={styles.blip} />
@@ -138,6 +148,54 @@ export default function HomeScreen({ navigation }: any) {
         <Text style={styles.statusNoteText}>{content.home.status_note}</Text>
       </View>
 
+      {topDoctors.length ? (
+        <>
+          <Text style={styles.sectionLabel}>{content.home.top_doctors_heading}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
+            {topDoctors.map((d) => (
+              <Pressable key={d.id} style={styles.miniCard} onPress={() => navigation.getParent()?.navigate('Care', { screen: 'DoctorDetail', params: { doctorId: d.id } })}>
+                <PaAvatar name={d.name} size={38} />
+                <Text style={styles.miniTitle} numberOfLines={1}>{d.name}</Text>
+                <Text style={styles.miniSub} numberOfLines={1}>{d.specialization}</Text>
+                <PaLiveStatus status={d.live_status} label={d.live_status_label} />
+                <Text style={styles.miniSub}>{d.rating_count ? `★ ${d.rating_avg.toFixed(1)} (${d.rating_count})` : 'New'} · R {Math.round(d.consultation_fee)}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </>
+      ) : null}
+
+      {topServices.length ? (
+        <>
+          <Text style={styles.sectionLabel}>{content.home.top_services_heading}</Text>
+          {topServices.map((sv) => (
+            <Pressable
+              key={sv.kind}
+              style={styles.row}
+              onPress={() => sv.group === 'pharmacy' ? navigation.getParent()?.navigate('Pharmacy') : navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: sv.group } })}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>{sv.name}</Text>
+                <Text style={styles.rowSub}>{sv.kind}{sv.rating_count ? ` · ★ ${sv.rating_avg.toFixed(1)} (${sv.rating_count})` : ''}</Text>
+              </View>
+              <Text style={styles.rowArrow}>→</Text>
+            </Pressable>
+          ))}
+        </>
+      ) : null}
+
+      <Text style={styles.sectionLabel}>{content.home.benefits_heading}</Text>
+      {content.benefits.map((b, i) => (
+        <Pressable key={i} style={styles.benefit} onPress={() => Linking.openURL(websiteUrl(`/about#benefit-${i + 1}`))}>
+          <Text style={styles.benefitNum}>{String(i + 1).padStart(2, '0')}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowTitle}>{b.title}</Text>
+            {b.summary ? <Text style={styles.rowSub}>{b.summary}</Text> : null}
+            <Text style={styles.learnMore}>Learn more →</Text>
+          </View>
+        </Pressable>
+      ))}
+
       {content.topic ? (
         <View style={styles.topicCard}>
           <Text style={styles.topicEyebrow}>{content.home.topic_heading}</Text>
@@ -192,6 +250,15 @@ const styles = StyleSheet.create({
   greetRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
   greetSmall: { fontSize: 13, color: pa.muted, fontFamily: paFonts.regular },
   greetName: { fontSize: 24, fontFamily: paFonts.black, color: pa.ink },
+  headline: { fontFamily: paFonts.black, fontSize: 22, lineHeight: 26, color: pa.ink, marginBottom: 6 },
+  lead: { fontFamily: paFonts.regular, fontSize: 13, color: pa.inkSoft, marginBottom: 14 },
+  miniCard: { width: 168, backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, padding: 12, gap: 5 },
+  miniTitle: { fontFamily: paFonts.bold, fontSize: 14, color: pa.ink },
+  miniSub: { fontFamily: paFonts.regular, fontSize: 11, color: pa.muted },
+  rowArrow: { fontSize: 16, color: pa.muted },
+  benefit: { flexDirection: 'row', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: pa.lineSoft },
+  benefitNum: { fontFamily: paFonts.black, fontSize: 18, color: pa.signal, width: 28 },
+  learnMore: { fontFamily: paFonts.bold, fontSize: 12, color: pa.signal, marginTop: 4 },
   slogan: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, color: pa.signal, marginBottom: 10 },
   statusNote: { backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, padding: 14, marginTop: 4, marginBottom: 14 },
   statusDot: { width: 9, height: 9, borderRadius: 5 },

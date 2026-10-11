@@ -76,4 +76,41 @@ class ClinicController extends Controller
 
         return \App\Http\Resources\ThirdPartyProfileResource::collection($partners);
     }
+
+    /** Home screen: "Top rated doctors today" + "Top rated services today" (radiology, pharmacy, laboratory). */
+    public function topRated()
+    {
+        $doctors = DoctorProfile::query()
+            ->where('status', 'active')
+            ->where('is_accepting_appointments', true)
+            ->with(['user', 'clinics'])
+            ->orderByDesc('rating_avg')
+            ->orderByDesc('rating_count')
+            ->limit(4)
+            ->get();
+
+        $partner = fn (string $category) => \App\Models\ThirdPartyProfile::query()
+            ->where('status', 'active')->where('category', $category)
+            ->orderByDesc('rating_avg')->orderByDesc('rating_count')->first();
+        $pharmacy = \App\Models\Pharmacy::query()->where('status', 'active')
+            ->orderByDesc('rating_avg')->orderByDesc('rating_count')->first();
+
+        $services = collect([
+            ['kind' => 'Radiology', 'group' => 'radiology', 'model' => $partner('imaging')],
+            ['kind' => 'Pharmacy', 'group' => 'pharmacy', 'model' => $pharmacy],
+            ['kind' => 'Laboratory', 'group' => 'laboratories', 'model' => $partner('lab')],
+        ])->filter(fn ($s) => $s['model'])->map(fn ($s) => [
+            'kind' => $s['kind'],
+            'group' => $s['group'],
+            'id' => $s['model']->id,
+            'name' => $s['model']->company_name ?? $s['model']->name,
+            'rating_avg' => (float) $s['model']->rating_avg,
+            'rating_count' => (int) $s['model']->rating_count,
+        ])->values();
+
+        return response()->json([
+            'doctors' => DoctorProfileResource::collection($doctors),
+            'services' => $services,
+        ]);
+    }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api/client';
+import { api, API_BASE_URL } from '../api/client';
 import type { TriageLevel } from './triage';
 
 /**
@@ -15,8 +15,15 @@ export interface EmergencyLevelCopy {
   action: string;
 }
 
+export interface Benefit {
+  title: string;
+  summary?: string;
+  detail?: string;
+}
+
 export interface SiteContent {
   home: Record<string, string>;
+  benefits: Benefit[];
   emergency: {
     dispatch_phone: string;
     whatsapp_number: string;
@@ -50,7 +57,24 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     topic_heading: 'Topic of the month',
     topic_read_label: 'Read topic',
     topic_testimonial_label: 'Submit a testimonial',
+    title: 'Find a doctor, connect virtually and get a lift to your consultation',
+    lead: 'Download our sleek app and get all the benefits of promptaid right at the palm of your hand',
+    benefits_heading: 'BENEFITS OF USING PROMPTAID',
+    top_doctors_heading: 'Top rated doctors today',
+    top_services_heading: 'Top rated services today',
   },
+  benefits: [
+    { title: "Identifying the level of care", summary: "The PromptAid Emergency Scale tells you how urgently you need to be seen and where to go." },
+    { title: "Quick access to the health system", summary: "Doctors, clinics, pharmacies, labs and transport in one account." },
+    { title: "Choice of practitioner", summary: "Compare GPs, specialists, dentists and allied practitioners by rating, fee and availability." },
+    { title: "Choice of transportation", summary: "Book a standard, comfort, wheelchair or stretcher shuttle with a return leg." },
+    { title: "Eliminating waiting time", summary: "See who is available now and book a time instead of queuing." },
+    { title: "Access to pharmacies, radiology centres and laboratories", summary: "Order medicine, book scans and lab tests from one place." },
+    { title: "Have a say in your treatment", summary: "You choose the practitioner, the time, the mode and how you get there." },
+    { title: "Continuation of care", summary: "Prescriptions, results and visit notes follow you to every provider." },
+    { title: "Ask a doctor feature", summary: "Ask a doctor a question on WhatsApp." },
+    { title: "Access to medical information", summary: "Trusted health topics every month, plus your own records." },
+  ],
   emergency: {
     dispatch_phone: '081 670 9522',
     whatsapp_number: '27816709522',
@@ -100,7 +124,7 @@ export function useSiteContent(): SiteContent {
       .get('/site-content')
       .then(({ data }) => {
         if (!alive || !data?.data) return;
-        cache = { ...DEFAULT_SITE_CONTENT, ...data.data };
+        cache = { ...DEFAULT_SITE_CONTENT, ...data.data, home: { ...DEFAULT_SITE_CONTENT.home, ...(data.data.home ?? {}) } };
         setContent(cache!);
       })
       .catch(() => {
@@ -129,3 +153,8 @@ export const STATUS_COLOURS: Record<'green' | 'orange' | 'red', { fg: string; bg
   orange: { fg: '#B4520F', bg: '#FCEEE2' },
   red: { fg: '#C8102E', bg: '#FBEAEA' },
 };
+
+/** Public website root (API URL without /api), for links into web pages. */
+export function websiteUrl(path = '') {
+  return API_BASE_URL.replace(/\/api\/?$/, '') + path;
+}

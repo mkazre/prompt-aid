@@ -41,6 +41,7 @@ Route::get('/clinics', [ClinicController::class, 'index']);
 Route::get('/clinics/{clinic}', [ClinicController::class, 'show']);
 Route::get('/doctors', [ClinicController::class, 'doctors']);
 Route::get('/partners', [ClinicController::class, 'partners']);
+Route::get('/top-rated', [ClinicController::class, 'topRated']);
 Route::get('/doctors/{doctor}', [ClinicController::class, 'doctor']);
 Route::get('/doctors/{doctor}/available-slots', [AppointmentController::class, 'availableSlots']);
 Route::get('/doctors/{doctorId}/reviews', [ReviewController::class, 'forDoctor']);
