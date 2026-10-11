@@ -96,6 +96,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('throttle:60,1')->post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'send'])->whereNumber('conversation');
     Route::post('/conversations/{conversation}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markRead'])->whereNumber('conversation');
 
+    Route::post('/push-tokens', [\App\Http\Controllers\Api\PushTokenController::class, 'store'])->middleware('throttle:20,1');
+    Route::delete('/push-tokens', [\App\Http\Controllers\Api\PushTokenController::class, 'destroy']);
     Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
     Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\NotificationController::class, 'unreadCount']);
     Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllRead']);

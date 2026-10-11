@@ -12,7 +12,7 @@
       @forelse ($labRequests as $req)
         <tr>
           <td><div class="t-main">{{ $req->items->pluck('test_name')->implode(', ') ?: 'Lab request' }}</div><div class="t-sub">{{ $req->request_ref }}</div></td>
-          <td>{{ $req->doctor->user->name }}</td>
+          <td>{{ $req->doctor?->user?->name ?? '—' }}</td>
           <td>{{ $req->thirdParty?->name ?? '—' }}</td>
           <td><span class="pa-badge {{ $req->status === 'completed' ? 'is-go' : ($req->status === 'cancelled' ? 'is-stop' : 'is-wait') }}">{{ str($req->status)->headline() }}</span></td>
           <td>{{ $req->completed_at?->format('d M Y') ?? '—' }}</td>

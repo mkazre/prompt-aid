@@ -224,6 +224,15 @@ class DoctorProfile extends Model
         });
     }
 
+    /** "Dr Jane Smith" — without doubling a title already in the name ("Dr. Dr. …"). */
+    public function displayName(): string
+    {
+        $name = trim((string) $this->user?->name);
+        $name = preg_replace('/^(dr\.?\s+)+/i', '', $name);
+
+        return 'Dr '.$name;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

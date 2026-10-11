@@ -1,7 +1,7 @@
-<x-layout :title="'Dr '.$doctor->user->name.' · Prompt Aid'">
+<x-layout :title="$doctor->displayName().' · Prompt Aid'">
 @php $clinic = $doctor->clinics->first(); @endphp
 <div class="pa-pagehead"><div class="inner">
-  <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> <a href="{{ route('doctors.index') }}">Find care</a> <span style="color:#CFC8B8">/</span> Dr {{ $doctor->user->name }}</div>
+  <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> <a href="{{ route('doctors.index') }}">Find care</a> <span style="color:#CFC8B8">/</span> {{ $doctor->displayName() }}</div>
   <div style="display:grid;grid-template-columns:160px minmax(0,1fr);gap:28px;padding-bottom:28px">
     <div class="pa-avatar" style="width:160px;height:160px;font-size:40px">{{ \Illuminate\Support\Str::of($doctor->user->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}</div>
     <div>
@@ -11,7 +11,7 @@
         <span style="font-size:13px;color:var(--pa-ink-soft)">{{ $doctor->liveStatusDescription() }}</span>
         @if ($doctor->liveStatus() === 'green')<a href="{{ route('instant-consult') }}" style="font-size:13px;font-weight:700">See a doctor now →</a>@endif
       </div>
-      <h1 style="margin-bottom:8px">Dr {{ $doctor->user->name }}</h1>
+      <h1 style="margin-bottom:8px">{{ $doctor->displayName() }}</h1>
       <p style="font-size:17px;color:var(--pa-ink-soft);margin-bottom:18px">{{ $doctor->specialization }}@if($doctor->qualification) · {{ $doctor->qualification }}@endif
         @if($doctor->registration_no) · HPCSA {{ $doctor->registration_no }}@endif</p>
       <div style="display:flex;gap:32px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--pa-line)">
@@ -163,7 +163,7 @@
               });
             </script>
           @elseif (! $doctor->isAvailableForBooking())
-            <p class="pa-muted" style="font-size:14px">Dr {{ $doctor->user->name }} is not accepting new bookings right now.</p>
+            <p class="pa-muted" style="font-size:14px">{{ $doctor->displayName() }} is not accepting new bookings right now.</p>
           @else
             <p class="pa-muted" style="font-size:14px">This doctor has no clinic linked for bookings yet.</p>
           @endif

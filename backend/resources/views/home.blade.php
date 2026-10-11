@@ -124,7 +124,7 @@
     @foreach ($topDoctors as $doctor)
       <a href="{{ route('doctors.show', $doctor) }}" style="padding:24px;color:inherit;text-decoration:none;display:block">
         <div style="display:flex;gap:14px;margin-bottom:14px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">{{ \Illuminate\Support\Str::of($doctor->user->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}</div>
-        <div><div style="font-size:16px;font-weight:700;line-height:1.25">Dr {{ $doctor->user->name }}</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">{{ $doctor->specialization }}</div></div></div>
+        <div><div style="font-size:16px;font-weight:700;line-height:1.25">{{ $doctor->displayName() }}</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">{{ $doctor->specialization }}</div></div></div>
         <div style="margin-bottom:12px"><span class="pa-status is-{{ $doctor->liveStatus() }}">{{ $doctor->liveStatusLabel() }}</span></div>
         <div style="font-size:13px;color:var(--pa-ink-soft);margin-bottom:14px">{{ $doctor->clinics->first()?->name ?? 'Video consultation available' }}</div>
         <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span style="font-size:13px;color:var(--pa-muted)">@if($doctor->rating_count)★ {{ number_format($doctor->rating_avg, 1) }} ({{ $doctor->rating_count }})@else New @endif</span><span class="pa-num" style="font-size:19px">R {{ number_format($doctor->consultation_fee, 0) }}</span></div></a>

@@ -31,7 +31,9 @@
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "RECORD_AUDIO",
-        "MODIFY_AUDIO_SETTINGS"
+        "MODIFY_AUDIO_SETTINGS",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -55,6 +57,13 @@
           "image": "./assets/splash.jpg",
           "resizeMode": "cover",
           "backgroundColor": "#FFFFFF"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#D0211C",
+          "defaultChannel": "alerts"
         }
       ]
     ],

@@ -22,6 +22,23 @@ class NotificationsController extends Controller
         ]);
     }
 
+    /** Polled by the site header (public/assets/js/pa-alerts.js) for the live bell + chime. */
+    public function poll(Request $request)
+    {
+        $userId = $request->user()->id;
+        $latest = UserNotification::query()->where('user_id', $userId)->whereNull('read_at')->orderByDesc('id')->first();
+
+        return response()->json([
+            'count' => UserNotification::query()->where('user_id', $userId)->whereNull('read_at')->count(),
+            'latest' => $latest ? [
+                'id' => $latest->id,
+                'title' => $latest->title,
+                'body' => $latest->body,
+                'url' => route('account.notifications.open', $latest->id),
+            ] : null,
+        ]);
+    }
+
     /** Mark read, then follow the notification's web link if it has a safe one. */
     public function open(Request $request, int $id)
     {

@@ -1,6 +1,8 @@
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { Linking } from 'react-native';
+import { useAlerts } from '../services/alerts';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -21,6 +23,7 @@ import VideoCallScreen from '../screens/comms/VideoCallScreen';
 import { colors, pa } from '../theme';
 
 const Stack = createNativeStackNavigator();
+const navRef = createNavigationContainerRef<any>();
 const AppStack = createNativeStackNavigator();
 
 function AuthStack() {
@@ -57,6 +60,14 @@ function SignedInStack({ Tabs }: { Tabs: React.ComponentType<any> }) {
 export default function RootNavigator() {
   const { user, loading } = useAuth();
 
+  // Alerts with sound for every role; tapping one opens the right place.
+  useAlerts(!!user, (data) => {
+    if (!navRef.isReady()) return;
+    if (data?.route === 'ChatList' || data?.type === 'chat_message') navRef.navigate('ChatList');
+    else if (typeof data?.url === 'string' && /^https?:\/\//.test(data.url)) Linking.openURL(data.url);
+    else navRef.navigate('Notifications');
+  });
+
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: pa.paper }}>
@@ -77,7 +88,7 @@ export default function RootNavigator() {
             : PatientTabs;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navRef}>
       {!user ? <AuthStack /> : <SignedInStack key={user.role} Tabs={Tabs} />}
     </NavigationContainer>
   );

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Services\Notifications\ExpoPush;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
@@ -41,6 +42,17 @@ class StaffNotifier
             ]);
         }
 
-        $notification->sendToDatabase($recipients);
+        // Filament's database notification is a queued job; shared hosting
+        // has no queue worker, so deliver it now — otherwise staff (e.g. a
+        // doctor getting a new booking) never see the bell/sound alert.
+        $users = $recipients instanceof User ? [$recipients] : $recipients;
+        $ids = [];
+        foreach ($users as $user) {
+            $user->notifyNow($notification->toDatabase());
+            $ids[] = $user->id;
+        }
+
+        // And on their phone, if they use the app.
+        ExpoPush::toUsers($ids, $title, $body, $url ? ['url' => $url] : []);
     }
 }

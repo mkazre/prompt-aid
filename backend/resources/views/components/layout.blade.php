@@ -65,7 +65,7 @@
             $layoutUnread = 0;
         }
       @endphp
-      <a class="pa-bell" href="{{ route('account.notifications') }}" aria-label="Notifications{{ $layoutUnread ? ' ('.$layoutUnread.' unread)' : '' }}" title="Notifications">
+      <a class="pa-bell" data-pa-alerts="{{ route('account.notifications.poll') }}" data-pa-alerts-count="{{ $layoutUnread }}" href="{{ route('account.notifications') }}" aria-label="Notifications{{ $layoutUnread ? ' ('.$layoutUnread.' unread)' : '' }}" title="Notifications">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
         @if ($layoutUnread > 0)<span class="pa-bell-count">{{ $layoutUnread > 99 ? '99+' : $layoutUnread }}</span>@endif
       </a>
@@ -149,6 +149,7 @@
 })();
 </script>
 <script src="{{ asset('assets/js/promptaid.js') }}"></script>
+@auth<script src="{{ asset('assets/js/pa-alerts.js') }}" defer></script>@endauth
 @stack('scripts')
 </body>
 </html>

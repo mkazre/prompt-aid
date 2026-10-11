@@ -43,7 +43,7 @@
           <div class="pa-avatar" style="width:64px;height:64px;font-size:21px">{{ \Illuminate\Support\Str::of($doctor->user->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}</div>
           <div style="min-width:0">
             <div class="pa-row" style="flex-wrap:wrap;margin-bottom:5px">
-              <a href="{{ route('doctors.show', $doctor) }}" style="font-size:18px;font-weight:900;letter-spacing:-.012em;color:var(--pa-ink)">Dr {{ $doctor->user->name }}</a>
+              <a href="{{ route('doctors.show', $doctor) }}" style="font-size:18px;font-weight:900;letter-spacing:-.012em;color:var(--pa-ink)">{{ $doctor->displayName() }}</a>
               <span class="pa-status is-{{ $doctor->liveStatus() }}" title="{{ $doctor->liveStatusDescription() }}">{{ $doctor->liveStatusLabel() }}</span>
               @if ($doctor->offers_video)<span class="pa-badge">Video</span>@endif
             </div>
@@ -58,7 +58,7 @@
             <div style="font-size:12px;color:var(--pa-muted);margin-bottom:12px">per consult</div>
             @if ($schedule = $doctor->availabilitySummary())<div style="font-size:12px;color:var(--pa-ink-soft);margin-bottom:10px">{{ $schedule }}</div>@endif
             <a class="pa-btn pa-btn-block" href="{{ route('doctors.show', $doctor) }}">Book</a>
-            <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="{{ route('shuttle') }}?to={{ urlencode('Dr '.$doctor->user->name) }}"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Add shuttle</a>
+            <a class="pa-btn-ghost pa-btn-block pa-btn-sm" style="margin-top:6px" href="{{ route('shuttle') }}?to={{ urlencode($doctor->displayName()) }}"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Add shuttle</a>
           </div>
         </div>
       @empty

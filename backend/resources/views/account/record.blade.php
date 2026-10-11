@@ -10,7 +10,7 @@
     <div>
       @forelse ($encounters as $encounter)
         <div class="pa-card" style="margin-bottom:22px">
-          <div class="pa-card-head"><h3>Encounter · {{ $encounter->created_at->format('d F Y') }}</h3><span class="pa-badge is-go">{{ $encounter->appointment->doctor->user->name }}</span></div>
+          <div class="pa-card-head"><h3>Encounter · {{ $encounter->created_at->format('d F Y') }}</h3><span class="pa-badge is-go">{{ $encounter->appointment?->doctor?->user?->name ?? 'Doctor' }}</span></div>
           <div class="pa-card-body">
             @if ($encounter->vitals)
               <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));margin-bottom:22px">

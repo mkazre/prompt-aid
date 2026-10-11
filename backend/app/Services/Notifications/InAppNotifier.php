@@ -54,13 +54,18 @@ class InAppNotifier
         }
 
         try {
-            return UserNotification::query()->create([
+            $notification = UserNotification::query()->create([
                 'user_id' => $userId,
                 'type' => $type,
                 'title' => mb_substr($title, 0, 255),
                 'body' => $body,
                 'data' => $data ?: null,
             ]);
+
+            // Same alert on the user's phone, with sound.
+            ExpoPush::toUsers($userId, $title, $body, $data + ['type' => $type, 'notification_id' => $notification->id]);
+
+            return $notification;
         } catch (\Throwable $e) {
             // Never let the in-app feed break the business action that
             // triggered it (booking, payment, dispatch...).
@@ -98,6 +103,7 @@ class InAppNotifier
             ], $ids);
             DB::table('user_notifications')->insert($rows);
             $count += count($rows);
+            ExpoPush::toUsers($ids, $title, $body, ['type' => 'broadcast']);
         };
 
         if ($userIds instanceof \Illuminate\Database\Eloquent\Builder) {

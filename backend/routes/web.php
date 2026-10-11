@@ -150,6 +150,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/{conversation}/poll', [\App\Http\Controllers\Account\MessagesController::class, 'poll'])->whereNumber('conversation')->name('messages.poll');
         Route::middleware('throttle:60,1')->post('/messages/{conversation}', [\App\Http\Controllers\Account\MessagesController::class, 'send'])->whereNumber('conversation')->name('messages.send');
         Route::get('/notifications', [\App\Http\Controllers\Account\NotificationsController::class, 'index'])->name('notifications');
+        Route::get('/notifications/poll', [\App\Http\Controllers\Account\NotificationsController::class, 'poll'])->middleware('throttle:60,1')->name('notifications.poll');
         Route::post('/notifications/read-all', [\App\Http\Controllers\Account\NotificationsController::class, 'readAll'])->name('notifications.read-all');
         Route::post('/notifications/clear', [\App\Http\Controllers\Account\NotificationsController::class, 'clear'])->name('notifications.clear');
         Route::get('/notifications/{id}/open', [\App\Http\Controllers\Account\NotificationsController::class, 'open'])->whereNumber('id')->name('notifications.open');
@@ -181,8 +182,14 @@ Route::middleware('auth')->group(function () {
     });
     Route::post('/pharmacies/{pharmacy}/checkout', [PharmacyPageController::class, 'checkout'])->name('pharmacies.checkout');
     Route::get('/staff/notifications/unread-count', function () {
-        return response()->json(['count' => request()->user()->unreadNotifications()->count()]);
-    })->name('staff.notifications.unread-count');
+        $user = request()->user();
+        $latest = $user->unreadNotifications()->latest()->first();
+
+        return response()->json([
+            'count' => $user->unreadNotifications()->count(),
+            'latest' => $latest ? ['title' => $latest->data['title'] ?? null, 'body' => isset($latest->data['body']) ? strip_tags((string) $latest->data['body']) : null] : null,
+        ]);
+    })->middleware('throttle:60,1')->name('staff.notifications.unread-count');
     Route::get('/staff/preview/pages/{page}', [PageBuilderPreviewController::class, 'show'])->name('page-builder.preview');
     require __DIR__.'/web_privacy.php';
 });

@@ -66,7 +66,7 @@
           <a href="{{ route('doctors.show', $doctor) }}" style="display:flex;gap:12px;align-items:center;padding:14px 22px;color:inherit;text-decoration:none;border-bottom:1px solid var(--pa-line-soft)">
             <div class="pa-avatar" style="width:40px;height:40px;font-size:14px">{{ \Illuminate\Support\Str::of($doctor->user->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}</div>
             <div style="min-width:0;flex:1">
-              <div style="font-size:14px;font-weight:700">Dr {{ $doctor->user->name }}</div>
+              <div style="font-size:14px;font-weight:700">{{ $doctor->displayName() }}</div>
               <div style="font-size:12px;color:var(--pa-muted)">{{ $doctor->specialization }}</div>
             </div>
             <span class="pa-badge {{ $doctor->isAvailableForBooking() ? 'is-go' : '' }}" style="font-size:10px">{{ $doctor->isAvailableForBooking() ? 'Book' : 'Full' }}</span>

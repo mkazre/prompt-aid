@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { unregisterAlerts } from '../services/alerts';
 import { api, apiErrorMessage, clearToken, getToken, saveToken } from '../api/client';
 import { Role, User } from '../api/types';
 
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function logout() {
+    await unregisterAlerts();
     try {
       await api.post('/auth/logout');
     } catch {

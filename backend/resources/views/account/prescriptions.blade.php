@@ -17,7 +17,7 @@
             <tr>
               <td><div class="t-main">{{ $item->medicine_name }}</div><div class="t-sub">{{ $item->dosage }}</div></td>
               <td>{{ $item->frequency }}{{ $item->duration_days ? ' · '.$item->duration_days.' days' : '' }}{{ $item->instructions ? ' · '.$item->instructions : '' }}</td>
-              <td>{{ $prescription->encounter->appointment->doctor->user->name }}</td>
+              <td>{{ $prescription->encounter?->appointment?->doctor?->user?->name ?? '—' }}</td>
               <td>{{ $prescription->created_at->format('d M Y') }}</td>
             </tr>
           @empty

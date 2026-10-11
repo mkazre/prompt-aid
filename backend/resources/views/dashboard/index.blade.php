@@ -34,7 +34,7 @@
     <div class="pa-stat">
       <div class="k">Next appointment</div>
       <div class="v">{{ $nextAppt ? \Illuminate\Support\Carbon::parse($nextAppt->start_time)->format('H:i') : '—' }}</div>
-      <div class="d go">{{ $nextAppt ? $nextAppt->date->format('d M').' · '.$nextAppt->doctor->user->name : 'Nothing booked' }}</div>
+      <div class="d go">{{ $nextAppt ? $nextAppt->date->format('d M').' · '.($nextAppt->doctor?->user?->name ?? 'Finding your doctor…') : 'Nothing booked' }}</div>
     </div>
     <div class="pa-stat">
       <div class="k">Active ride</div>
@@ -61,7 +61,7 @@
         @forelse ($appointments as $appt)
           <div class="pa-spread" style="padding:16px 22px;border-bottom:1px solid var(--pa-line-soft)">
             <div>
-              <div style="font-size:15px;font-weight:700">{{ $appt->doctor->user->name }}</div>
+              <div style="font-size:15px;font-weight:700">{{ $appt->doctor?->user?->name ?? 'Finding your doctor…' }}</div>
               <div style="font-size:13px;color:var(--pa-muted);margin-top:2px">{{ $appt->clinic->name }} · {{ $appt->date->format('d M Y') }} at {{ \Illuminate\Support\Carbon::parse($appt->start_time)->format('H:i') }}</div>
             </div>
             <span class="pa-badge {{ in_array($appt->status, ['completed', 'confirmed']) ? 'is-go' : (in_array($appt->status, ['cancelled', 'no_show']) ? 'is-stop' : 'is-wait') }}">{{ str($appt->status)->headline() }}</span>
@@ -76,7 +76,7 @@
         @forelse ($labRequests as $req)
           <div style="padding:16px 22px;border-bottom:1px solid var(--pa-line-soft)">
             <div class="pa-spread">
-              <div style="font-size:15px;font-weight:700">{{ $req->doctor->user->name }}</div>
+              <div style="font-size:15px;font-weight:700">{{ $req->doctor?->user?->name ?? '—' }}</div>
               <span class="pa-badge {{ $req->status === 'completed' ? 'is-go' : ($req->status === 'cancelled' ? 'is-stop' : 'is-wait') }}">{{ str($req->status)->headline() }}</span>
             </div>
             <div style="font-size:13px;color:var(--pa-muted);margin-top:4px">{{ $req->items->pluck('test_name')->implode(', ') }}</div>

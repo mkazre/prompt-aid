@@ -1,51 +1,41 @@
-<div
-    x-data="{
-        toast: null,
-        timer: null,
-        lastCount: parseInt(sessionStorage.getItem('pa_unread_count') || '0', 10),
-        show(count) {
-            this.toast = count === 1 ? '1 new notification' : count + ' new notifications';
-            clearTimeout(this.timer);
-            this.timer = setTimeout(() => (this.toast = null), 6000);
-        },
-        beep() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime);
-                gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-                osc.connect(gain).connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.35);
-            } catch (e) {}
-        },
-        async poll() {
-            try {
-                const res = await fetch('{{ route('staff.notifications.unread-count') }}', { headers: { Accept: 'application/json' } });
-                if (!res.ok) return;
-                const { count } = await res.json();
-                if (count > this.lastCount) {
-                    this.show(count - this.lastCount);
-                    this.beep();
-                }
-                this.lastCount = count;
-                sessionStorage.setItem('pa_unread_count', String(count));
-            } catch (e) {}
-        },
-    }"
-    x-init="poll(); setInterval(() => poll(), 15000)"
-    class="fixed bottom-6 right-6 z-50"
->
-    <div
-        x-show="toast"
-        x-transition
-        x-cloak
-        class="flex items-center gap-3 rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white shadow-lg"
-    >
-        <span class="flex h-2 w-2 rounded-full bg-primary-400"></span>
-        <span x-text="toast"></span>
+{{-- Live alert for staff: chime + desktop notification + toast when new
+     panel notifications arrive (e.g. a doctor's new booking). Logic lives in
+     public/assets/js/pa-alerts.js, shared with the public site's bell. --}}
+<div id="pa-staff-alert" class="fixed bottom-6 right-6 z-50" style="display:none">
+    <div style="display:flex;align-items:center;gap:12px;background:#101012;color:#fff;padding:12px 16px;border-left:4px solid #F2C200;font-size:14px;font-weight:600;box-shadow:0 8px 24px -12px rgba(16,16,18,.5)">
+        <span style="width:8px;height:8px;border-radius:999px;background:#F2C200;display:inline-block"></span>
+        <span id="pa-staff-alert-text"></span>
     </div>
 </div>
+<div id="pa-staff-sound-hint" style="position:fixed;left:16px;bottom:16px;z-index:50;background:#FEF6DA;border:1px solid #EBD98A;color:#101012;font-size:12px;padding:8px 12px;display:none">
+    🔔 Click anywhere to turn on alert sounds
+</div>
+<script src="{{ asset('assets/js/pa-alerts.js') }}"></script>
+<script>
+(function () {
+    var box = document.getElementById('pa-staff-alert');
+    var text = document.getElementById('pa-staff-alert-text');
+    var hint = document.getElementById('pa-staff-sound-hint');
+    var timer = null;
+    // Browsers block sound until the first click — say so instead of failing silently.
+    try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) {
+            hint.style.display = 'block';
+            document.addEventListener('click', function () { hint.style.display = 'none'; }, { once: true });
+        }
+    } catch (e) {}
+    window.PaAlerts.start({
+        url: @json(route('staff.notifications.unread-count')),
+        interval: 15000,
+        onNew: function (n, latest) {
+            text.textContent = (latest && latest.title) ? latest.title : (n === 1 ? '1 new notification' : n + ' new notifications');
+            box.style.display = 'block';
+            clearTimeout(timer);
+            timer = setTimeout(function () { box.style.display = 'none'; }, 8000);
+            // Refresh Filament's bell straight away.
+            try { window.Livewire && window.Livewire.dispatch('databaseNotificationsSent'); } catch (e) {}
+        }
+    });
+})();
+</script>
