@@ -35,14 +35,22 @@ class DoctorProfileForm
                     ->options(['active' => 'Active', 'inactive' => 'Inactive', 'pending_approval' => 'Pending Approval'])
                     ->required()
                     ->default('pending_approval'),
+                Toggle::make('offers_video')
+                    ->label('Offers virtual / video consults')
+                    ->helperText('Shows this doctor under "Virtual consult" on the website and app.')
+                    ->default(true),
                 Toggle::make('is_accepting_appointments')
                     ->label('Accepting new appointments')
                     ->helperText('Turn this off to hide the "book now" option from patients while you are away, fully booked, etc. Your profile stays visible either way.')
                     ->default(true),
                 Select::make('availability')
-                    ->label('Live matching status')
-                    ->helperText('Whether this doctor is currently online for instant video/in-person matching.')
-                    ->options(['offline' => 'Offline', 'available' => 'Available', 'busy' => 'Busy'])
+                    ->label('Live status (shown to patients)')
+                    ->helperText('Green: can see a patient within 30 min (receives "see a GP now" requests). Orange: available today at the next slot in the queue. Red: not available today — patients can book a future day.')
+                    ->options([
+                        'available' => 'Green — available in 30 min',
+                        'busy' => 'Orange — available today (next slot)',
+                        'offline' => 'Red — not available today',
+                    ])
                     ->required()
                     ->default('offline'),
             ]);

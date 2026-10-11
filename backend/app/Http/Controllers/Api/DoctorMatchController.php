@@ -37,7 +37,24 @@ class DoctorMatchController extends Controller
         return new AppointmentResource($appointment->load(['doctor.user', 'patient.user']));
     }
 
-    /** Doctor: unmatched requests in their own specialty. */
+    /** Patient: "Get connected to a Doctor in 30min" — broadcast to every green GP. */
+    public function storeInstant(Request $request)
+    {
+        $data = $request->validate([
+            'mode' => ['required', 'in:video,in_person'],
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if ($this->match->greenGps()->isEmpty()) {
+            return response()->json(['message' => 'No GP is available to see you within 30 minutes right now. Please book a doctor manually or use Ask a Doctor on WhatsApp.'], 409);
+        }
+
+        $appointment = $this->match->requestInstantGp($request->user()->patientProfile, $data['mode'], $data['reason'] ?? null);
+
+        return new AppointmentResource($appointment->load(['doctor.user', 'patient.user']));
+    }
+
+    /** Doctor: unmatched requests they are allowed to take. */
     public function available(Request $request)
     {
         $doctor = $request->user()->doctorProfile;
@@ -45,7 +62,12 @@ class DoctorMatchController extends Controller
         $appointments = Appointment::query()
             ->where('status', Appointment::STATUS_MATCHING)
             ->whereNull('doctor_profile_id')
-            ->where('requested_specialty', $doctor->specialization)
+            ->where(function ($q) use ($doctor) {
+                $q->where('requested_specialty', $doctor->specialization);
+                if ($doctor->isGeneralPractitioner()) {
+                    $q->orWhere('requested_specialty', DoctorMatchService::INSTANT_GP_SPECIALTY);
+                }
+            })
             ->with(['patient.user'])
             ->latest()
             ->get();
@@ -53,7 +75,7 @@ class DoctorMatchController extends Controller
         return AppointmentResource::collection($appointments);
     }
 
-    /** Doctor: accept an unmatched request. */
+    /** Doctor: accept an unmatched request (first doctor to accept wins). */
     public function accept(Request $request, Appointment $appointment)
     {
         $doctor = $request->user()->doctorProfile;
@@ -62,19 +84,29 @@ class DoctorMatchController extends Controller
             return response()->json(['message' => 'This request has already been matched.'], 409);
         }
 
-        if ($appointment->requested_specialty !== $doctor->specialization) {
+        if (! $this->match->canAccept($appointment, $doctor)) {
             return response()->json(['message' => 'This request is not in your specialty.'], 409);
         }
 
-        $appointment = $this->match->assignDoctor($appointment, $doctor);
+        $claimed = $this->match->claim($appointment, $doctor);
 
-        return new AppointmentResource($appointment->load(['patient.user']));
+        if (! $claimed) {
+            return response()->json(['message' => 'Another doctor accepted this request first.'], 409);
+        }
+
+        return new AppointmentResource($claimed->load(['patient.user']));
     }
 
-    /** Doctor: toggle online/offline for instant matching. */
+    /** Doctor: their current live status. */
+    public function showAvailability(Request $request)
+    {
+        return response()->json(['availability' => $request->user()->doctorProfile->availability]);
+    }
+
+    /** Doctor: set their live status — available (green), busy (orange) or offline (red). */
     public function toggleAvailability(Request $request)
     {
-        $data = $request->validate(['availability' => ['required', 'in:available,offline']]);
+        $data = $request->validate(['availability' => ['required', 'in:available,busy,offline']]);
 
         $request->user()->doctorProfile->update(['availability' => $data['availability']]);
 

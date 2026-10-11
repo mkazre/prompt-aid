@@ -6,4 +6,10 @@
     @endif
 
     {!! $html !!}
+
+    @if ($page->slug === 'about')
+        {{-- Targets of the home page "Learn more" links (#benefit-N); text is
+             edited at /staff → Site → Site content → Benefits. --}}
+        @include('partials.about-benefits')
+    @endif
 </x-layout>

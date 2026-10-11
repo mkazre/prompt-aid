@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>{{ $title ?? 'Prompt Aid — Find a doctor, fill a script, get a lift' }}</title>
+<title>{{ $title ?? 'Prompt Aid — Find a doctor, connect virtually and get a lift' }}</title>
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @php
     $themeColors = \App\Models\ThemeSetting::get('colors', []);
@@ -48,7 +48,9 @@
       <a href="{{ $link['route'] && \Illuminate\Support\Facades\Route::has($link['route']) ? route($link['route']) : ($link['url'] ?? '#') }}" target="{{ $link['target'] ?? '_self' }}">{{ $link['label'] }}</a>
     @empty
       <a href="{{ route('doctors.index') }}" class="{{ request()->routeIs('doctors.*') ? 'is-on' : '' }}">Find care</a>
-      <a href="{{ route('shop.index') }}" class="{{ request()->routeIs('shop.*', 'pharmacies.*') ? 'is-on' : '' }}">Pharmacy &amp; tests</a>
+      <a href="{{ route('shop.index') }}" class="{{ request()->routeIs('shop.*', 'pharmacies.*') ? 'is-on' : '' }}">Pharmacy</a>
+      <a href="{{ route('radiology.index') }}" class="{{ request()->routeIs('radiology.*') ? 'is-on' : '' }}">Radiology</a>
+      <a href="{{ route('laboratories.index') }}" class="{{ request()->routeIs('laboratories.*', 'labs.*') ? 'is-on' : '' }}">Laboratory</a>
       <a href="{{ route('shuttle') }}" class="{{ request()->routeIs('shuttle') ? 'is-on' : '' }}">Shuttle</a>
       <a href="{{ route('how-it-works') }}" class="{{ request()->routeIs('how-it-works') ? 'is-on' : '' }}">How it works</a>
       <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'is-on' : '' }}">About</a>
@@ -59,12 +61,13 @@
       <a class="pa-btn-ghost" href="{{ route('dashboard') }}">My account</a>
       <form method="POST" action="{{ route('logout') }}" style="display:inline">
         @csrf
-        <button class="pa-btn" type="submit">Log out</button>
+        <button class="pa-btn-ghost" type="submit">Log out</button>
       </form>
     @else
       <a class="pa-btn-ghost" href="{{ route('login') }}">Log in</a>
-      <a class="pa-btn" href="{{ route('doctors.index') }}">Book care</a>
     @endauth
+    {{-- Opens the PromptAid Emergency Scale popup (public/assets/js/promptaid.js). --}}
+    <a class="pa-btn" href="{{ route('emergency') }}" data-pa-open-triage>Emergency</a>
   </div>
 </div></header>
 
@@ -78,7 +81,7 @@
   </div>
   <div>
     <div class="ft">Patients</div>
-    <div class="fl"><a href="{{ route('doctors.index') }}">Find a doctor</a><a href="{{ route('shop.index') }}">Pharmacy &amp; tests</a><a href="{{ route('shuttle') }}">Book a shuttle</a><a href="{{ route('dashboard') }}">My record</a></div>
+    <div class="fl"><a href="{{ route('doctors.index') }}">Find a doctor</a><a href="{{ route('shop.index') }}">Pharmacy</a><a href="{{ route('radiology.index') }}">Radiology</a><a href="{{ route('laboratories.index') }}">Laboratory</a><a href="{{ route('virtual-consult') }}">Virtual consult</a><a href="{{ route('shuttle') }}">Book a shuttle</a><a href="{{ route('dashboard') }}">My record</a></div>
   </div>
   <div>
     <div class="ft">Providers</div>
@@ -86,7 +89,7 @@
   </div>
   <div>
     <div class="ft">Company</div>
-    <div class="fl"><a href="{{ route('about') }}">About</a><a href="{{ route('how-it-works') }}">How it works</a><a href="{{ route('faq') }}">FAQ</a><a href="{{ route('contact') }}">Contact</a><a href="{{ route('legal-popia') }}">POPIA notice</a></div>
+    <div class="fl"><a href="{{ route('about') }}">About</a><a href="{{ route('how-it-works') }}">How it works</a><a href="{{ route('topic.show') }}">Topic of the month</a><a href="{{ route('testimonials.create') }}">Submit a testimonial</a><a href="{{ route('faq') }}">FAQ</a><a href="{{ route('contact') }}">Contact</a><a href="{{ route('legal-popia') }}">POPIA notice</a></div>
   </div>
 </div>
 <div class="legal"><div class="inner2">
@@ -100,6 +103,7 @@
     ->values();
 @endphp
 <script>window.PromptAidEmergencyContacts = @json($layoutEmergencyContactsForJs);</script>
+<script>window.PromptAidConfig = @json(\App\Support\SiteLinks::forJs());</script>
 <script>
 (function () {
   'use strict';

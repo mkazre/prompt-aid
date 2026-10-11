@@ -2,14 +2,7 @@
 <div class="pa-pagehead"><div class="inner">
   <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Clinics</div>
   <h1>Clinics</h1><p class="pa-muted" style="font-size:15px;margin:6px 0 24px">{{ number_format($clinics->total()) }} day hospitals, family practices and walk-in rooms.</p>
-  <div class="pa-tabs" style="gap:2px">
-    <a class="pa-tab" href="{{ route('doctors.index') }}" style="border-bottom:0">All providers</a>
-    <a class="pa-tab" href="{{ route('doctors.index') }}" style="border-bottom:0">Doctors</a>
-    <a class="pa-tab is-on" href="{{ route('clinics.index') }}" style="border-bottom:0">Clinics</a>
-    <a class="pa-tab" href="{{ route('pharmacies.index') }}" style="border-bottom:0">Pharmacies</a>
-    <a class="pa-tab" href="{{ route('labs.index') }}" style="border-bottom:0">Labs &amp; imaging</a>
-    <a class="pa-tab" href="{{ route('specialists.index') }}" style="border-bottom:0">Physio &amp; specialists</a>
-  </div>
+  <x-care-tabs />
 </div></div>
 <div class="pa-container" style="padding-top:32px;padding-bottom:80px">
   <form method="GET" style="margin-bottom:16px"><input class="pa-field" name="search" value="{{ request('search') }}" placeholder="Search clinics…" style="max-width:360px" /></form>

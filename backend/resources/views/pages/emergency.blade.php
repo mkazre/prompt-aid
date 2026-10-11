@@ -8,7 +8,7 @@
   <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Emergency triage</div>
   <div class="pa-spread" style="align-items:flex-end">
     <div>
-      <div class="pa-row" style="margin-bottom:12px"><span class="pa-blip"></span><span class="pa-eyebrow">South African Triage Scale · pre-triage</span></div>
+      <div class="pa-row" style="margin-bottom:12px"><span class="pa-blip"></span><span class="pa-eyebrow">PromptAid Emergency Scale · pre-triage</span></div>
       <h1>Let's work out how fast you need help</h1>
       <p class="pa-muted" style="font-size:15px;margin:8px 0 20px;max-width:640px">Four questions. We will give you a triage colour, tell you where the nearest place that can treat this is, and send what you have told us ahead so you do not have to repeat it.</p>
     </div>
@@ -202,7 +202,7 @@
       <p style="font-size:13px;color:var(--pa-ink-soft)">Allergies, chronic medicine and your scheme are attached to whatever you book, so the person treating you already has them.</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pa-badge is-stop">Penicillin allergy</span><span class="pa-badge is-wait">Hypertension</span></div>
     </div>
-    <div class="pa-note-stop">This is a pre-triage aid, not a diagnosis. A practitioner performs the formal SATS assessment on arrival and may reach a different colour.</div>
+    <div class="pa-note-stop">This is a pre-triage aid, not a diagnosis. A practitioner performs the formal assessment on arrival and may reach a different colour.</div>
   </aside>
 </div>
 <script>window.PromptAidTriageConfig = @json($triageConfigForJs);</script>
@@ -385,14 +385,14 @@
 
     document.getElementById('pa-verdict').innerHTML =
       '<div class="pa-verdict ' + res.level + '">' +
-        '<div class="lvl">South African Triage Scale · result</div>' +
+        '<div class="lvl">PromptAid Emergency Scale · result</div>' +
         '<h2>' + m.label + ' — ' + m.name + '</h2>' +
         '<p>Target time to be seen: <strong>' + m.targetLabel + '</strong>. Reference <strong id="pa-verdict-ref">' + res.reference + '</strong> — show this at reception.</p>' +
       '</div>' +
       (res.callAmbulance ? '<a class="pa-emergency-cta" style="margin-top:2px" href="' + primaryEmergency.tel + '">Call an ambulance now · ' + primaryEmergency.phone + '</a>' : '') +
       '<div class="pa-card" style="margin-top:20px">' +
         '<div class="pa-card-head"><h3>What to do right now</h3>' +
-        '<span class="pa-countdown" style="font-size:22px">' + (m.target === 0 ? 'NOW' : m.target + ' min') + '</span></div>' +
+        '<span class="pa-countdown" style="font-size:22px">' + (m.target === 0 ? 'NOW' : m.target < 120 ? m.target + ' min' : m.target < 1440 ? Math.round(m.target / 60) + ' hrs' : Math.round(m.target / 1440) + ' days') + '</span></div>' +
         '<div class="pa-card-body"><ol style="margin:0;padding-left:20px;font-size:15px;line-height:1.8;color:var(--pa-ink-soft)">' +
           advice.map(function (a) { return '<li>' + a + '</li>'; }).join('') +
         '</ol></div></div>' +

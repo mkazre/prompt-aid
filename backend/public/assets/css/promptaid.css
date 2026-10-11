@@ -400,3 +400,60 @@ textarea.pa-field{min-height:110px;resize:vertical;line-height:1.55}
 .pa-locrow{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--pa-beacon-wash);border:1px solid var(--pa-beacon-line);font-size:13px}
 .pa-emergency-cta{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--pa-sats-red);color:#fff;padding:18px;font-size:18px;font-weight:900;text-decoration:none;letter-spacing:-.01em}
 .pa-emergency-cta:hover{background:#9E0C23;color:#fff;text-decoration:none}
+
+/* ---------------------------------------------------------------
+   October 2026 amendments (Prompt 1–4)
+   --------------------------------------------------------------- */
+/* Emergency scale modal: timeframe + clickable action under it */
+.pa-sats-btn .t,.pa-sats-btn .d{display:block}
+.pa-sats-btn .w{display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-align:right}
+.pa-sats-act{display:block;max-width:190px;white-space:normal;font-size:12px;letter-spacing:0;text-transform:none;font-weight:900;line-height:1.3;color:var(--pa-ink)}
+.pa-sats-btn.red .pa-sats-act{color:var(--pa-sats-red)}
+.pa-sats-btn.orange .pa-sats-act{color:#B4520F}
+.pa-sats-btn.green .pa-sats-act{color:var(--pa-sats-green)}
+@media (max-width:640px){
+  .pa-sats-btn{grid-template-columns:44px minmax(0,1fr);gap:12px;padding:14px}
+  .pa-sats-btn .sig{width:44px;height:44px}
+  .pa-sats-btn .w{grid-column:1 / -1;flex-direction:row;justify-content:space-between;align-items:center;text-align:left}
+  .pa-sats-act{max-width:none;text-align:right}
+}
+.pa-btn-whatsapp,.pa-btn-video{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:13px 20px;font-size:15px;font-weight:900;color:#fff;text-decoration:none;border-radius:var(--pa-radius,2px);flex:1 1 220px}
+.pa-btn-whatsapp{background:#1FA855}
+.pa-btn-whatsapp:hover{background:#178A45;color:#fff;text-decoration:none}
+.pa-btn-video{background:#1F5FBF}
+.pa-btn-video:hover{background:#174A96;color:#fff;text-decoration:none}
+
+/* Practitioner live status (green / orange / red) */
+.pa-status{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:5px 10px;border:1px solid currentColor;border-radius:2px;line-height:1.2}
+.pa-status::before{content:"";width:9px;height:9px;border-radius:999px;background:currentColor;flex:none}
+.pa-status.is-green{color:#1F7A4C;background:#E7F3EC}
+.pa-status.is-orange{color:#B4520F;background:#FCEEE2}
+.pa-status.is-red{color:#C8102E;background:#FBEAEA}
+.pa-status-legend{display:grid;gap:8px;font-size:14px;color:var(--pa-ink-soft);max-width:560px;margin-bottom:32px}
+.pa-status-legend .dot{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:8px;vertical-align:middle}
+/* Radio "tabs" (label.pa-tab > input[type=radio]) follow the checked input */
+label.pa-tab:has(input[type=radio]){background:var(--pa-surface);border-color:var(--pa-line);color:var(--pa-ink-soft)}
+label.pa-tab:has(input[type=radio]:checked){background:var(--pa-ink);border-color:var(--pa-ink);color:#fff}
+/* Topic of the month */
+.pa-topic-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:32px;align-items:start}
+@media (max-width:900px){.pa-topic-grid{grid-template-columns:1fr}}
+.pa-prose{font-size:16px;line-height:1.7;color:var(--pa-ink-soft)}
+.pa-prose h2,.pa-prose h3{color:var(--pa-ink);margin:24px 0 10px}
+.pa-prose ul,.pa-prose ol{padding-left:22px;margin:0 0 16px}
+.pa-prose li{margin-bottom:6px}
+.pa-prose p{margin:0 0 14px}
+/* Directory rows (Find care landing pages) */
+.pa-listing{background:var(--pa-surface);padding:22px 24px;display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:20px;align-items:start}
+.pa-listing-side{text-align:right;min-width:158px}
+@media (max-width:640px){
+  .pa-listing{grid-template-columns:48px minmax(0,1fr);gap:14px;padding:18px 16px}
+  .pa-listing .pa-avatar{width:48px !important;height:48px !important;font-size:16px !important}
+  .pa-listing-side{grid-column:1 / -1;text-align:left;min-width:0}
+}
+.pa-findcare{display:grid;grid-template-columns:268px minmax(0,1fr);gap:32px;align-items:start}
+.pa-findcare-filters{position:sticky;top:96px}
+@media (max-width:860px){.pa-findcare{grid-template-columns:1fr}.pa-findcare-filters{position:static}}
+/* Home: benefits boxes */
+.pa-benefit{padding:26px 24px;color:inherit;text-decoration:none;display:flex;flex-direction:column}
+.pa-benefit:hover{background:var(--pa-surface-2);text-decoration:none;color:inherit}
+.pa-benefit-more{margin-top:auto;font-size:13px;font-weight:700;color:var(--pa-signal)}

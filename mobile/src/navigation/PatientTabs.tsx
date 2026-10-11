@@ -21,6 +21,7 @@ import TriageStartScreen from '../screens/patient/TriageStartScreen';
 import TriageFlagsScreen from '../screens/patient/TriageFlagsScreen';
 import TriageResultScreen from '../screens/patient/TriageResultScreen';
 import ConsultRoomScreen from '../screens/ConsultRoomScreen';
+import InstantConsultScreen from '../screens/patient/InstantConsultScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { pa, paFonts } from '../theme';
 
@@ -45,6 +46,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="TriageFlags" component={TriageFlagsScreen as any} options={{ title: 'Emergency triage' }} />
       <HomeStack.Screen name="TriageResult" component={TriageResultScreen as any} options={{ title: 'Your result', headerBackVisible: false }} />
       <HomeStack.Screen name="ConsultRoom" component={ConsultRoomScreen} options={{ headerShown: false }} />
+      <HomeStack.Screen name="InstantConsult" component={InstantConsultScreen} options={{ title: 'See a doctor now' }} />
     </HomeStack.Navigator>
   );
 }

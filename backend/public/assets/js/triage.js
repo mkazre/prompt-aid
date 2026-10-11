@@ -32,9 +32,9 @@
 
   var DEFAULT_META = {
     red:    { label: 'Red',    name: 'Emergency',    target: 0,   targetLabel: 'Immediately',        colour: '#C8102E' },
-    orange: { label: 'Orange', name: 'Very urgent',  target: 10,  targetLabel: 'Within 10 minutes',  colour: '#E4701E' },
-    yellow: { label: 'Yellow', name: 'Urgent',       target: 60,  targetLabel: 'Within 60 minutes',  colour: '#F2C200' },
-    green:  { label: 'Green',  name: 'Routine',      target: 240, targetLabel: 'Within 4 hours',     colour: '#1F7A4C' }
+    orange: { label: 'Orange', name: 'Very urgent',  target: 30,  targetLabel: 'Within 30 minutes',  colour: '#E4701E' },
+    yellow: { label: 'Yellow', name: 'Urgent',       target: 480, targetLabel: 'Within 8 hours',     colour: '#F2C200' },
+    green:  { label: 'Green',  name: 'Routine',      target: 4320, targetLabel: 'In the next few days', colour: '#1F7A4C' }
   };
 
   /* --- TEWS-lite weights. Adult bands; paediatric multiplier below. --- */

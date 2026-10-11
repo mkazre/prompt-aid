@@ -35,6 +35,11 @@ Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/clinics', [PageController::class, 'clinics'])->name('clinics.index');
 Route::get('/clinics/{clinic}', [PageController::class, 'clinicShow'])->name('clinics.show');
 Route::get('/doctors', [PageController::class, 'doctors'])->name('doctors.index');
+// Find care landing pages (one per tab) + virtual consult.
+Route::get('/general-practitioners', fn (\Illuminate\Http\Request $r) => app(PageController::class)->doctors($r, 'gp'))->name('care.gp');
+Route::get('/dentists', fn (\Illuminate\Http\Request $r) => app(PageController::class)->doctors($r, 'dentists'))->name('care.dentists');
+Route::get('/specialists', fn (\Illuminate\Http\Request $r) => app(PageController::class)->doctors($r, 'specialists'))->name('specialists.index');
+Route::get('/virtual-consult', fn (\Illuminate\Http\Request $r) => app(PageController::class)->doctors($r, 'video'))->name('virtual-consult');
 Route::get('/doctors/{doctor}', [PageController::class, 'doctorShow'])->name('doctors.show');
 Route::get('/doctors/{doctor}/slots', [PageController::class, 'doctorSlots'])->name('doctors.slots');
 
@@ -51,6 +56,11 @@ Route::get('/emergency', [StaticPageController::class, 'emergency'])->name('emer
 Route::get('/emergency-results', [EmergencyResultsController::class, 'show'])->name('emergency.results');
 Route::post('/emergency/submit', [\App\Http\Controllers\TriageSubmissionController::class, 'store'])->name('emergency.submit');
 Route::post('/emergency/alert-contact', [EmergencyResultsController::class, 'alertContact'])->name('emergency.alert-contact');
+Route::get('/topic-of-the-month', [\App\Http\Controllers\HealthTopicController::class, 'current'])->name('topic.show');
+Route::get('/topics/{topic}', [\App\Http\Controllers\HealthTopicController::class, 'show'])->name('topic.view');
+Route::get('/testimonials/submit', [\App\Http\Controllers\HealthTopicController::class, 'createTestimonial'])->name('testimonials.create');
+Route::post('/testimonials/submit', [\App\Http\Controllers\HealthTopicController::class, 'storeTestimonial'])->middleware('throttle:10,1')->name('testimonials.store');
+Route::get('/see-a-doctor-now', [\App\Http\Controllers\InstantConsultController::class, 'show'])->name('instant-consult');
 Route::get('/assets/triage-config.json', [TriageConfigController::class, 'show'])->name('triage-config.json');
 
 // About, How It Works, FAQ, Privacy, Terms and the POPIA notice are pure
@@ -72,10 +82,14 @@ Route::post('/shuttle/quote', [ShuttlePageController::class, 'quote'])->name('sh
 Route::get('/shop', [ShopPageController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product}', [ShopPageController::class, 'show'])->name('shop.show');
 
-Route::get('/labs', [ThirdPartyPageController::class, 'labsIndex'])->name('labs.index');
+Route::get('/radiology', [ThirdPartyPageController::class, 'radiologyIndex'])->name('radiology.index');
+Route::get('/laboratories', [ThirdPartyPageController::class, 'laboratoriesIndex'])->name('laboratories.index');
+Route::get('/allied', [ThirdPartyPageController::class, 'alliedIndex'])->name('allied.index');
+Route::get('/allied/{provider}', [ThirdPartyPageController::class, 'alliedShow'])->name('allied.show');
+Route::redirect('/labs', '/laboratories', 301)->name('labs.index');
 Route::get('/labs/{lab}', [ThirdPartyPageController::class, 'labsShow'])->name('labs.show');
-Route::get('/specialists', [ThirdPartyPageController::class, 'specialistsIndex'])->name('specialists.index');
-Route::get('/specialists/{specialist}', [ThirdPartyPageController::class, 'specialistsShow'])->name('specialists.show');
+// Old "Physio & specialists" detail URLs now live under /allied.
+Route::get('/specialists/{specialist}', fn (\App\Models\ThirdPartyProfile $specialist) => redirect()->route('allied.show', $specialist, 301))->name('specialists.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [WebAuthController::class, 'showLogin'])->name('login');
@@ -102,6 +116,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/appointments', [WebAppointmentController::class, 'store'])->name('appointments.store');
+    Route::post('/see-a-doctor-now', [\App\Http\Controllers\InstantConsultController::class, 'store'])->name('instant-consult.store');
+    Route::post('/see-a-doctor-now/{appointment}/cancel', [\App\Http\Controllers\InstantConsultController::class, 'cancel'])->name('instant-consult.cancel');
 
     Route::prefix('account')->name('account.')->group(function () {
         Route::get('/appointments', [AccountAppointmentsController::class, 'index'])->name('appointments');
@@ -134,5 +150,5 @@ Route::middleware('auth')->group(function () {
 // exclusion is baked into the route's own pattern rather than relying on
 // "runs after everything else" alone.
 Route::get('/{path}', [PageBuilderRenderController::class, 'render'])
-    ->where('path', '^(?!(login|register|join|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets)(/|$)).+$')
+    ->where('path', '^(?!(login|register|join|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets|general-practitioners|dentists|virtual-consult|radiology|laboratories|allied|see-a-doctor-now|topic-of-the-month|topics|testimonials)(/|$)).+$')
     ->name('page-builder.render');

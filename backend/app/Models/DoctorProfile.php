@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\SiteContent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,12 +24,34 @@ class DoctorProfile extends Model
         'user_id', 'specialization', 'qualification', 'experience_years', 'bio',
         'consultation_fee', 'registration_no', 'signature', 'rating_avg', 'rating_count', 'status',
         'is_accepting_appointments', 'availability', 'current_lat', 'current_lng', 'location_updated_at',
+        'offers_video',
     ];
+
+    /**
+     * Public traffic-light status shown to patients, driven by the doctor's
+     * own `availability` setting (dashboard / mobile app):
+     *   green  = available → can see the patient within 30 minutes
+     *   orange = busy      → available today, at a booked slot in the queue
+     *   red    = offline   → not available today; book a future day
+     * Labels/descriptions are admin-editable (SiteContent 'status').
+     */
+    /** Maps the doctor's stored availability onto the patient-facing colour. */
+    public const AVAILABILITY_COLOURS = [
+        self::AVAILABLE => 'green',
+        self::BUSY => 'orange',
+        self::OFFLINE => 'red',
+    ];
+
+    /** Specialization text that marks a General Practitioner / Dentist. */
+    protected const GP_PATTERNS = ['%general practi%', '%family physician%', '%family medicine%'];
+
+    protected const DENTIST_PATTERNS = ['%dentist%', '%dental%', '%orthodont%', '%oral%'];
 
     protected function casts(): array
     {
         return [
             'is_accepting_appointments' => 'boolean',
+            'offers_video' => 'boolean',
             'location_updated_at' => 'datetime',
         ];
     }
@@ -48,6 +72,97 @@ class DoctorProfile extends Model
     public function isAvailableForMatching(): bool
     {
         return $this->status === 'active' && $this->is_accepting_appointments && $this->availability === self::AVAILABLE;
+    }
+
+    public function liveStatus(): string
+    {
+        if ($this->status !== 'active' || ! $this->is_accepting_appointments) {
+            return 'red';
+        }
+
+        return self::AVAILABILITY_COLOURS[$this->availability] ?? 'red';
+    }
+
+    public function liveStatusLabel(): string
+    {
+        return (string) SiteContent::get('status.'.$this->liveStatus().'.label');
+    }
+
+    public function liveStatusDescription(): string
+    {
+        return (string) SiteContent::get('status.'.$this->liveStatus().'.description');
+    }
+
+    public function isGeneralPractitioner(): bool
+    {
+        $spec = mb_strtolower((string) $this->specialization);
+
+        return $spec === 'gp' || str_contains($spec, 'general practi') || str_contains($spec, 'family physician') || str_contains($spec, 'family medicine');
+    }
+
+    public function scopeGeneralPractitioners(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->where('specialization', 'GP');
+            foreach (self::GP_PATTERNS as $pattern) {
+                $q->orWhere('specialization', 'like', $pattern);
+            }
+        });
+    }
+
+    public function scopeDentists(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            foreach (self::DENTIST_PATTERNS as $pattern) {
+                $q->orWhere('specialization', 'like', $pattern);
+            }
+        });
+    }
+
+    /** Medical specialists: everyone who is neither a GP nor a dentist. */
+    public function scopeSpecialists(Builder $query): Builder
+    {
+        $query->where('specialization', '!=', 'GP');
+        foreach (array_merge(self::GP_PATTERNS, self::DENTIST_PATTERNS) as $pattern) {
+            $query->where('specialization', 'not like', $pattern);
+        }
+
+        return $query;
+    }
+
+    public function scopeOffersVideo(Builder $query): Builder
+    {
+        return $query->where('offers_video', true);
+    }
+
+    /** Green first, then orange, then red — so "see me now" doctors lead the list. */
+    public function scopeOrderByLiveStatus(Builder $query): Builder
+    {
+        return $query
+            ->orderByRaw("CASE WHEN is_accepting_appointments = 1 AND availability = 'available' THEN 0 WHEN is_accepting_appointments = 1 AND availability = 'busy' THEN 1 ELSE 2 END")
+            ->orderByDesc('rating_avg');
+    }
+
+    /**
+     * Opening hours per weekday, e.g. ['Mon' => '08:00–17:00', ...], across
+     * every clinic the doctor works at. Days without a schedule are omitted.
+     *
+     * @return array<string, string>
+     */
+    public function operatingHours(): array
+    {
+        $rows = $this->relationLoaded('availabilities') ? $this->availabilities : $this->availabilities()->where('is_active', true)->get();
+        $days = ['Mon' => 1, 'Tue' => 2, 'Wed' => 3, 'Thu' => 4, 'Fri' => 5, 'Sat' => 6, 'Sun' => 0];
+        $hours = [];
+
+        foreach ($days as $label => $weekday) {
+            $dayRows = $rows->where('is_active', true)->where('weekday', $weekday);
+            if ($dayRows->isNotEmpty()) {
+                $hours[$label] = substr($dayRows->min('start_time'), 0, 5).'–'.substr($dayRows->max('end_time'), 0, 5);
+            }
+        }
+
+        return $hours;
     }
 
     /**

@@ -104,7 +104,7 @@ export default function TriageResultScreen({ navigation, route }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <PaVerdictBanner
         level={result.level}
-        eyebrow={`South African Triage Scale · ${result.reference}`}
+        eyebrow={`PromptAid Emergency Scale · ${result.reference}`}
         title={`${result.meta.label} — ${result.meta.name}`}
         message={`Target time to be seen: ${result.meta.targetLabel}. Show reference ${result.reference} at reception.`}
       />
@@ -117,7 +117,7 @@ export default function TriageResultScreen({ navigation, route }: Props) {
         <PaCard style={{ marginBottom: 16 }}>
           <View style={styles.cardHeadRow}>
             <Text style={styles.cardHead}>What to do right now</Text>
-            <Text style={styles.countdown}>{result.meta.target === 0 ? 'NOW' : `${result.meta.target} min`}</Text>
+            <Text style={styles.countdown}>{formatTarget(result.meta.target)}</Text>
           </View>
           {advice.map((a, i) => (
             <Text key={i} style={styles.adviceLine}>
@@ -159,3 +159,10 @@ const styles = StyleSheet.create({
   facilityNote: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: 12, lineHeight: 18 },
   facilityNoteBold: { fontFamily: paFonts.bold, color: pa.ink },
 });
+
+function formatTarget(minutes: number) {
+  if (minutes === 0) return 'NOW';
+  if (minutes < 120) return `${minutes} min`;
+  if (minutes < 1440) return `${Math.round(minutes / 60)} hrs`;
+  return `${Math.round(minutes / 1440)} days`;
+}

@@ -27,6 +27,12 @@ class DoctorProfileResource extends JsonResource
             'rating_count' => $this->rating_count,
             'status' => $this->status,
             'is_accepting_appointments' => (bool) $this->is_accepting_appointments,
+            'offers_video' => (bool) $this->offers_video,
+            // Patient-facing traffic light: green / orange / red.
+            'live_status' => $this->liveStatus(),
+            'live_status_label' => $this->liveStatusLabel(),
+            'live_status_description' => $this->liveStatusDescription(),
+            'operating_hours' => (object) $this->operatingHours(),
             'availability_summary' => $this->availabilitySummary(),
             'clinics' => ClinicResource::collection($this->whenLoaded('clinics')),
         ];

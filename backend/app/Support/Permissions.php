@@ -44,6 +44,8 @@ class Permissions
         'menus' => 'Site',
         'page-templates' => 'Site',
         'pages' => 'Site',
+        'health-topics' => 'Site',
+        'testimonials' => 'Site',
 
         'service-categories' => 'Commerce',
 
@@ -72,6 +74,7 @@ class Permissions
     public const PAGES = [
         'live-dispatch.view' => ['group' => 'Ride Service', 'label' => 'Live Dispatch'],
         'media-library.view' => ['group' => 'Site', 'label' => 'Media Library'],
+        'site-content.view' => ['group' => 'Site', 'label' => 'Site content (home page, emergency popup, labels)'],
         'roles-permissions.view' => ['group' => 'System', 'label' => 'Roles & Permissions (view)'],
         'roles-permissions.manage' => ['group' => 'System', 'label' => 'Roles & Permissions (manage)'],
     ];

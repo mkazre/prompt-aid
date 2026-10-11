@@ -2,14 +2,7 @@
 <div class="pa-pagehead"><div class="inner">
   <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Pharmacies</div>
   <h1>Pharmacies</h1><p class="pa-muted" style="font-size:15px;margin:6px 0 24px">{{ number_format($pharmacies->total()) }} licensed pharmacy partners.</p>
-  <div class="pa-tabs" style="gap:2px">
-    <a class="pa-tab" href="{{ route('doctors.index') }}" style="border-bottom:0">All providers</a>
-    <a class="pa-tab" href="{{ route('doctors.index') }}" style="border-bottom:0">Doctors</a>
-    <a class="pa-tab" href="{{ route('clinics.index') }}" style="border-bottom:0">Clinics</a>
-    <a class="pa-tab is-on" href="{{ route('pharmacies.index') }}" style="border-bottom:0">Pharmacies</a>
-    <a class="pa-tab" href="{{ route('labs.index') }}" style="border-bottom:0">Labs &amp; imaging</a>
-    <a class="pa-tab" href="{{ route('specialists.index') }}" style="border-bottom:0">Physio &amp; specialists</a>
-  </div>
+  <x-care-tabs />
 </div></div>
 <div class="pa-container" style="padding-top:32px;padding-bottom:80px">
   <div class="pa-spread" style="margin-bottom:16px">

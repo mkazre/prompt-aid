@@ -6,7 +6,10 @@
     <div class="pa-avatar" style="width:160px;height:160px;font-size:40px">{{ \Illuminate\Support\Str::of($doctor->user->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}</div>
     <div>
       <div class="pa-row" style="flex-wrap:wrap;margin-bottom:12px">
-        <span class="pa-badge {{ $doctor->isAvailableForBooking() ? 'is-go' : '' }}">{{ $doctor->isAvailableForBooking() ? 'Accepting patients' : 'Not accepting patients' }}</span>
+        {{-- Live status — mirrors what the doctor has set on their dashboard. --}}
+        <span class="pa-status is-{{ $doctor->liveStatus() }}">{{ $doctor->liveStatusLabel() }}</span>
+        <span style="font-size:13px;color:var(--pa-ink-soft)">{{ $doctor->liveStatusDescription() }}</span>
+        @if ($doctor->liveStatus() === 'green')<a href="{{ route('instant-consult') }}" style="font-size:13px;font-weight:700">See a doctor in 30 min →</a>@endif
       </div>
       <h1 style="margin-bottom:8px">Dr {{ $doctor->user->name }}</h1>
       <p style="font-size:17px;color:var(--pa-ink-soft);margin-bottom:18px">{{ $doctor->specialization }}@if($doctor->qualification) · {{ $doctor->qualification }}@endif@if($doctor->registration_no) · HPCSA {{ $doctor->registration_no }}@endif</p>
@@ -32,6 +35,21 @@
       </div>
     @endif
 
+    @php $hours = $doctor->operatingHours(); @endphp
+    <div class="pa-card" style="margin-bottom:24px">
+      <div class="pa-card-head"><h3>Operating hours</h3></div>
+      @if ($hours)
+        @foreach (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $day)
+          <div class="pa-spread" style="padding:12px 26px;border-bottom:1px solid var(--pa-line-soft);font-size:14px{{ $day === now()->format('D') ? ';font-weight:900' : '' }}">
+            <span>{{ $day }}@if($day === now()->format('D')) · today @endif</span>
+            <span class="pa-num" style="{{ isset($hours[$day]) ? '' : 'color:var(--pa-muted)' }}">{{ $hours[$day] ?? 'Closed' }}</span>
+          </div>
+        @endforeach
+      @else
+        <div style="padding:16px 26px;font-size:14px;color:var(--pa-muted)">Operating hours have not been published yet. Contact the practice to book.</div>
+      @endif
+    </div>
+
     @if ($doctor->services->isNotEmpty())
       <div class="pa-card" style="margin-bottom:24px">
         <div class="pa-card-head"><h3>Services &amp; fees</h3></div>
@@ -43,6 +61,22 @@
         @endforeach
       </div>
     @endif
+
+    <div class="pa-card" style="margin-bottom:24px">
+      <div class="pa-card-head"><h3>Contact details</h3></div>
+      <div style="padding:16px 26px;font-size:14px;line-height:1.7;color:var(--pa-ink-soft)">
+        @forelse ($doctor->clinics as $c)
+          <div style="{{ $loop->last ? '' : 'margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--pa-line-soft)' }}">
+            <div style="font-weight:700;color:var(--pa-ink)">{{ $c->name }}</div>
+            <div>{{ $c->address }}@if($c->city), {{ $c->city }}@endif</div>
+            @if ($c->phone)<div>Phone: <a href="tel:{{ preg_replace('/[^0-9+]/', '', $c->phone) }}">{{ $c->phone }}</a></div>@endif
+            @if ($c->email)<div>Email: <a href="mailto:{{ $c->email }}">{{ $c->email }}</a></div>@endif
+          </div>
+        @empty
+          <div>Book through PromptAid: <a href="tel:{{ preg_replace('/[^0-9+]/', '', \App\Models\Setting::get('support_phone', '0800 776 678')) }}">{{ \App\Models\Setting::get('support_phone', '0800 776 678') }}</a> · <a href="mailto:{{ \App\Models\Setting::get('support_email', 'help@promptaid.health') }}">{{ \App\Models\Setting::get('support_email', 'help@promptaid.health') }}</a></div>
+        @endforelse
+      </div>
+    </div>
 
     @if ($doctor->reviews->isNotEmpty())
       <div class="pa-card" style="margin-bottom:24px">
@@ -85,11 +119,12 @@
                 </select>
               </div>
               <div class="pa-formrow"><label class="pa-label">Date</label>
-                <input class="pa-field" type="date" name="date" id="date" min="{{ now()->toDateString() }}" value="{{ now()->addDay()->toDateString() }}">
+                @php $firstDay = $doctor->liveStatus() === 'red' ? now()->addDay() : now(); @endphp
+                <input class="pa-field" type="date" name="date" id="date" min="{{ $firstDay->toDateString() }}" value="{{ $firstDay->toDateString() }}">
               </div>
               <div class="pa-tabs" style="display:grid;grid-template-columns:1fr 1fr;margin-bottom:14px">
                 <label class="pa-tab is-on" style="text-align:center;cursor:pointer"><input type="radio" name="visit_type" value="clinic" checked style="margin-right:6px">In person</label>
-                <label class="pa-tab" style="text-align:center;cursor:pointer"><input type="radio" name="visit_type" value="telemed" style="margin-right:6px">Video</label>
+                @if ($doctor->offers_video)<label class="pa-tab" style="text-align:center;cursor:pointer"><input type="radio" name="visit_type" value="telemed" style="margin-right:6px">Video</label>@endif
               </div>
               <div class="pa-label" style="margin-bottom:10px">Available times</div>
               <div id="slot-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:20px">

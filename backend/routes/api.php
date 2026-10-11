@@ -22,6 +22,15 @@ Route::get('/ping', fn () => response()->json(['ok' => true, 'app' => 'Prompt Ai
 
 Route::post('/triage/submit', [TriageSubmissionController::class, 'store']);
 Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
+Route::get('/app-links', fn () => response()->json(['data' => \App\Support\SiteLinks::forJs()]));
+// Admin-editable copy + links for the mobile app (see App\Support\SiteContent).
+Route::get('/site-content', fn () => response()->json(['data' => \App\Support\SiteContent::all() + [
+    'topic' => [
+        'title' => \App\Models\HealthTopic::current()?->title,
+        'url' => route('topic.show'),
+        'testimonial_url' => route('testimonials.create'),
+    ],
+]]));
 
 // --- Public ---
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -31,6 +40,7 @@ Route::get('/medical-schemes', [MedicalSchemeController::class, 'index']);
 Route::get('/clinics', [ClinicController::class, 'index']);
 Route::get('/clinics/{clinic}', [ClinicController::class, 'show']);
 Route::get('/doctors', [ClinicController::class, 'doctors']);
+Route::get('/partners', [ClinicController::class, 'partners']);
 Route::get('/doctors/{doctor}', [ClinicController::class, 'doctor']);
 Route::get('/doctors/{doctor}/available-slots', [AppointmentController::class, 'availableSlots']);
 Route::get('/doctors/{doctorId}/reviews', [ReviewController::class, 'forDoctor']);
@@ -54,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
 
         Route::post('/request-doctor', [DoctorMatchController::class, 'store']);
+        Route::post('/request-doctor/instant', [DoctorMatchController::class, 'storeInstant']);
 
         Route::apiResource('invoices', InvoiceController::class)->only(['index', 'show']);
         Route::post('/invoices/{id}/pay', [InvoiceController::class, 'pay']);
@@ -92,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/requests/available', [DoctorMatchController::class, 'available']);
         Route::post('/requests/{appointment}/accept', [DoctorMatchController::class, 'accept']);
+        Route::get('/availability', [DoctorMatchController::class, 'showAvailability']);
         Route::post('/availability', [DoctorMatchController::class, 'toggleAvailability']);
     });
 

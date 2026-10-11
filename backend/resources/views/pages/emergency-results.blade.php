@@ -10,7 +10,7 @@
 <x-layout title="Nearest help · Prompt Aid">
 <div class="pa-pagehead"><div class="inner">
   <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> <a href="{{ route('emergency') }}">Emergency triage</a> <span style="color:#CFC8B8">/</span> Nearest help</div>
-  <div class="pa-row" style="margin-bottom:12px"><span class="pa-blip"></span><span class="pa-eyebrow">South African Triage Scale · result</span></div>
+  <div class="pa-row" style="margin-bottom:12px"><span class="pa-blip"></span><span class="pa-eyebrow">PromptAid Emergency Scale · result</span></div>
   <h1>
     @if($level === 'red') Red — get emergency care immediately
     @elseif($level === 'orange') Orange — very urgent, within 10 minutes
@@ -100,7 +100,7 @@
       <div class="pa-label" style="margin-bottom:10px">Why these results</div>
       <p style="font-size:13px;color:var(--pa-ink-soft)">We only list providers registered on Prompt Aid, ranked by distance from you. We are not a hospital directory and do not claim to list every emergency department in your area — for a full list of hospitals, call {{ $primaryEmergencyContact?->phone }} or 112.</p>
     </div>
-    <div class="pa-note-stop">This is a pre-triage aid, not a diagnosis. A practitioner performs the formal SATS assessment on arrival and may reach a different colour.</div>
+    <div class="pa-note-stop">This is a pre-triage aid, not a diagnosis. A practitioner performs the formal assessment on arrival and may reach a different colour.</div>
   </aside>
 </div>
 

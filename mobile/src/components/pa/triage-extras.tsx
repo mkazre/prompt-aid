@@ -1,7 +1,8 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { pa, paFonts, paRadius, type } from '../../theme';
 import type { TriageLevel } from '../../services/triage';
+import { telUrl, useSiteContent, whatsappUrl } from '../../services/siteContent';
 
 /**
  * Extra components for the patient triage flow, built on top of the shared
@@ -9,71 +10,104 @@ import type { TriageLevel } from '../../services/triage';
  * read-only for this work). Kept in a separate file per project convention
  * so the shared library stays untouched.
  *
- * `TriagePromptModal` mirrors the "South African Triage Scale" sheet on
- * new-ui/promptaid-mobile/home.html (#m-triage) — the home screen can show
- * it directly (e.g. on cold start / AppState "active") without needing any
- * change to this file.
+ * `TriagePromptModal` is the PromptAid Emergency Scale sheet — the same
+ * four levels, actions and buttons as the website popup, with copy and
+ * numbers coming from the admin (Site content → Emergency popup).
  */
 
-const SATS_SIGNALS: { level: TriageLevel; letter: string; title: string; desc: string; bg: string; wash: string }[] = [
-  { level: 'red', letter: 'R', title: 'Help right now', desc: 'Not breathing properly, chest pain, heavy bleeding', bg: pa.sats.red, wash: '#FBEAEA' },
-  { level: 'orange', letter: 'O', title: 'Very urgent', desc: 'Burn, deep cut, head knock, severe pain', bg: pa.sats.orange, wash: '#FCEEE2' },
-  { level: 'yellow', letter: 'Y', title: 'Seen today', desc: 'Fever, vomiting, a wound, sick child', bg: pa.sats.yellow, wash: pa.beaconWash },
-  { level: 'green', letter: 'G', title: 'It can wait', desc: 'Repeat meds, routine check', bg: pa.sats.green, wash: pa.goWash },
+const SATS_SIGNALS: { level: TriageLevel; letter: string; bg: string; wash: string; actionColour: string }[] = [
+  { level: 'red', letter: 'R', bg: pa.sats.red, wash: '#FBEAEA', actionColour: pa.sats.red },
+  { level: 'orange', letter: 'O', bg: pa.sats.orange, wash: '#FCEEE2', actionColour: '#B4520F' },
+  { level: 'yellow', letter: 'Y', bg: pa.sats.yellow, wash: pa.beaconWash, actionColour: pa.ink },
+  { level: 'green', letter: 'G', bg: pa.sats.green, wash: pa.goWash, actionColour: pa.sats.green },
 ];
 
+/** What the caller must do for the actions that need navigation. */
+export type EmergencyScaleAction = 'doctorNow' | 'findCare' | 'video';
+
 /**
- * The triage entry sheet. Renders as a bottom-sheet-style modal. The caller
- * (home screen) controls visibility with `visible` and is responsible for
- * navigating to the `TriageStart` route (see mobile/src/screens/patient/
- * TriageStartScreen.tsx) with `{ selfReported: level }` when a colour is
- * tapped — this component does not import navigation itself so it stays
- * reusable from any screen.
+ * The emergency scale sheet. Red dials the dispatch centre and "Ask a
+ * doctor" opens WhatsApp directly; the caller handles navigation for the
+ * rest through `onAction` (orange → see a GP in 30 min, yellow/green →
+ * Find care, blue button → virtual consult).
  */
 export function TriagePromptModal({
   visible,
   onDismiss,
-  onSelectLevel,
+  onAction,
 }: {
   visible: boolean;
   onDismiss: () => void;
-  onSelectLevel: (level: TriageLevel) => void;
+  onAction: (action: EmergencyScaleAction) => void;
 }) {
+  const { emergency } = useSiteContent();
+
+  function choose(level: TriageLevel) {
+    if (level === 'red') {
+      Linking.openURL(telUrl(emergency.dispatch_phone));
+      return;
+    }
+    onDismiss();
+    onAction(level === 'orange' ? 'doctorNow' : 'findCare');
+  }
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
       <View style={sheetStyles.scrim}>
         <View style={sheetStyles.sheet}>
-          <View style={sheetStyles.headRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ width: 6, height: 6, backgroundColor: pa.signal }} />
-              <Text style={[type.label, { color: pa.signal }]}>South African Triage Scale</Text>
+          <ScrollView contentContainerStyle={{ paddingBottom: 8 }}>
+            <View style={sheetStyles.headRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ width: 6, height: 6, backgroundColor: pa.signal }} />
+                <Text style={[type.label, { color: pa.signal }]}>{emergency.eyebrow}</Text>
+              </View>
+              <Pressable onPress={onDismiss} hitSlop={12}>
+                <Text style={sheetStyles.close}>×</Text>
+              </Pressable>
             </View>
-            <Pressable onPress={onDismiss} hitSlop={12}>
-              <Text style={sheetStyles.close}>×</Text>
-            </Pressable>
-          </View>
-          <Text style={sheetStyles.title}>How serious is it?</Text>
-          <Text style={sheetStyles.subtitle}>Answer a few quick questions. We will find the nearest place that can treat it.</Text>
+            <Text style={sheetStyles.title}>{emergency.title}</Text>
+            <Text style={sheetStyles.subtitle}>{emergency.intro}</Text>
 
-          {SATS_SIGNALS.map((s) => (
+            {SATS_SIGNALS.map((s) => {
+              const copy = emergency.levels[s.level];
+              return (
+                <Pressable
+                  key={s.level}
+                  onPress={() => choose(s.level)}
+                  style={({ pressed }) => [sheetStyles.signalRow, { backgroundColor: s.wash, opacity: pressed ? 0.85 : 1 }]}
+                >
+                  <View style={[sheetStyles.signalBadge, { backgroundColor: s.bg }]}>
+                    <Text style={sheetStyles.signalLetter}>{s.letter}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={sheetStyles.signalTitle}>{copy.title}</Text>
+                    <Text style={sheetStyles.signalDesc}>{copy.description}</Text>
+                    <Text style={sheetStyles.timeframe}>{copy.timeframe}</Text>
+                    <Text style={[sheetStyles.action, { color: s.actionColour }]}>({copy.action})</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            <Pressable onPress={() => Linking.openURL(telUrl(emergency.dispatch_phone))} style={sheetStyles.note}>
+              <Text style={sheetStyles.noteText}>
+                {emergency.note} <Text style={{ fontFamily: paFonts.black, textDecorationLine: 'underline' }}>{emergency.dispatch_phone}</Text>
+              </Text>
+            </Pressable>
+
+            <Pressable onPress={() => Linking.openURL(whatsappUrl(emergency.whatsapp_number))} style={[sheetStyles.bigBtn, { backgroundColor: '#1FA855' }]}>
+              <Text style={sheetStyles.bigBtnText}>💬  {emergency.ask_doctor_label}</Text>
+            </Pressable>
             <Pressable
-              key={s.level}
-              onPress={() => onSelectLevel(s.level)}
-              style={({ pressed }) => [sheetStyles.signalRow, { backgroundColor: s.wash, opacity: pressed ? 0.85 : 1 }]}
+              onPress={() => {
+                onDismiss();
+                onAction('video');
+              }}
+              style={[sheetStyles.bigBtn, { backgroundColor: '#1F5FBF' }]}
             >
-              <View style={[sheetStyles.signalBadge, { backgroundColor: s.bg }]}>
-                <Text style={sheetStyles.signalLetter}>{s.letter}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={sheetStyles.signalTitle}>{s.title}</Text>
-                <Text style={sheetStyles.signalDesc}>{s.desc}</Text>
-              </View>
+              <Text style={sheetStyles.bigBtnText}>{emergency.video_label}</Text>
             </Pressable>
-          ))}
-
-          <Pressable onPress={onDismiss} style={sheetStyles.ghostBtn}>
-            <Text style={sheetStyles.ghostBtnText}>No emergency</Text>
-          </Pressable>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -82,7 +116,7 @@ export function TriagePromptModal({
 
 const sheetStyles = StyleSheet.create({
   scrim: { flex: 1, backgroundColor: 'rgba(16,16,18,0.55)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: pa.surface, borderTopLeftRadius: 12, borderTopRightRadius: 12, padding: 20, paddingBottom: 32 },
+  sheet: { backgroundColor: pa.surface, borderTopLeftRadius: 12, borderTopRightRadius: 12, padding: 20, paddingBottom: 32, maxHeight: '92%' },
   headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   close: { fontSize: 22, color: pa.muted },
   title: { ...type.h2, color: pa.ink, marginBottom: 4 },
@@ -92,8 +126,12 @@ const sheetStyles = StyleSheet.create({
   signalLetter: { fontFamily: paFonts.black, fontSize: 16, color: '#fff' },
   signalTitle: { fontFamily: paFonts.bold, fontSize: 15, color: pa.ink },
   signalDesc: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: 2 },
-  ghostBtn: { marginTop: 8, borderWidth: 1, borderColor: pa.line, borderRadius: paRadius.sm, paddingVertical: 14, alignItems: 'center' },
-  ghostBtnText: { fontFamily: paFonts.bold, fontSize: 14, color: pa.ink },
+  timeframe: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: pa.inkSoft, marginTop: 6 },
+  action: { fontFamily: paFonts.black, fontSize: 13, marginTop: 2 },
+  note: { backgroundColor: '#FBEAEA', borderWidth: 1, borderColor: '#F2C4C4', padding: 12, marginTop: 4, marginBottom: 12 },
+  noteText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.sats.red },
+  bigBtn: { borderRadius: paRadius.sm, paddingVertical: 15, alignItems: 'center', marginBottom: 10 },
+  bigBtnText: { fontFamily: paFonts.black, fontSize: 15, color: '#fff' },
 });
 
 /** The 4-segment red/orange/yellow/green progress bar shown across all triage steps — matches .pa-satsbar. */

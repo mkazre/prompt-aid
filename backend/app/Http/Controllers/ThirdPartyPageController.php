@@ -6,18 +6,31 @@ use App\Models\ThirdPartyProfile;
 use Illuminate\Http\Request;
 
 /**
- * Public directories for the two ThirdPartyProfile groupings shown in the
- * new-ui nav: "Labs & imaging" (lab/imaging) and "Physio & specialists"
- * (everything else — physio, optometry, dental, dietetics, audiology,
- * home nursing).
+ * Public directories for ThirdPartyProfile groupings on the Find care tabs:
+ * Radiology (imaging), Laboratories (lab) and Allied (everything else —
+ * physio, optometry, dental, dietetics, audiology, home nursing).
+ * Lab and imaging providers share the /labs/{lab} detail page; allied
+ * providers use /allied/{provider}.
  */
 class ThirdPartyPageController extends Controller
 {
     protected const LAB_CATEGORIES = ['lab', 'imaging'];
 
-    public function labsIndex(Request $request)
+    public function radiologyIndex(Request $request)
     {
-        return view('pages.labs', ['providers' => $this->query($request, self::LAB_CATEGORIES)]);
+        return $this->directory($request, ['imaging'], 'radiology', 'Search radiology and x-ray centres…', 'View centre');
+    }
+
+    public function laboratoriesIndex(Request $request)
+    {
+        return $this->directory($request, ['lab'], 'laboratories', 'Search laboratories…', 'View lab');
+    }
+
+    public function alliedIndex(Request $request)
+    {
+        $categories = array_values(array_diff(ThirdPartyProfile::CATEGORIES, self::LAB_CATEGORIES));
+
+        return $this->directory($request, $categories, 'allied', 'Search allied practitioners…', 'View practice');
     }
 
     public function labsShow(ThirdPartyProfile $lab)
@@ -27,18 +40,23 @@ class ThirdPartyPageController extends Controller
         return view('pages.lab-single', ['provider' => $lab->load('user')]);
     }
 
-    public function specialistsIndex(Request $request)
+    public function alliedShow(ThirdPartyProfile $provider)
     {
-        $categories = array_diff(ThirdPartyProfile::CATEGORIES, self::LAB_CATEGORIES);
+        abort_if(in_array($provider->category, self::LAB_CATEGORIES, true), 404);
 
-        return view('pages.specialists', ['providers' => $this->query($request, $categories)]);
+        return view('pages.specialist-single', ['provider' => $provider->load('user')]);
     }
 
-    public function specialistsShow(ThirdPartyProfile $specialist)
+    protected function directory(Request $request, array $categories, string $tab, string $placeholder, string $cta)
     {
-        abort_if(in_array($specialist->category, self::LAB_CATEGORIES, true), 404);
-
-        return view('pages.specialist-single', ['provider' => $specialist->load('user')]);
+        return view('pages.provider-directory', [
+            'providers' => $this->query($request, $categories),
+            'tab' => $tab,
+            'meta' => \App\Support\SiteContent::get("care.tabs.{$tab}"),
+            'placeholder' => $placeholder,
+            'cta' => $cta,
+            'showRoute' => $tab === 'allied' ? 'allied.show' : 'labs.show',
+        ]);
     }
 
     protected function query(Request $request, array $categories)

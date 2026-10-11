@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
@@ -8,6 +8,12 @@ import { PaAvatar, PaBadge, PaQuickAction, PaSatsChip } from '../../components/p
 import { pa, paFonts } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { META } from '../../services/triage';
+import { TriagePromptModal } from '../../components/pa/triage-extras';
+import { navigateForEmergencyAction } from '../../components/pa/care-extras';
+import { STATUS_COLOURS, useSiteContent } from '../../services/siteContent';
+
+// The PromptAid Emergency Scale opens once per app session, like the website popup.
+let emergencyScaleShown = false;
 
 export default function HomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -17,6 +23,15 @@ export default function HomeScreen({ navigation }: any) {
   const [prescriptions, setPrescriptions] = useState<PrescriptionUpload[]>([]);
   const [latestTriage, setLatestTriage] = useState<LatestTriage | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scaleOpen, setScaleOpen] = useState(false);
+  const content = useSiteContent();
+
+  useEffect(() => {
+    if (!emergencyScaleShown) {
+      emergencyScaleShown = true;
+      setScaleOpen(true);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,11 +76,19 @@ export default function HomeScreen({ navigation }: any) {
         </Pressable>
       </View>
 
-      <Pressable style={styles.emergencyBanner} onPress={() => navigation.navigate('TriageStart')}>
+      <TriagePromptModal
+        visible={scaleOpen}
+        onDismiss={() => setScaleOpen(false)}
+        onAction={(action) => navigateForEmergencyAction(navigation, action)}
+      />
+
+      <Text style={styles.slogan}>{content.home.eyebrow}</Text>
+
+      <Pressable style={styles.emergencyBanner} onPress={() => setScaleOpen(true)}>
         <View style={styles.blip} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.emergencyTitle}>Emergency? Start triage</Text>
-          <Text style={styles.emergencySub}>Finds the nearest place that can treat it</Text>
+          <Text style={styles.emergencyTitle}>Emergency?</Text>
+          <Text style={styles.emergencySub}>{content.emergency.eyebrow} — get help, a doctor in 30 min, or book care</Text>
         </View>
         <Text style={styles.emergencyArrow}>→</Text>
       </Pressable>
@@ -100,11 +123,35 @@ export default function HomeScreen({ navigation }: any) {
       ) : null}
 
       <View style={styles.grid2}>
-        <PaQuickAction number="01" label="Find a doctor" onPress={() => navigation.getParent()?.navigate('Care')} />
-        <PaQuickAction number="02" label="Order medicine" onPress={() => navigation.getParent()?.navigate('Pharmacy')} />
-        <PaQuickAction number="03" label="Book a shuttle" onPress={() => navigation.getParent()?.navigate('Rides')} />
-        <PaQuickAction number="04" label="Upload a script" onPress={() => navigation.getParent()?.navigate('Pharmacy', { screen: 'ScriptUpload' })} />
+        <PaQuickAction number="01" label="Find a doctor" onPress={() => navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: 'gp' } })} />
+        <PaQuickAction number="02" label="Virtual consult" onPress={() => navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: 'video' } })} />
+        <PaQuickAction number="03" label="Pharmacy" onPress={() => navigation.getParent()?.navigate('Pharmacy')} />
+        <PaQuickAction number="04" label="Book a shuttle" onPress={() => navigation.getParent()?.navigate('Rides')} />
+        <PaQuickAction number="05" label="Radiology" onPress={() => navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: 'radiology' } })} />
+        <PaQuickAction number="06" label="Laboratory" onPress={() => navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: 'laboratories' } })} />
       </View>
+
+      <View style={styles.statusNote}>
+        <View style={{ flexDirection: 'row', gap: 5, marginBottom: 6 }}>
+          {(['green', 'orange', 'red'] as const).map((c) => <View key={c} style={[styles.statusDot, { backgroundColor: STATUS_COLOURS[c].fg }]} />)}
+        </View>
+        <Text style={styles.statusNoteText}>{content.home.status_note}</Text>
+      </View>
+
+      {content.topic ? (
+        <View style={styles.topicCard}>
+          <Text style={styles.topicEyebrow}>{content.home.topic_heading}</Text>
+          <Text style={styles.topicTitle}>{content.topic.title ?? 'A new health topic is coming soon.'}</Text>
+          <View style={styles.apptActions}>
+            <Pressable style={styles.topicBtn} onPress={() => Linking.openURL(content.topic!.url)}>
+              <Text style={styles.topicBtnText}>{content.home.topic_read_label}</Text>
+            </Pressable>
+            <Pressable style={[styles.ghostBtn, { borderColor: '#fff' }]} onPress={() => Linking.openURL(content.topic!.testimonial_url)}>
+              <Text style={styles.ghostBtnText}>{content.home.topic_testimonial_label}</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
 
       {(labResults.length || prescriptions.length) ? (
         <>
@@ -145,6 +192,15 @@ const styles = StyleSheet.create({
   greetRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
   greetSmall: { fontSize: 13, color: pa.muted, fontFamily: paFonts.regular },
   greetName: { fontSize: 24, fontFamily: paFonts.black, color: pa.ink },
+  slogan: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, color: pa.signal, marginBottom: 10 },
+  statusNote: { backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, padding: 14, marginTop: 4, marginBottom: 14 },
+  statusDot: { width: 9, height: 9, borderRadius: 5 },
+  statusNoteText: { fontFamily: paFonts.regular, fontSize: 12, color: pa.inkSoft, lineHeight: 18 },
+  topicCard: { backgroundColor: pa.signal, padding: 18, marginBottom: 14 },
+  topicEyebrow: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: '#FBD5D3', marginBottom: 6 },
+  topicTitle: { fontFamily: paFonts.black, fontSize: 17, color: '#fff', marginBottom: 14 },
+  topicBtn: { flex: 1, backgroundColor: '#fff', paddingVertical: 12, alignItems: 'center' },
+  topicBtnText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
   emergencyBanner: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#C8102E', padding: 15, marginBottom: 14, minHeight: 56 },
   blip: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' },
   emergencyTitle: { fontFamily: paFonts.black, fontSize: 15, color: '#fff' },

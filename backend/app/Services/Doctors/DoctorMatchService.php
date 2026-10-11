@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\DoctorProfile;
 use App\Models\PatientProfile;
 use App\Support\StaffNotifier;
+use Illuminate\Support\Collection;
 
 /**
  * "Uber-style" on-demand doctor matching: request now, get matched to the
@@ -21,6 +22,16 @@ class DoctorMatchService
     // appointment's date/start_time/end_time are stamped to "now" for this
     // many minutes, matching AppointmentBookingService's slot-length fallback.
     protected const DEFAULT_DURATION_MINUTES = 30;
+
+    /**
+     * "Get connected to a Doctor in 30min" (PromptAid Emergency Scale,
+     * orange): the request goes to every GP flagged green, and whichever
+     * GP accepts first is booked with the patient this many minutes later.
+     */
+    public const INSTANT_GP_LEAD_MINUTES = 30;
+
+    /** requested_specialty marker for a broadcast-to-all-green-GPs request. */
+    public const INSTANT_GP_SPECIALTY = 'General Practitioner';
 
     public function __construct(
         protected GeocodingInterface $geo,
@@ -61,6 +72,118 @@ class DoctorMatchService
         }
 
         return $appointment->fresh();
+    }
+
+    /** GPs currently flagged green (active, accepting, availability = available). */
+    public function greenGps(): Collection
+    {
+        return DoctorProfile::query()
+            ->generalPractitioners()
+            ->where('status', 'active')
+            ->where('is_accepting_appointments', true)
+            ->where('availability', DoctorProfile::AVAILABLE)
+            ->with('user')
+            ->get();
+    }
+
+    /**
+     * Broadcast a "see a GP within 30 minutes" request to every green GP.
+     * Nobody is auto-assigned: the first GP to accept() it gets the booking.
+     */
+    public function requestInstantGp(PatientProfile $patient, string $mode, ?string $reason = null): Appointment
+    {
+        $appointment = $this->requestMatch(
+            $patient,
+            self::INSTANT_GP_SPECIALTY,
+            $mode,
+            autoAssign: false,
+        );
+
+        if ($reason) {
+            $appointment->update(['reason' => $reason]);
+        }
+
+        $gps = $this->greenGps();
+        $patientName = $patient->user->name;
+        $modeLabel = $mode === Appointment::MODE_VIDEO ? 'video' : 'in-person';
+
+        foreach ($gps as $gp) {
+            $this->notifier->push(
+                $gp->user,
+                'Patient needs a GP within 30 min',
+                "{$patientName} is asking for a {$modeLabel} consult. First GP to accept gets the booking."
+            );
+        }
+
+        if ($gps->isNotEmpty()) {
+            StaffNotifier::alert(
+                $gps->pluck('user')->all(),
+                'Patient needs a GP within 30 min',
+                "{$patientName} is asking for a {$modeLabel} consult. The first GP to accept gets the booking in 30 minutes.",
+                icon: 'heroicon-o-bolt',
+                color: 'danger',
+                url: route('filament.admin.pages.dashboard'),
+                actionLabel: 'Accept on dashboard',
+            );
+        }
+
+        return $appointment->fresh();
+    }
+
+    /** Whether this doctor may accept this open request. */
+    public function canAccept(Appointment $appointment, DoctorProfile $doctor): bool
+    {
+        if ($appointment->requested_specialty === self::INSTANT_GP_SPECIALTY) {
+            return $doctor->isGeneralPractitioner();
+        }
+
+        return $appointment->requested_specialty === $doctor->specialization;
+    }
+
+    /**
+     * Atomically claim an open request for a doctor — only the first caller
+     * wins, so two GPs tapping Accept at once can never both get the patient.
+     * Returns null when someone else already took it.
+     */
+    public function claim(Appointment $appointment, DoctorProfile $doctor): ?Appointment
+    {
+        $start = now()->addMinutes(self::INSTANT_GP_LEAD_MINUTES);
+        $isInstantGp = $appointment->requested_specialty === self::INSTANT_GP_SPECIALTY;
+
+        $claimed = Appointment::query()
+            ->whereKey($appointment->id)
+            ->where('status', Appointment::STATUS_MATCHING)
+            ->whereNull('doctor_profile_id')
+            ->update(array_filter([
+                'doctor_profile_id' => $doctor->id,
+                // Instant GP requests are slotted 30 minutes from acceptance.
+                'date' => $isInstantGp ? $start->toDateString() : null,
+                'start_time' => $isInstantGp ? $start->format('H:i:s') : null,
+                'end_time' => $isInstantGp ? $start->clone()->addMinutes(self::DEFAULT_DURATION_MINUTES)->format('H:i:s') : null,
+                'clinic_id' => $appointment->mode === Appointment::MODE_IN_PERSON ? $doctor->clinics()->value('clinics.id') : null,
+            ], fn ($v) => $v !== null));
+
+        if (! $claimed) {
+            return null;
+        }
+
+        $appointment = $appointment->fresh();
+
+        if ($isInstantGp) {
+            $appointment->update(['status' => Appointment::STATUS_CONFIRMED]);
+            $doctor->update(['availability' => DoctorProfile::BUSY]);
+
+            $when = $start->format('H:i');
+            $this->notifier->push(
+                $appointment->patient->user,
+                'A GP accepted your request',
+                "Dr. {$doctor->user->name} will see you at {$when} ({$appointment->mode}). Booking {$appointment->booking_ref}."
+            );
+
+            return $appointment->fresh();
+        }
+
+        return $this->assignDoctor($appointment, $doctor);
     }
 
     public function findNearestAvailableDoctor(string $specialty, string $mode, ?float $lat, ?float $lng): ?DoctorProfile

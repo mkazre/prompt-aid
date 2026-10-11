@@ -1,10 +1,25 @@
-<x-layout title="Find a doctor, fill a script, get a lift · Prompt Aid">
+@php $c = \App\Support\SiteContent::get('home'); @endphp
+<x-layout :title="$c['title'].' · Prompt Aid'">
 <section class="pa-hero">
   <div class="pa-container pa-hero-grid">
     <div class="pa-hero-copy" style="animation:pa-rise .5s ease both">
-      <div class="pa-row" style="margin-bottom:24px"><span class="pa-tick"></span><span class="pa-eyebrow">Care, medicine and transport · South Africa</span></div>
-      <h1 style="font-size:clamp(36px,4.6vw,64px);margin-bottom:22px">Find a doctor, fill a script,<br />and get a lift there.</h1>
-      <p style="font-size:17px;color:var(--pa-ink-soft);max-width:540px;margin-bottom:32px">One account for clinics, pharmacies, labs and specialists — plus a medical shuttle that fetches you from home and brings you back.</p>
+      <div class="pa-row" style="margin-bottom:24px"><span class="pa-tick"></span><span class="pa-eyebrow">{{ $c['eyebrow'] }}</span></div>
+      <h1 style="font-size:clamp(34px,4.2vw,58px);margin-bottom:22px">{{ $c['title'] }}</h1>
+      @if ($c['lead'])<p style="font-size:17px;color:var(--pa-ink-soft);max-width:540px;margin-bottom:18px">{{ $c['lead'] }}</p>@endif
+      @if ($c['app_store_url'] || $c['play_store_url'])
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px">
+          @if ($c['app_store_url'])<a class="pa-btn" href="{{ $c['app_store_url'] }}" target="_blank" rel="noopener">Download on the App Store</a>@endif
+          @if ($c['play_store_url'])<a class="pa-btn-ghost" href="{{ $c['play_store_url'] }}" target="_blank" rel="noopener">Get it on Google Play</a>@endif
+        </div>
+      @endif
+      @if ($c['status_note'])
+        <div class="pa-status-legend">
+          <div>
+            <span class="dot" style="background:#1F7A4C"></span><span class="dot" style="background:#E4701E"></span><span class="dot" style="background:#C8102E"></span>
+            {{ $c['status_note'] }}
+          </div>
+        </div>
+      @endif
       <div style="display:flex;gap:28px;flex-wrap:wrap">
         <div><div class="pa-num" style="font-size:30px">{{ number_format($stats['providers']) }}</div><div style="font-size:12px;color:var(--pa-muted);margin-top:2px">providers listed</div></div>
         <div style="width:1px;background:var(--pa-line)"></div>
@@ -16,36 +31,21 @@
     <div class="pa-hero-widget">
       <div class="pa-pop" data-pa-tabs>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--pa-line)">
-          <button class="pa-tab is-on" data-pa-target="care" style="border:0;border-radius:0;padding:15px 8px">Book care</button>
-          <button class="pa-tab" data-pa-target="meds" style="border:0;border-left:1px solid var(--pa-line);border-radius:0;padding:15px 8px">Order meds</button>
-          <button class="pa-tab" data-pa-target="ride" style="border:0;border-left:1px solid var(--pa-line);border-radius:0;padding:15px 8px">Shuttle</button>
+          <button class="pa-tab is-on" data-pa-target="care" style="border:0;border-radius:0;padding:15px 8px">{{ $c['tab_care'] }}</button>
+          <button class="pa-tab" data-pa-target="virtual" style="border:0;border-left:1px solid var(--pa-line);border-radius:0;padding:15px 8px">{{ $c['tab_virtual'] }}</button>
+          <button class="pa-tab" data-pa-target="ride" style="border:0;border-left:1px solid var(--pa-line);border-radius:0;padding:15px 8px">{{ $c['tab_shuttle'] }}</button>
         </div>
         <div style="padding:26px">
-          <form method="GET" action="{{ route('doctors.index') }}" data-pa-panel="care">
-            <div class="pa-formrow"><label class="pa-label">Symptom, speciality or name</label><input class="pa-field" name="search" placeholder="e.g. persistent cough, cardiologist" /></div>
-            <div class="pa-formrow"><label class="pa-label">Where</label><input class="pa-field" placeholder="Suburb or postal code (coming soon)" disabled /></div>
-            <div class="pa-formgrid" style="margin-bottom:22px">
-              <div><label class="pa-label">When</label><input class="pa-field" value="Today" disabled /></div>
-              <div><label class="pa-label">Paying with</label><input class="pa-field" value="Any scheme" disabled /></div>
-            </div>
-            <button type="submit" class="pa-btn pa-btn-block pa-btn-lg">Search {{ number_format($stats['providers']) }} providers</button>
+          @foreach (['care' => 'doctors.index', 'virtual' => 'virtual-consult'] as $panel => $target)
+          <form method="GET" action="{{ route($target) }}" data-pa-panel="{{ $panel }}" @class(['pa-hide' => $panel !== 'care'])>
+            <div class="pa-formrow"><label class="pa-label">{{ $c['search_label'] }}</label><input class="pa-field" name="search" placeholder="{{ $c['search_placeholder'] }}" /></div>
+            <div class="pa-formrow" style="margin-bottom:22px"><label class="pa-label">Where</label><input class="pa-field" placeholder="Suburb or postal code (coming soon)" disabled /></div>
+            <button type="submit" class="pa-btn pa-btn-block pa-btn-lg">{{ $panel === 'care' ? 'Search '.number_format($stats['providers']).' providers' : 'Find a virtual consult' }}</button>
           </form>
-          <form method="GET" action="{{ route('shop.index') }}" data-pa-panel="meds" class="pa-hide">
-            <div class="pa-formrow"><label class="pa-label">Medicine or product</label><input class="pa-field" name="search" placeholder="e.g. Panado, blood pressure monitor" /></div>
-            <div class="pa-formrow"><label class="pa-label">Deliver to</label><input class="pa-field" placeholder="Street address (added at checkout)" disabled /></div>
-            <div class="pa-formgrid" style="margin-bottom:22px">
-              <div><label class="pa-label">When</label><input class="pa-field" value="Today" disabled /></div>
-              <div><label class="pa-label">Paying with</label><input class="pa-field" value="Any scheme" disabled /></div>
-            </div>
-            <button type="submit" class="pa-btn pa-btn-block pa-btn-lg">Search the pharmacy</button>
-          </form>
+          @endforeach
           <form method="GET" action="{{ route('shuttle') }}" data-pa-panel="ride" class="pa-hide">
             <div class="pa-formrow"><label class="pa-label">Pick up</label><input class="pa-field" placeholder="Home address (entered on the next step)" disabled /></div>
-            <div class="pa-formrow"><label class="pa-label">Drop off</label><input class="pa-field" placeholder="Clinic, pharmacy or lab" disabled /></div>
-            <div class="pa-formgrid" style="margin-bottom:22px">
-              <div><label class="pa-label">When</label><input class="pa-field" value="Today" disabled /></div>
-              <div><label class="pa-label">Paying with</label><input class="pa-field" value="Any scheme" disabled /></div>
-            </div>
+            <div class="pa-formrow" style="margin-bottom:22px"><label class="pa-label">Drop off</label><input class="pa-field" placeholder="Clinic, pharmacy or lab" disabled /></div>
             <button type="submit" class="pa-btn pa-btn-block pa-btn-lg">Get a fare estimate</button>
           </form>
           <div class="pa-row" style="margin-top:16px;font-size:12px;color:var(--pa-muted)"><span style="width:6px;height:6px;background:var(--pa-go);display:block"></span>{{ $stats['openToday'] }} doctors have openings today</div>
@@ -65,36 +65,20 @@
   </div>
 </section>
 
-<section class="pa-section">
+<section class="pa-section" id="benefits">
   <div class="pa-spread" style="align-items:baseline;margin-bottom:28px">
-    <div><div class="pa-eyebrow" style="margin-bottom:10px">What do you need</div><h2>Six services, one account</h2></div>
-    <a class="pa-btn-ghost" href="{{ route('doctors.index') }}">Browse everything</a>
+    <div>@if($c['benefits_eyebrow'])<div class="pa-eyebrow" style="margin-bottom:10px">{{ $c['benefits_eyebrow'] }}</div>@endif<h2>{{ $c['benefits_heading'] }}</h2></div>
+    <a class="pa-btn-ghost" href="{{ route('about') }}#benefits">About PromptAid</a>
   </div>
   <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
-    <a href="{{ route('doctors.index') }}" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
-      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">01</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Doctors</div>
-      <div style="font-size:13px;color:var(--pa-muted)">GPs and specialists, in person or by video</div></a>
-    <a href="{{ route('clinics.index') }}" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
-      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">02</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Clinics</div>
-      <div style="font-size:13px;color:var(--pa-muted)">Day hospitals, family practices, walk-in rooms</div></a>
-    <a href="{{ route('pharmacies.index') }}" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
-      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">03</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Pharmacy</div>
-      <div style="font-size:13px;color:var(--pa-muted)">Repeat scripts, OTC, devices, delivered</div></a>
-    <a href="{{ route('labs.index') }}" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
-      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">04</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Labs &amp; imaging</div>
-      <div style="font-size:13px;color:var(--pa-muted)">Blood work, X-ray, ultrasound, CT</div></a>
-    <a href="{{ route('specialists.index') }}" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
-      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">05</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Physio &amp; specialists</div>
-      <div style="font-size:13px;color:var(--pa-muted)">Rehab, optometry, dietetics, audiology</div></a>
-    <a href="{{ route('shuttle') }}" style="padding:26px 24px;color:inherit;text-decoration:none;display:block">
-      <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">06</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Shuttle</div>
-      <div style="font-size:13px;color:var(--pa-muted)">Wheelchair and stretcher vehicles, return legs</div></a>
+    @foreach (\App\Support\SiteContent::get('benefits') as $i => $benefit)
+      <a href="{{ route('about') }}#benefit-{{ $i + 1 }}" class="pa-benefit">
+        <div class="pa-num" style="font-size:26px;color:var(--pa-signal);margin-bottom:14px">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px">{{ $benefit['title'] }}</div>
+        @if (! empty($benefit['summary']))<div style="font-size:13px;color:var(--pa-muted);margin-bottom:14px">{{ $benefit['summary'] }}</div>@endif
+        <span class="pa-benefit-more">Learn more →</span>
+      </a>
+    @endforeach
   </div>
 </section>
 
@@ -121,37 +105,37 @@
   </div>
 </section>
 
-@if ($featuredDoctors->count() || $featuredPartners->count())
+@if ($topDoctors->count())
 <section class="pa-section">
-  <div class="pa-spread" style="align-items:baseline;margin-bottom:28px"><h2>Available today</h2><a class="pa-btn-ghost" href="{{ route('doctors.index') }}">All providers</a></div>
-  <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
-    @foreach ($featuredDoctors as $doctor)
+  <div class="pa-spread" style="align-items:baseline;margin-bottom:28px"><h2>{{ $c['top_doctors_heading'] }}</h2><a class="pa-btn-ghost" href="{{ route('doctors.index') }}">All doctors</a></div>
+  <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+    @foreach ($topDoctors as $doctor)
       <a href="{{ route('doctors.show', $doctor) }}" style="padding:24px;color:inherit;text-decoration:none;display:block">
-        <div style="display:flex;gap:14px;margin-bottom:16px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">{{ \Illuminate\Support\Str::of($doctor->user->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}</div>
+        <div style="display:flex;gap:14px;margin-bottom:14px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">{{ \Illuminate\Support\Str::of($doctor->user->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}</div>
         <div><div style="font-size:16px;font-weight:700;line-height:1.25">Dr {{ $doctor->user->name }}</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">{{ $doctor->specialization }}</div></div></div>
+        <div style="margin-bottom:12px"><span class="pa-status is-{{ $doctor->liveStatus() }}">{{ $doctor->liveStatusLabel() }}</span></div>
         <div style="font-size:13px;color:var(--pa-ink-soft);margin-bottom:14px">{{ $doctor->clinics->first()?->name ?? 'Video consultation available' }}</div>
-        <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span class="pa-badge is-go">Book online</span><span class="pa-num" style="font-size:19px">R {{ number_format($doctor->consultation_fee, 0) }}</span></div></a>
-    @endforeach
-    @foreach ($featuredPartners as $partner)
-      <a href="{{ route('specialists.show', $partner) }}" style="padding:24px;color:inherit;text-decoration:none;display:block">
-        <div style="display:flex;gap:14px;margin-bottom:16px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">{{ mb_substr($partner->company_name, 0, 2) }}</div>
-        <div><div style="font-size:16px;font-weight:700;line-height:1.25">{{ $partner->company_name }}</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">{{ ucfirst($partner->category) }}</div></div></div>
-        <div style="font-size:13px;color:var(--pa-ink-soft);margin-bottom:14px">{{ $partner->service_type }}</div>
-        <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span class="pa-badge is-go">{{ $partner->accepts_walk_ins ? 'Walk in' : 'By appointment' }}</span><span class="pa-num" style="font-size:19px">View</span></div></a>
+        <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span style="font-size:13px;color:var(--pa-muted)">@if($doctor->rating_count)★ {{ number_format($doctor->rating_avg, 1) }} ({{ $doctor->rating_count }})@else New @endif</span><span class="pa-num" style="font-size:19px">R {{ number_format($doctor->consultation_fee, 0) }}</span></div></a>
     @endforeach
   </div>
 </section>
 @endif
 
+@if ($topServices->count())
 <section class="pa-section">
   <div class="pa-rule-heavy" style="margin-bottom:36px"></div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:40px">
-    <div><div style="font-size:13px;font-weight:900;color:var(--pa-signal);margin-bottom:12px">STEP 01</div><div style="font-size:19px;font-weight:700;margin-bottom:8px">Search and compare</div><div style="font-size:14px;color:var(--pa-ink-soft)">Filter by speciality, suburb, fee, scheme and who has an opening today.</div></div>
-    <div><div style="font-size:13px;font-weight:900;color:var(--pa-signal);margin-bottom:12px">STEP 02</div><div style="font-size:19px;font-weight:700;margin-bottom:8px">Book and add a lift</div><div style="font-size:14px;color:var(--pa-ink-soft)">Pick a slot. Tick the shuttle box and the return leg is scheduled with it.</div></div>
-    <div><div style="font-size:13px;font-weight:900;color:var(--pa-signal);margin-bottom:12px">STEP 03</div><div style="font-size:19px;font-weight:700;margin-bottom:8px">Attend or dial in</div><div style="font-size:14px;color:var(--pa-ink-soft)">The driver tracks to your door, or a Google Meet link opens in the app.</div></div>
-    <div><div style="font-size:13px;font-weight:900;color:var(--pa-signal);margin-bottom:12px">STEP 04</div><div style="font-size:19px;font-weight:700;margin-bottom:8px">Scripts and results follow</div><div style="font-size:14px;color:var(--pa-ink-soft)">Prescriptions go to your pharmacy, results to your record and your doctor.</div></div>
+  <div class="pa-spread" style="align-items:baseline;margin-bottom:28px"><h2>{{ $c['top_services_heading'] }}</h2></div>
+  <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+    @foreach ($topServices as $service)
+      @php $m = $service['model']; $name = $m->company_name ?? $m->name; @endphp
+      <a href="{{ route($service['route'], $m) }}" style="padding:24px;color:inherit;text-decoration:none;display:block">
+        <div style="display:flex;gap:14px;margin-bottom:14px"><div class="pa-avatar" style="width:52px;height:52px;font-size:18px">{{ mb_strtoupper(mb_substr($name, 0, 2)) }}</div>
+        <div><div style="font-size:16px;font-weight:700;line-height:1.25">{{ $name }}</div><div style="font-size:13px;color:var(--pa-muted);margin-top:3px">{{ $service['kind'] }}</div></div></div>
+        <div class="pa-spread" style="border-top:1px solid var(--pa-line);padding-top:14px"><span style="font-size:13px;color:var(--pa-muted)">@if($m->rating_count)★ {{ number_format($m->rating_avg, 1) }} ({{ $m->rating_count }})@else New @endif</span><span class="pa-num" style="font-size:15px">View</span></div></a>
+    @endforeach
   </div>
 </section>
+@endif
 
 @if ($schemeNames->count())
 <section class="pa-section">
@@ -166,11 +150,11 @@
 
 <section class="pa-section pa-section-last">
   <div style="background:var(--pa-signal);color:#fff;padding:52px 48px;display:flex;align-items:center;justify-content:space-between;gap:36px;flex-wrap:wrap">
-    <div><h2 style="font-size:38px;color:#fff;margin-bottom:10px">Your next appointment,<br />lift included.</h2>
-    <p style="font-size:16px;color:#FBD5D3;margin:0">Free to join. No booking fee. Pay the provider directly.</p></div>
+    <div><h2 style="font-size:38px;color:#fff;margin-bottom:10px">{{ $c['topic_heading'] }}</h2>
+    <p style="font-size:17px;color:#FBD5D3;margin:0;max-width:620px">{{ $topic?->title ?? 'A new health topic is coming soon.' }}</p></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <a class="pa-btn-lg" style="background:#fff;color:var(--pa-ink);border:1px solid #fff;font-weight:700;padding:16px 26px;display:inline-flex;align-items:center" href="{{ route('register') }}">Create an account</a>
-      <a class="pa-btn-lg" style="background:transparent;color:#fff;border:1px solid #fff;font-weight:700;padding:16px 26px;display:inline-flex;align-items:center" href="{{ route('how-it-works') }}">How the shuttle works</a>
+      <a class="pa-btn-lg" style="background:#fff;color:var(--pa-ink);border:1px solid #fff;font-weight:700;padding:16px 26px;display:inline-flex;align-items:center" href="{{ route('topic.show') }}">{{ $c['topic_read_label'] }}</a>
+      <a class="pa-btn-lg" style="background:transparent;color:#fff;border:1px solid #fff;font-weight:700;padding:16px 26px;display:inline-flex;align-items:center" href="{{ route('testimonials.create', $topic ? ['topic' => $topic->id] : []) }}">{{ $c['topic_testimonial_label'] }}</a>
     </div>
   </div>
 </section>

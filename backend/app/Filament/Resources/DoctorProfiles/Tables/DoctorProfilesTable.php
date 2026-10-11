@@ -34,18 +34,23 @@ class DoctorProfilesTable
                     ->boolean(),
                 TextColumn::make('availability')
                     ->label('Live')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'available' => 'Green',
+                        'busy' => 'Orange',
+                        default => 'Red',
+                    })
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'available' => 'success',
                         'busy' => 'warning',
-                        default => 'gray',
+                        default => 'danger',
                     }),
                 TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')->options(['active' => 'Active', 'inactive' => 'Inactive', 'pending_approval' => 'Pending Approval']),
                 TernaryFilter::make('is_accepting_appointments')->label('Accepting appointments'),
-                SelectFilter::make('availability')->options(['available' => 'Available', 'busy' => 'Busy', 'offline' => 'Offline']),
+                SelectFilter::make('availability')->label('Live status')->options(['available' => 'Green', 'busy' => 'Orange', 'offline' => 'Red']),
             ])
             ->recordActions([
                 EditAction::make(),

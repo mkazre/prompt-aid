@@ -94,6 +94,7 @@ export interface Clinic {
   lat: number;
   lng: number;
   phone: string | null;
+  email?: string | null;
   specialties: string[];
 }
 
@@ -110,6 +111,25 @@ export interface Doctor {
   is_accepting_appointments: boolean;
   availability_summary: string | null;
   clinics: Clinic[];
+  offers_video?: boolean;
+  /** Patient-facing traffic light set by the doctor: green / orange / red. */
+  live_status?: 'green' | 'orange' | 'red';
+  live_status_label?: string;
+  live_status_description?: string;
+  /** e.g. { Mon: '08:00–17:00' } — days without hours are omitted. */
+  operating_hours?: Record<string, string>;
+}
+
+/** Radiology / laboratory / allied provider (GET /partners). */
+export interface Partner {
+  id: number;
+  company_name: string;
+  service_type: string | null;
+  category: string;
+  description: string | null;
+  rating_avg: number;
+  rating_count: number;
+  accepts_walk_ins: boolean;
 }
 
 export interface EncounterVitals {
@@ -136,8 +156,9 @@ export interface Appointment {
   start_time: string;
   end_time: string;
   visit_type: 'clinic' | 'telemed' | 'home';
-  status: 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
+  status: 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show' | 'matching';
   reason: string | null;
+  requested_specialty?: string | null;
   // NOTE: `mode`/`meet_url` columns exist on the appointments table (see
   // backend/database/migrations/2026_09_23_100011_add_video_fields_to_appointments_table.php)
   // but AppointmentResource does not serialize them yet — optional here so the

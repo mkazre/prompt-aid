@@ -1,6 +1,6 @@
 <x-layout :title="$provider->company_name.' · Prompt Aid'">
 <div class="pa-pagehead"><div class="inner">
-  <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> <a href="{{ route('labs.index') }}">Labs &amp; imaging</a> <span style="color:#CFC8B8">/</span> {{ $provider->company_name }}</div>
+  <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> <a href="{{ route($provider->category === 'imaging' ? 'radiology.index' : 'laboratories.index') }}">{{ $provider->category === 'imaging' ? 'Radiology' : 'Laboratories' }}</a> <span style="color:#CFC8B8">/</span> {{ $provider->company_name }}</div>
   <div style="display:grid;grid-template-columns:160px minmax(0,1fr);gap:28px;padding-bottom:28px">
     <div class="pa-avatar" style="width:160px;height:160px;font-size:40px">{{ mb_strtoupper(mb_substr($provider->company_name, 0, 2)) }}</div>
     <div>

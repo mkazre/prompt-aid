@@ -12,6 +12,7 @@ use App\Models\Ride;
 use App\Models\ThirdPartyProfile;
 use App\Models\User;
 use App\Services\Booking\AppointmentBookingService;
+use App\Support\SiteContent;
 use App\Support\StaffNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -25,18 +26,22 @@ class PageController extends Controller
         $pharmacies = Pharmacy::where('status', 'active')->count();
         $labs = ThirdPartyProfile::where('status', 'active')->count();
 
-        $featured = DoctorProfile::where('status', 'active')
+        // "Top rated doctors today": bookable doctors, best-rated first.
+        $topDoctors = DoctorProfile::where('status', 'active')
             ->where('is_accepting_appointments', true)
-            ->with('user')
-            ->inRandomOrder()
-            ->limit(2)
+            ->with(['user', 'clinics'])
+            ->orderByDesc('rating_avg')
+            ->orderByDesc('rating_count')
+            ->limit(4)
             ->get();
 
-        $featuredPartners = ThirdPartyProfile::where('status', 'active')
-            ->with('user')
-            ->inRandomOrder()
-            ->limit(2)
-            ->get();
+        // "Top rated services today": the best-rated radiology centre,
+        // pharmacy and laboratory (one card each, when one exists).
+        $topServices = collect([
+            ['kind' => 'Radiology', 'route' => 'labs.show', 'model' => ThirdPartyProfile::where('status', 'active')->where('category', 'imaging')->orderByDesc('rating_avg')->orderByDesc('rating_count')->first()],
+            ['kind' => 'Pharmacy', 'route' => 'pharmacies.show', 'model' => Pharmacy::where('status', 'active')->orderByDesc('rating_avg')->orderByDesc('rating_count')->first()],
+            ['kind' => 'Laboratory', 'route' => 'labs.show', 'model' => ThirdPartyProfile::where('status', 'active')->where('category', 'lab')->orderByDesc('rating_avg')->orderByDesc('rating_count')->first()],
+        ])->filter(fn ($s) => $s['model'] !== null)->values();
 
         return view('home', [
             'stats' => [
@@ -47,8 +52,9 @@ class PageController extends Controller
                 'tripsToday' => Ride::whereDate('requested_at', Carbon::today())->count(),
                 'scriptsThisWeek' => \App\Models\OrderItem::whereHas('order', fn ($q) => $q->where('created_at', '>=', now()->subWeek()))->sum('qty'),
             ],
-            'featuredDoctors' => $featured,
-            'featuredPartners' => $featuredPartners,
+            'topDoctors' => $topDoctors,
+            'topServices' => $topServices,
+            'topic' => \App\Models\HealthTopic::current(),
             'schemeNames' => MedicalScheme::where('active', true)->orderBy('name')->pluck('name'),
         ]);
     }
@@ -75,18 +81,48 @@ class PageController extends Controller
         ]);
     }
 
-    public function doctors(Request $request)
+    /**
+     * Find care. $group narrows to one landing page: 'gp', 'dentists',
+     * 'specialists' (medical specialists) or 'video' (virtual consult).
+     * Search matches a doctor's name or speciality.
+     */
+    public function doctors(Request $request, ?string $group = null)
     {
+        $search = trim((string) $request->string('search'));
+
         $doctors = DoctorProfile::query()
             ->where('status', 'active')
             ->with(['user', 'clinics', 'availabilities' => fn ($q) => $q->where('is_active', true)])
+            ->when($group === 'gp', fn ($q) => $q->generalPractitioners())
+            ->when($group === 'dentists', fn ($q) => $q->dentists())
+            ->when($group === 'specialists', fn ($q) => $q->specialists())
+            ->when($group === 'video', fn ($q) => $q->offersVideo())
             ->when($request->filled('specialization'), fn ($q) => $q->where('specialization', 'like', '%'.$request->string('specialization').'%'))
-            ->when($request->filled('search'), fn ($q) => $q->whereHas('user', fn ($uq) => $uq->where('name', 'like', '%'.$request->string('search').'%')))
+            ->when($search !== '', fn ($q) => $q->where(function ($w) use ($search) {
+                $w->where('specialization', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', '%'.preg_replace('/^dr\.?\s+/i', '', $search).'%'));
+            }))
             ->when($request->filled('clinic_id'), fn ($q) => $q->whereHas('clinics', fn ($cq) => $cq->where('clinics.id', $request->integer('clinic_id'))))
+            ->orderByLiveStatus()
             ->paginate(9)
             ->withQueryString();
 
-        return view('doctors.index', ['doctors' => $doctors]);
+        $tabs = SiteContent::get('care.tabs');
+        $meta = match ($group) {
+            'gp', 'dentists', 'specialists' => $tabs[$group],
+            'video' => ['heading' => SiteContent::get('care.virtual_heading'), 'description' => SiteContent::get('care.virtual_description')],
+            default => ['heading' => 'Find care', 'description' => null],
+        };
+
+        return view('doctors.index', [
+            'doctors' => $doctors,
+            'group' => $group,
+            'heading' => $meta['heading'],
+            'description' => $meta['description'],
+            'dentalPractices' => $group === 'dentists'
+                ? ThirdPartyProfile::query()->where('status', 'active')->where('category', 'dental')->orderByDesc('rating_avg')->limit(12)->get()
+                : collect(),
+        ]);
     }
 
     public function doctorShow(DoctorProfile $doctor)

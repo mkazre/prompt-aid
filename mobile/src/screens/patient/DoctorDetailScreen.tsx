@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api, apiErrorMessage } from '../../api/client';
 import { Doctor } from '../../api/types';
 import { PaAvatar, PaBadge, PaButton, PaCard, PaInput, PaSectionLabel } from '../../components/pa';
 import { pa, paFonts, paRadius, type } from '../../theme';
+import { PaLiveStatus } from '../../components/pa/care-extras';
+import { telUrl } from '../../services/siteContent';
+
+const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function DoctorDetailScreen({ route, navigation }: any) {
   const { doctorId } = route.params;
@@ -20,6 +24,8 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
     api.get(`/doctors/${doctorId}`).then(({ data }) => {
       setDoctor(data.data);
       if (data.data.clinics?.length) setClinicId(data.data.clinics[0].id);
+      // Red = not available today, so start the booking on tomorrow.
+      setDate(defaultDate(data.data.live_status === 'red' ? 1 : 0));
     });
   }, [doctorId]);
 
@@ -66,14 +72,45 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
         <View style={{ flex: 1 }}>
           <Text style={styles.name}>{doctor.name}</Text>
           <Text style={styles.spec}>{doctor.specialization}</Text>
-          <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            <PaLiveStatus status={doctor.live_status} label={doctor.live_status_label} />
             <PaBadge tone="go" label={`${doctor.rating_avg.toFixed(1)} · ${doctor.rating_count}`} />
           </View>
         </View>
       </View>
 
-      {doctor.availability_summary ? <Text style={styles.meta}>{doctor.availability_summary}</Text> : null}
+      {doctor.live_status_description ? <Text style={styles.meta}>{doctor.live_status_description}</Text> : null}
       {doctor.bio ? <Text style={styles.bio}>{doctor.bio}</Text> : null}
+
+      <PaSectionLabel style={{ marginTop: 12, marginBottom: 8 }}>Operating hours</PaSectionLabel>
+      <PaCard style={{ paddingVertical: 4 }}>
+        {doctor.operating_hours && Object.keys(doctor.operating_hours).length ? (
+          WEEK.map((d) => (
+            <View key={d} style={styles.hoursRow}>
+              <Text style={styles.hoursDay}>{d}</Text>
+              <Text style={[styles.hoursTime, !doctor.operating_hours?.[d] && { color: pa.muted }]}>{doctor.operating_hours?.[d] ?? 'Closed'}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={[styles.muted, { paddingVertical: 10 }]}>Operating hours have not been published yet.</Text>
+        )}
+      </PaCard>
+
+      <PaSectionLabel style={{ marginTop: 16, marginBottom: 8 }}>Contact details</PaSectionLabel>
+      <PaCard>
+        {doctor.clinics.length ? (
+          doctor.clinics.map((c) => (
+            <View key={c.id} style={{ marginBottom: 8 }}>
+              <Text style={styles.contactName}>{c.name}</Text>
+              <Text style={styles.muted}>{c.address}{c.city ? `, ${c.city}` : ''}</Text>
+              {c.phone ? <Text style={styles.link} onPress={() => Linking.openURL(telUrl(c.phone!))}>{c.phone}</Text> : null}
+              {c.email ? <Text style={styles.link} onPress={() => Linking.openURL(`mailto:${c.email}`)}>{c.email}</Text> : null}
+            </View>
+          ))
+        ) : (
+          <Text style={styles.muted}>Book through PromptAid — video consultation available.</Text>
+        )}
+      </PaCard>
 
       {!doctor.is_accepting_appointments ? (
         <PaCard style={{ marginTop: 18 }}>
@@ -130,9 +167,9 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
-function defaultDate() {
+function defaultDate(daysAhead = 1) {
   const d = new Date();
-  d.setDate(d.getDate() + 1);
+  d.setDate(d.getDate() + daysAhead);
   return d.toISOString().slice(0, 10);
 }
 
@@ -154,6 +191,11 @@ const styles = StyleSheet.create({
   slotCellActive: { backgroundColor: pa.ink, borderColor: pa.ink },
   slotText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
   slotTextActive: { color: '#fff' },
+  hoursRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: pa.lineSoft },
+  hoursDay: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
+  hoursTime: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
+  contactName: { fontFamily: paFonts.bold, fontSize: 14, color: pa.ink },
+  link: { fontFamily: paFonts.bold, fontSize: 13, color: pa.signal, marginTop: 3 },
   shuttleBanner: { backgroundColor: pa.beaconWash, borderWidth: 1, borderColor: pa.beaconLine, padding: 13, marginBottom: 14 },
   shuttleTitle: { fontFamily: paFonts.black, fontSize: 13, color: pa.ink },
   shuttleSub: { fontFamily: paFonts.regular, fontSize: 12, color: pa.inkSoft, marginTop: 2 },
