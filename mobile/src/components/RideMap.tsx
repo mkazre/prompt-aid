@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { CAR_ICON, DESTINATION_ICON, PICKUP_ICON } from './mapIconData';
 
 interface RideMapProps {
   pickup: { lat: number; lng: number };
@@ -43,16 +44,33 @@ export default function RideMap({ pickup, dropoff, driver, height = 260 }: RideM
         const map = L.map('map', { zoomControl: false }).setView(pickup, 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-        const pickupIcon = L.divIcon({ html: '📍', className: '', iconSize: [24, 24] });
-        const dropoffIcon = L.divIcon({ html: '🏥', className: '', iconSize: [24, 24] });
-        const driverIcon = L.divIcon({ html: '🚗', className: '', iconSize: [24, 24] });
+        // Pins: 68x96 source -> 26x36 on screen, anchored at the tip.
+        const pickupIcon = L.icon({ iconUrl: '${PICKUP_ICON}', iconSize: [26, 36], iconAnchor: [13, 36] });
+        const dropoffIcon = L.icon({ iconUrl: '${DESTINATION_ICON}', iconSize: [26, 36], iconAnchor: [13, 36] });
+        // Car: 48x96 source -> 20x40, centred, rotated to face the direction of travel.
+        function driverIcon(bearing) {
+          return L.divIcon({
+            className: '',
+            iconSize: [20, 40],
+            iconAnchor: [10, 20],
+            html: '<img src="${CAR_ICON}" style="width:20px;height:40px;display:block;transform:rotate(' + (bearing || 0) + 'deg);transform-origin:50% 50%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));" />',
+          });
+        }
+        function bearingBetween(a, b) {
+          const toRad = Math.PI / 180;
+          const y = Math.sin((b[1] - a[1]) * toRad) * Math.cos(b[0] * toRad);
+          const x = Math.cos(a[0] * toRad) * Math.sin(b[0] * toRad) - Math.sin(a[0] * toRad) * Math.cos(b[0] * toRad) * Math.cos((b[1] - a[1]) * toRad);
+          return (Math.atan2(y, x) / toRad + 360) % 360;
+        }
 
         L.marker(pickup, { icon: pickupIcon }).addTo(map);
         L.marker(dropoff, { icon: dropoffIcon }).addTo(map);
         map.fitBounds(L.latLngBounds([pickup, dropoff]), { padding: [30, 30] });
 
         let driverMarker = null;
-        ${driver ? `driverMarker = L.marker([${driver.lat}, ${driver.lng}], { icon: driverIcon }).addTo(map);` : ''}
+        let lastDriverPos = null;
+        let lastBearing = 0;
+        ${driver ? `lastDriverPos = [${driver.lat}, ${driver.lng}]; driverMarker = L.marker(lastDriverPos, { icon: driverIcon(0), zIndexOffset: 1000 }).addTo(map);` : ''}
 
         document.addEventListener('message', function (e) { handle(e.data); });
         window.addEventListener('message', function (e) { handle(e.data); });
@@ -62,10 +80,15 @@ export default function RideMap({ pickup, dropoff, driver, height = 260 }: RideM
             const data = JSON.parse(raw);
             if (data.type === 'driver') {
               const pos = [data.lat, data.lng];
+              if (lastDriverPos && (lastDriverPos[0] !== pos[0] || lastDriverPos[1] !== pos[1])) {
+                lastBearing = bearingBetween(lastDriverPos, pos);
+              }
+              lastDriverPos = pos;
               if (!driverMarker) {
-                driverMarker = L.marker(pos, { icon: driverIcon }).addTo(map);
+                driverMarker = L.marker(pos, { icon: driverIcon(lastBearing), zIndexOffset: 1000 }).addTo(map);
               } else {
                 driverMarker.setLatLng(pos);
+                driverMarker.setIcon(driverIcon(lastBearing));
               }
             }
           } catch (e) {}

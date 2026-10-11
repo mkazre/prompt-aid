@@ -18,6 +18,9 @@ class DoctorProfileResource extends JsonResource
             'id' => $this->id,
             'name' => $this->user?->name,
             'avatar' => $this->user?->avatar,
+            'avatar_url' => \App\Support\Widgets\WidgetDataService::mediaUrl($this->user?->avatar),
+            // Only present when the list endpoint was called with ?lat=&lng=.
+            'distance_km' => $this->when($this->resource->getAttribute('distance_km') !== null, fn () => (float) $this->resource->getAttribute('distance_km')),
             'specialization' => $this->specialization,
             'qualification' => $this->qualification,
             'experience_years' => $this->experience_years,
@@ -29,6 +32,7 @@ class DoctorProfileResource extends JsonResource
             'is_accepting_appointments' => (bool) $this->is_accepting_appointments,
             'availability_summary' => $this->availabilitySummary(),
             'clinics' => ClinicResource::collection($this->whenLoaded('clinics')),
+            'services' => ServiceResource::collection($this->whenLoaded('services')),
         ];
     }
 }

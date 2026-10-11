@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { api, apiErrorMessage } from '../../api/client';
 import { RideSeries, VehicleType } from '../../api/types';
 import { PaButton, PaEmptyState, PaInput } from '../../components/pa';
+import AddressAutocomplete, { GeoPoint } from '../../components/AddressAutocomplete';
 import { pa, paFonts } from '../../theme';
 
 const DAYS = [
@@ -21,6 +22,8 @@ export default function RideSeriesScreen() {
   const [until, setUntil] = useState('');
   const [pickupAddress, setPickupAddress] = useState('');
   const [dropoffAddress, setDropoffAddress] = useState('');
+  const [pickupCoords, setPickupCoords] = useState<GeoPoint | null>(null);
+  const [dropoffCoords, setDropoffCoords] = useState<GeoPoint | null>(null);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -55,12 +58,21 @@ export default function RideSeriesScreen() {
     }
     setSaving(true);
     try {
-      // Free-text addresses only — resolve both through the same geocode
-      // helper the shuttle quote screen uses, then submit real coordinates.
-      const pickupGeo = await api.post('/rides/quote-by-address', { pickup_address: pickupAddress, dropoff_address: pickupAddress });
-      const dropoffGeo = await api.post('/rides/quote-by-address', { pickup_address: dropoffAddress, dropoff_address: dropoffAddress });
-      const pickupPoint = pickupGeo.data.pickup as { lat: number; lng: number };
-      const dropoffPoint = dropoffGeo.data.pickup as { lat: number; lng: number };
+      // Use the coordinates from the picked suggestions; only geocode
+      // (server-side, OpenStreetMap) a leg that was typed but never picked.
+      let pickupPoint = pickupCoords;
+      let dropoffPoint = dropoffCoords;
+      if (!pickupPoint || !dropoffPoint) {
+        const { data } = await api.post('/rides/quote-by-address', {
+          pickup_address: pickupAddress,
+          dropoff_address: dropoffAddress,
+          ...(pickupPoint ? { pickup_lat: pickupPoint.lat, pickup_lng: pickupPoint.lng } : {}),
+          ...(dropoffPoint ? { dropoff_lat: dropoffPoint.lat, dropoff_lng: dropoffPoint.lng } : {}),
+        });
+        pickupPoint = data.pickup as GeoPoint;
+        dropoffPoint = data.dropoff as GeoPoint;
+      }
+      if (!pickupPoint || !dropoffPoint) throw new Error('unresolved');
 
       await api.post('/ride-series', {
         days,
@@ -77,17 +89,21 @@ export default function RideSeriesScreen() {
       setCreating(false);
       setPickupAddress('');
       setDropoffAddress('');
+      setPickupCoords(null);
+      setDropoffCoords(null);
       load();
       Alert.alert('Series saved', 'Your recurring trip has been scheduled.');
     } catch (e) {
-      Alert.alert('Could not save series', apiErrorMessage(e));
+      const errors = (e as any)?.response?.data?.errors;
+      const msgs = errors ? Object.values(errors).flat().filter((m): m is string => typeof m === 'string') : [];
+      Alert.alert('Could not save series', msgs.length ? msgs.join('\n') : apiErrorMessage(e));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Recurring trips</Text>
 
       {series.map((s) => (
@@ -115,8 +131,19 @@ export default function RideSeriesScreen() {
           </View>
           <PaInput label="Pick-up time" value={time} onChangeText={setTime} placeholder="14:30" />
           <PaInput label="Until" value={until} onChangeText={setUntil} placeholder="2026-11-14" />
-          <PaInput label="Pick-up address" value={pickupAddress} onChangeText={setPickupAddress} />
-          <PaInput label="Drop-off address" value={dropoffAddress} onChangeText={setDropoffAddress} />
+          <AddressAutocomplete
+            label="Pick-up address"
+            value={pickupAddress}
+            onChange={(address, coords) => { setPickupAddress(address); setPickupCoords(coords); }}
+            placeholder="Start typing your address"
+            allowCurrentLocation
+          />
+          <AddressAutocomplete
+            label="Drop-off address"
+            value={dropoffAddress}
+            onChange={(address, coords) => { setDropoffAddress(address); setDropoffCoords(coords); }}
+            placeholder="Clinic, pharmacy or lab address"
+          />
           <PaButton title="Save series" onPress={createSeries} loading={saving} />
         </View>
       ) : (

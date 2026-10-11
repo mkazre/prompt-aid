@@ -38,6 +38,10 @@ class PharmacyController extends Controller
             ->with('pharmacy')
             ->when($request->filled('pharmacy_id'), fn ($q) => $q->where('pharmacy_id', $request->integer('pharmacy_id')))
             ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
+            // Shop-by-category widget: legacy FK or the many-to-many pivot.
+            ->when($request->integer('service_category_id'), fn ($q, $categoryId) => $q->where(fn ($cq) => $cq
+                ->where('service_category_id', $categoryId)
+                ->orWhereHas('serviceCategories', fn ($sq) => $sq->where('service_categories.id', $categoryId))))
             ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
             ->paginate(20);
 

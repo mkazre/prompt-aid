@@ -25,7 +25,7 @@ class DriverProfileForm
                 TextInput::make('vehicle_color'),
                 TextInput::make('vehicle_plate_no'),
                 Select::make('vehicle_type')
-                    ->options(['sedan' => 'Sedan', 'suv' => 'SUV', 'van' => 'Van', 'wheelchair_accessible' => 'Wheelchair Accessible'])
+                    ->options(['sedan' => 'Sedan', 'suv' => 'SUV', 'van' => 'Van', 'wheelchair_accessible' => 'Wheelchair Accessible', 'stretcher' => 'Stretcher'])
                     ->required()
                     ->default('sedan'),
                 Select::make('availability')

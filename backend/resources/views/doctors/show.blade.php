@@ -9,7 +9,8 @@
         <span class="pa-badge {{ $doctor->isAvailableForBooking() ? 'is-go' : '' }}">{{ $doctor->isAvailableForBooking() ? 'Accepting patients' : 'Not accepting patients' }}</span>
       </div>
       <h1 style="margin-bottom:8px">Dr {{ $doctor->user->name }}</h1>
-      <p style="font-size:17px;color:var(--pa-ink-soft);margin-bottom:18px">{{ $doctor->specialization }}@if($doctor->qualification) · {{ $doctor->qualification }}@endif@if($doctor->registration_no) · HPCSA {{ $doctor->registration_no }}@endif</p>
+      <p style="font-size:17px;color:var(--pa-ink-soft);margin-bottom:18px">{{ $doctor->specialization }}@if($doctor->qualification) · {{ $doctor->qualification }}@endif
+        @if($doctor->registration_no) · HPCSA {{ $doctor->registration_no }}@endif</p>
       <div style="display:flex;gap:32px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--pa-line)">
         <div><div class="pa-label" style="margin-bottom:4px">Consult</div><div class="pa-num" style="font-size:22px">R {{ number_format($doctor->consultation_fee, 0) }}</div></div>
         @if ($doctor->rating_count)
@@ -61,7 +62,7 @@
       <div class="pa-card pa-card-pad">
         <h3 style="margin-bottom:14px">Where to find us</h3>
         <div style="font-size:15px;line-height:1.6;color:var(--pa-ink-soft)">{{ $clinic->name }}<br />{{ $clinic->address }}@if($clinic->city), {{ $clinic->city }}@endif
-          <div style="margin-top:14px"><a class="pa-btn-ghost pa-btn-sm" href="{{ route('shuttle') }}?to={{ urlencode('Dr '.$doctor->user->name) }}"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Book a shuttle here</a></div>
+          <div style="margin-top:14px"><a class="pa-btn-ghost pa-btn-sm" href="{{ $clinic->shuttleUrl() }}"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Book a shuttle here</a></div>
         </div>
       </div>
     @endif
@@ -84,19 +85,34 @@
                   @foreach ($doctor->clinics as $c)<option value="{{ $c->id }}">{{ $c->name }}</option>@endforeach
                 </select>
               </div>
-              <div class="pa-formrow"><label class="pa-label">Date</label>
-                <input class="pa-field" type="date" name="date" id="date" min="{{ now()->toDateString() }}" value="{{ now()->addDay()->toDateString() }}">
-              </div>
+              @if ($doctor->services->isNotEmpty())
+                <div class="pa-formrow"><label class="pa-label" for="service_id">Service</label>
+                  <select class="pa-field" name="service_id" id="service_id">
+                    <option value="">Consultation · R {{ number_format($doctor->consultation_fee, 0) }}</option>
+                    @foreach ($doctor->services as $sv)<option value="{{ $sv->id }}">{{ $sv->name }} · R {{ number_format($sv->price, 0) }}</option>@endforeach
+                  </select>
+                </div>
+              @endif
               <div class="pa-tabs" style="display:grid;grid-template-columns:1fr 1fr;margin-bottom:14px">
                 <label class="pa-tab is-on" style="text-align:center;cursor:pointer"><input type="radio" name="visit_type" value="clinic" checked style="margin-right:6px">In person</label>
                 <label class="pa-tab" style="text-align:center;cursor:pointer"><input type="radio" name="visit_type" value="telemed" style="margin-right:6px">Video</label>
               </div>
-              <div class="pa-label" style="margin-bottom:10px">Available times</div>
-              <div id="slot-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:20px">
+              <input type="hidden" name="date" id="date" value="{{ old('date', now()->toDateString()) }}">
+              <input type="hidden" name="start_time" id="start_time">
+              {{-- Month + "Today" + day strip + session-grouped slots (public/assets/js/promptaid.js, data-pa-slot-picker). --}}
+              <div data-pa-slot-picker
+                   data-slots-url="{{ route('doctors.slots', $doctor) }}"
+                   data-clinic-select="#clinic_id"
+                   data-date-input="#date"
+                   data-time-input="#start_time"
+                   data-submit="#confirm-booking-btn"
+                   style="margin-bottom:16px">
                 <span style="font-size:12px;color:var(--pa-muted)">Loading…</span>
               </div>
-              <input type="hidden" name="start_time" id="start_time">
-              <a class="pa-check" href="{{ route('shuttle') }}?to={{ urlencode('Dr '.$doctor->user->name) }}" style="background:var(--pa-beacon-wash);border:1px solid var(--pa-beacon-line);padding:14px;margin-bottom:18px;color:inherit;text-decoration:none;display:flex;gap:10px">
+              <div class="pa-formrow"><label class="pa-label" for="reason">Notes for the doctor (optional)</label>
+                <textarea class="pa-field" name="reason" id="reason" rows="2" maxlength="1000" placeholder="Briefly describe your symptoms">{{ old('reason') }}</textarea>
+              </div>
+              <a class="pa-check" href="{{ $clinic->shuttleUrl() }}" style="background:var(--pa-beacon-wash);border:1px solid var(--pa-beacon-line);padding:14px;margin-bottom:18px;color:inherit;text-decoration:none;display:flex;gap:10px">
                 <span class="box"></span>
                 <span style="font-size:13px;line-height:1.45;color:var(--pa-ink-soft)"><strong style="color:var(--pa-ink)">Add a shuttle</strong><br />Fetch from home, return after — get a fare quote.</span>
               </a>
@@ -104,42 +120,12 @@
               <div style="font-size:12px;color:var(--pa-muted);margin-top:12px;text-align:center">Free cancellation up to 4 hours before</div>
             </form>
             <script>
-              (function () {
-                const clinicSelect = document.getElementById('clinic_id');
-                const dateInput = document.getElementById('date');
-                const grid = document.getElementById('slot-grid');
-                const startTime = document.getElementById('start_time');
-                const btn = document.getElementById('confirm-booking-btn');
-
-                async function loadSlots() {
-                  grid.innerHTML = '<span style="font-size:12px;color:var(--pa-muted)">Loading…</span>';
-                  btn.disabled = true; btn.textContent = 'Select a time';
-                  startTime.value = '';
-                  const res = await fetch(`{{ route('doctors.slots', $doctor) }}?clinic_id=${clinicSelect.value}&date=${dateInput.value}`);
-                  const data = await res.json();
-                  grid.innerHTML = '';
-                  if (!data.slots.length) {
-                    grid.innerHTML = '<span style="font-size:12px;color:var(--pa-muted)">No slots available this day</span>';
-                    return;
-                  }
-                  data.slots.forEach(s => {
-                    const b = document.createElement('button');
-                    b.type = 'button';
-                    b.textContent = s;
-                    b.style.cssText = 'background:#fff;color:var(--pa-ink);border:1px solid var(--pa-line);padding:10px 4px;font-size:13px;font-weight:700;text-align:center;cursor:pointer';
-                    b.addEventListener('click', () => {
-                      grid.querySelectorAll('button').forEach(x => { x.style.background = '#fff'; x.style.color = 'var(--pa-ink)'; x.style.borderColor = 'var(--pa-line)'; });
-                      b.style.background = 'var(--pa-ink)'; b.style.color = '#fff'; b.style.borderColor = 'var(--pa-ink)';
-                      startTime.value = s;
-                      btn.disabled = false; btn.textContent = 'Confirm booking';
-                    });
-                    grid.appendChild(b);
-                  });
-                }
-                clinicSelect.addEventListener('change', loadSlots);
-                dateInput.addEventListener('change', loadSlots);
-                loadSlots();
-              })();
+              // Highlight the chosen visit type tab (slots are handled by data-pa-slot-picker).
+              document.querySelectorAll('#booking-form input[name="visit_type"]').forEach(function (r) {
+                r.addEventListener('change', function () {
+                  document.querySelectorAll('#booking-form input[name="visit_type"]').forEach(function (x) { x.closest('label').classList.toggle('is-on', x.checked); });
+                });
+              });
             </script>
           @elseif (! $doctor->isAvailableForBooking())
             <p class="pa-muted" style="font-size:14px">Dr {{ $doctor->user->name }} is not accepting new bookings right now.</p>

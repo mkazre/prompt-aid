@@ -67,10 +67,20 @@ foreach (['about', 'how-it-works', 'faq', 'privacy', 'terms', 'legal-popia'] as 
 }
 
 Route::get('/shuttle', [ShuttlePageController::class, 'index'])->name('shuttle');
-Route::post('/shuttle/quote', [ShuttlePageController::class, 'quote'])->name('shuttle.quote');
+Route::post('/shuttle/quote', [ShuttlePageController::class, 'quote'])->middleware('throttle:30,1')->name('shuttle.quote');
+
+// Public read-only "follow my trip" link (tokenized, expires when the ride ends).
+Route::get('/trip/{token}', [\App\Http\Controllers\ShareTripController::class, 'show'])->middleware('throttle:30,1')->name('trip.share');
+Route::get('/trip/{token}/status', [\App\Http\Controllers\ShareTripController::class, 'status'])->middleware('throttle:40,1')->name('trip.status');
+
+// Cron-free background jobs trigger for an external pinger (key in settings; 404 while unset).
+Route::get('/tick', \App\Http\Controllers\TickController::class)->middleware('throttle:10,1')->name('tick');
 
 Route::get('/shop', [ShopPageController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product}', [ShopPageController::class, 'show'])->name('shop.show');
+
+Route::get('/health-articles', [\App\Http\Controllers\HealthArticlePageController::class, 'index'])->name('health-articles.index');
+Route::get('/health-articles/{slug}', [\App\Http\Controllers\HealthArticlePageController::class, 'show'])->name('health-articles.show');
 
 Route::get('/labs', [ThirdPartyPageController::class, 'labsIndex'])->name('labs.index');
 Route::get('/labs/{lab}', [ThirdPartyPageController::class, 'labsShow'])->name('labs.show');
@@ -99,6 +109,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    require __DIR__.'/web_doctor_match.php';
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/appointments', [WebAppointmentController::class, 'store'])->name('appointments.store');
@@ -116,16 +127,49 @@ Route::middleware('auth')->group(function () {
         Route::post('/profile', [AccountProfileController::class, 'update'])->name('profile.update');
         Route::get('/settings', [AccountSettingsController::class, 'edit'])->name('settings');
         Route::post('/settings/password', [AccountSettingsController::class, 'updatePassword'])->name('settings.password');
+
+        // Chat, notifications, video (policy/ownership-checked in the controllers).
+        Route::get('/appointments/{appointment}/video', [AccountAppointmentsController::class, 'video'])->name('appointments.video');
+        Route::get('/messages', [\App\Http\Controllers\Account\MessagesController::class, 'index'])->name('messages');
+        Route::post('/messages/start', [\App\Http\Controllers\Account\MessagesController::class, 'start'])->name('messages.start');
+        Route::get('/messages/{conversation}/poll', [\App\Http\Controllers\Account\MessagesController::class, 'poll'])->whereNumber('conversation')->name('messages.poll');
+        Route::middleware('throttle:60,1')->post('/messages/{conversation}', [\App\Http\Controllers\Account\MessagesController::class, 'send'])->whereNumber('conversation')->name('messages.send');
+        Route::get('/notifications', [\App\Http\Controllers\Account\NotificationsController::class, 'index'])->name('notifications');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Account\NotificationsController::class, 'readAll'])->name('notifications.read-all');
+        Route::post('/notifications/clear', [\App\Http\Controllers\Account\NotificationsController::class, 'clear'])->name('notifications.clear');
+        Route::get('/notifications/{id}/open', [\App\Http\Controllers\Account\NotificationsController::class, 'open'])->whereNumber('id')->name('notifications.open');
+        Route::delete('/notifications/{id}', [\App\Http\Controllers\Account\NotificationsController::class, 'destroy'])->whereNumber('id')->name('notifications.destroy');
     });
-    Route::post('/rides', [WebRideController::class, 'store'])->name('rides.store');
+    Route::post('/rides', [WebRideController::class, 'store'])->middleware('throttle:10,1')->name('rides.store');
     Route::post('/rides/{ride}/return', [WebRideController::class, 'requestReturn'])->name('rides.return');
     Route::get('/rides/{ride}/track', [RideTrackingController::class, 'show'])->name('rides.track');
-    Route::get('/rides/{ride}/status', [RideTrackingController::class, 'status'])->name('rides.status');
+    Route::get('/rides/{ride}/status', [RideTrackingController::class, 'status'])->middleware('throttle:120,1')->name('rides.status');
+    Route::get('/rides/{ride}/cancel-preview', [WebRideController::class, 'cancelPreview'])->middleware('throttle:30,1')->name('rides.cancel-preview');
+    Route::post('/rides/{ride}/cancel', [WebRideController::class, 'cancel'])->middleware('throttle:10,1')->name('rides.cancel');
+    Route::post('/rides/{ride}/retry', [WebRideController::class, 'retry'])->middleware('throttle:10,1')->name('rides.retry');
+    Route::post('/rides/{ride}/sos', [WebRideController::class, 'sos'])->middleware('throttle:5,1')->name('rides.sos');
+    Route::post('/rides/{ride}/rate', [WebRideController::class, 'rate'])->middleware('throttle:10,1')->name('rides.rate');
+
+    // Web driver console (drivers test/drive from a phone browser).
+    Route::middleware('role:'.\App\Models\User::ROLE_DRIVER)->prefix('driver')->name('driver.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\DriverConsoleController::class, 'index'])->name('console');
+        Route::get('/state', [\App\Http\Controllers\DriverConsoleController::class, 'state'])->middleware('throttle:120,1')->name('state');
+        Route::post('/online', [\App\Http\Controllers\DriverConsoleController::class, 'online'])->middleware('throttle:20,1')->name('online');
+        Route::post('/location', [\App\Http\Controllers\DriverConsoleController::class, 'location'])->middleware('throttle:60,1')->name('location');
+        Route::post('/offers/{offer}/accept', [\App\Http\Controllers\DriverConsoleController::class, 'acceptOffer'])->middleware('throttle:30,1')->name('offers.accept');
+        Route::post('/offers/{offer}/decline', [\App\Http\Controllers\DriverConsoleController::class, 'declineOffer'])->middleware('throttle:30,1')->name('offers.decline');
+        Route::post('/rides/{ride}/claim', [\App\Http\Controllers\DriverConsoleController::class, 'claim'])->middleware('throttle:30,1')->name('rides.claim');
+        Route::post('/rides/{ride}/status', [\App\Http\Controllers\DriverConsoleController::class, 'status'])->middleware('throttle:30,1')->name('rides.status');
+        Route::post('/rides/{ride}/cancel', [\App\Http\Controllers\DriverConsoleController::class, 'cancel'])->middleware('throttle:10,1')->name('rides.cancel');
+        Route::post('/rides/{ride}/no-show', [\App\Http\Controllers\DriverConsoleController::class, 'noShow'])->middleware('throttle:10,1')->name('rides.no-show');
+        Route::post('/rides/{ride}/rate', [\App\Http\Controllers\DriverConsoleController::class, 'rate'])->middleware('throttle:10,1')->name('rides.rate');
+    });
     Route::post('/pharmacies/{pharmacy}/checkout', [PharmacyPageController::class, 'checkout'])->name('pharmacies.checkout');
     Route::get('/staff/notifications/unread-count', function () {
         return response()->json(['count' => request()->user()->unreadNotifications()->count()]);
     })->name('staff.notifications.unread-count');
     Route::get('/staff/preview/pages/{page}', [PageBuilderPreviewController::class, 'show'])->name('page-builder.preview');
+    require __DIR__.'/web_privacy.php';
 });
 
 // Page builder catch-all — must stay last. Never matches a path starting
@@ -134,5 +178,5 @@ Route::middleware('auth')->group(function () {
 // exclusion is baked into the route's own pattern rather than relying on
 // "runs after everything else" alone.
 Route::get('/{path}', [PageBuilderRenderController::class, 'render'])
-    ->where('path', '^(?!(login|register|join|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets)(/|$)).+$')
+    ->where('path', '^(?!(login|register|join|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets|driver|trip|tick)(/|$)).+$')
     ->name('page-builder.render');

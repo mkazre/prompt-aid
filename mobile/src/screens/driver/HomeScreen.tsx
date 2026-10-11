@@ -10,6 +10,8 @@ import { PaBadge, PaButton } from '../../components/pa';
 import { formatTime } from '../../components/pa/driver-extras';
 import RideMap from '../../components/RideMap';
 import { pa, paFonts, paRadius, type } from '../../theme';
+import WidgetHost from '../../widgets/WidgetHost';
+import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 
 const ACTIVE_STATUSES = ['accepted', 'driver_enroute', 'arrived', 'in_progress'];
 
@@ -21,6 +23,10 @@ export default function DriverHomeScreen({ navigation }: any) {
   const [rides, setRides] = useState<Ride[]>([]);
   const [loading, setLoading] = useState(false);
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  // Rendered widget keys (null while loading) — hardcoded blocks hide when a widget replaces them.
+  const [widgetKeys, setWidgetKeys] = useState<string[] | null>(null);
+  const widgetOn = (key: string) => widgetKeys === null || widgetKeys.includes(key);
   const locationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
@@ -86,7 +92,7 @@ export default function DriverHomeScreen({ navigation }: any) {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(); setRefreshKey((k) => k + 1); }} />}
     >
       <View style={styles.mapWrap}>
         {active ? (
@@ -104,7 +110,10 @@ export default function DriverHomeScreen({ navigation }: any) {
             <Text style={styles.overlayLabel}>Today</Text>
             <Text style={styles.overlayNum}>R {todaysEarnings.toFixed(0)}</Text>
           </View>
-          <PaBadge tone={available ? 'go' : 'ink'} label={available ? 'Online' : 'Offline'} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <PaBadge tone={available ? 'go' : 'ink'} label={available ? 'Online' : 'Offline'} />
+            <CommsHeaderIcons />
+          </View>
         </View>
       </View>
 
@@ -123,7 +132,7 @@ export default function DriverHomeScreen({ navigation }: any) {
           />
         )}
 
-        {upcoming && (
+        {!widgetOn('driver_next_pickup') && upcoming && (
           <RowCard
             title={`${formatTime(upcoming.scheduled_for)} · ${upcoming.patient?.user?.name ?? 'Scheduled trip'}`}
             subtitle={`${upcoming.pickup_address} → ${upcoming.dropoff_address}`}
@@ -132,12 +141,13 @@ export default function DriverHomeScreen({ navigation }: any) {
           />
         )}
 
-        {!active && !upcoming && (
+        {!active && !upcoming && !widgetOn('driver_next_pickup') && (
           <View style={styles.emptyRow}>
             <Text style={styles.emptyText}>No active or upcoming trips right now.</Text>
           </View>
         )}
 
+        {!widgetOn('driver_today_trips') ? (
         <View style={styles.statsGrid}>
           <View style={styles.statTile}>
             <Text style={type.label}>Trips today</Text>
@@ -148,6 +158,7 @@ export default function DriverHomeScreen({ navigation }: any) {
             <Text style={[type.num, { fontSize: 22, marginTop: 4 }]}>{user?.driver_profile?.rating_avg?.toFixed(1) ?? '—'}</Text>
           </View>
         </View>
+        ) : null}
 
         <PaButton
           title={available ? 'Go offline' : 'Go online'}
@@ -155,6 +166,8 @@ export default function DriverHomeScreen({ navigation }: any) {
           loading={toggling}
           variant={available ? 'ghost' : 'primary'}
         />
+
+        <WidgetHost screen="home" refreshKey={refreshKey} onLoaded={setWidgetKeys} style={{ marginTop: 16 }} />
       </View>
     </ScrollView>
   );

@@ -41,6 +41,7 @@ class WebAuthController extends Controller
             User::ROLE_SUPER_ADMIN, User::ROLE_CLINIC_ADMIN, User::ROLE_DOCTOR => '/staff',
             User::ROLE_PHARMACY_ADMIN => '/vendor',
             User::ROLE_THIRD_PARTY => '/partner',
+            User::ROLE_DRIVER => '/driver',
             default => null,
         };
 
@@ -64,6 +65,12 @@ class WebAuthController extends Controller
             'phone' => ['nullable', 'string', 'unique:users,phone'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['required', Rule::in([User::ROLE_PATIENT, User::ROLE_DRIVER])],
+            // POPIA consent capture (see ConsentService).
+            'accept_terms' => ['accepted'],
+            'accept_health_data' => ['accepted'],
+        ], [
+            'accept_terms.accepted' => 'Please accept the terms of use and privacy policy to continue.',
+            'accept_health_data.accepted' => 'Please consent to the processing of personal information as set out in the POPIA notice.',
         ]);
 
         $user = User::query()->create([
@@ -84,6 +91,10 @@ class WebAuthController extends Controller
                 'status' => 'pending_approval',
             ]);
         }
+
+        app(\App\Services\Privacy\ConsentService::class)->recordRegistration(
+            $user, \App\Services\Privacy\ConsentService::purposesFromRequest($request), 'web', $request
+        );
 
         Auth::login($user);
         $request->session()->regenerate();

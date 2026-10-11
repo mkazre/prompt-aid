@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import * as Location from 'expo-location';
 import { api, apiErrorMessage } from '../../api/client';
 import { Ride, RideQuote, VehicleType } from '../../api/types';
-import { PaButton, PaInput } from '../../components/pa';
+import { PaButton } from '../../components/pa';
+import AddressAutocomplete, { GeoPoint } from '../../components/AddressAutocomplete';
 import RideMap from '../../components/RideMap';
 import { pa, paFonts } from '../../theme';
+import SuccessModal from '../../components/SuccessModal';
 
 const VEHICLE_LABELS: Record<VehicleType, { label: string; sub: string }> = {
   sedan: { label: 'Standard', sub: 'Sedan, 1–3 seats' },
@@ -19,14 +20,15 @@ const VEHICLE_LABELS: Record<VehicleType, { label: string; sub: string }> = {
 export default function ShuttleRequestScreen({ navigation, route }: any) {
   const [activeRide, setActiveRide] = useState<Ride | null>(null);
   const [pickup, setPickup] = useState('');
-  const [dropoff, setDropoff] = useState(route?.params?.to ?? '');
-  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [dropoff, setDropoff] = useState<string>(route?.params?.to ?? '');
+  const [pickupCoords, setPickupCoords] = useState<GeoPoint | null>(null);
+  const [dropoffCoords, setDropoffCoords] = useState<GeoPoint | null>(paramPoint(route?.params?.toLat, route?.params?.toLng));
   const [quotes, setQuotes] = useState<RideQuote[]>([]);
   const [vehicleType, setVehicleType] = useState<VehicleType>('sedan');
   const [waitAndReturn, setWaitAndReturn] = useState(true);
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [requested, setRequested] = useState<{ id: number; fare: number | null } | null>(null);
 
   const checkActive = useCallback(async () => {
     const { data } = await api.get('/rides');
@@ -37,58 +39,61 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
   useFocusEffect(useCallback(() => { checkActive(); }, [checkActive]));
 
   useEffect(() => {
-    if (activeRide) navigation.navigate('RideTrack', { rideId: activeRide.id });
+    if (activeRide && !requested) navigation.navigate('RideTrack', { rideId: activeRide.id });
   }, [activeRide?.id]);
 
-  async function useMyLocation() {
-    const perm = await Location.requestForegroundPermissionsAsync();
-    if (perm.status !== 'granted') {
-      Alert.alert('Location permission needed', 'Enable location access to auto-fill your pickup point.');
-      return;
-    }
-    const pos = await Location.getCurrentPositionAsync({});
-    const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+  // Arriving from "Add a shuttle" on a doctor/clinic: pre-fill that drop-off.
+  useEffect(() => {
+    const to = route?.params?.to;
+    if (!to) return;
+    setDropoff(to);
+    setDropoffCoords(paramPoint(route?.params?.toLat, route?.params?.toLng));
+    setQuotes([]);
+  }, [route?.params?.to, route?.params?.toLat, route?.params?.toLng]);
+
+  function changePickup(address: string, coords: GeoPoint | null) {
+    setPickup(address);
     setPickupCoords(coords);
-    if (!pickup) setPickup('My current location');
+    setQuotes([]); // any previous fare no longer matches the trip
+  }
+
+  function changeDropoff(address: string, coords: GeoPoint | null) {
+    setDropoff(address);
+    setDropoffCoords(coords);
+    setQuotes([]);
   }
 
   async function getQuote() {
-    if (!pickup || !dropoff) {
+    if (!pickup.trim() || !dropoff.trim()) {
       Alert.alert('Missing info', 'Enter both a pickup and a drop-off address.');
       return;
     }
     setLoadingQuotes(true);
     try {
-      if (pickupCoords) {
-        // Real GPS coordinates already captured via "Use my current
-        // location" — only the drop-off needs geocoding, and re-geocoding
-        // the placeholder pickup text would throw away a real position for
-        // a deterministic guess.
-        const geocoded = await api.post('/rides/quote-by-address', { pickup_address: dropoff, dropoff_address: dropoff });
-        const dropoffPoint = geocoded.data.pickup as { lat: number; lng: number };
-        setDropoffCoords(dropoffPoint);
+      if (pickupCoords && dropoffCoords) {
+        // Both points already resolved (picked suggestion / GPS) — price directly.
         const { data } = await api.post('/rides/quote', {
           pickup_lat: pickupCoords.lat,
           pickup_lng: pickupCoords.lng,
-          dropoff_lat: dropoffPoint.lat,
-          dropoff_lng: dropoffPoint.lng,
+          dropoff_lat: dropoffCoords.lat,
+          dropoff_lng: dropoffCoords.lng,
         });
         setQuotes(data.quotes);
       } else {
-        // No on-device geocoder — the backend resolves both addresses to
-        // coordinates the same way the website's shuttle page does, and
-        // hands back the resolved points so booking doesn't need a second
-        // geocode round-trip.
+        // Free text for at least one leg — the backend geocodes whatever has
+        // no coordinates yet (OpenStreetMap) and returns the resolved points.
         const { data } = await api.post('/rides/quote-by-address', {
           pickup_address: pickup,
           dropoff_address: dropoff,
+          ...(pickupCoords ? { pickup_lat: pickupCoords.lat, pickup_lng: pickupCoords.lng } : {}),
+          ...(dropoffCoords ? { dropoff_lat: dropoffCoords.lat, dropoff_lng: dropoffCoords.lng } : {}),
         });
         setPickupCoords(data.pickup);
         setDropoffCoords(data.dropoff);
         setQuotes(data.quotes);
       }
     } catch (e) {
-      Alert.alert('Could not get a quote', apiErrorMessage(e));
+      Alert.alert('Could not get a quote', validationMessage(e));
     } finally {
       setLoadingQuotes(false);
     }
@@ -98,7 +103,7 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
     if (!pickupCoords || !dropoffCoords || !pickup || !dropoff) return;
     setRequesting(true);
     try {
-      await api.post('/rides', {
+      const { data } = await api.post('/rides', {
         pickup_address: pickup,
         pickup_lat: pickupCoords.lat,
         pickup_lng: pickupCoords.lng,
@@ -108,9 +113,15 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
         vehicle_type: vehicleType,
         wait_and_return: waitAndReturn,
       });
-      await checkActive();
+      const ride = (data?.data ?? data) as Partial<Ride> | undefined;
+      if (ride?.id) {
+        // Confirm first; tracking opens from the modal's button.
+        setRequested({ id: ride.id, fare: selectedQuote?.fare ?? null });
+      } else {
+        await checkActive();
+      }
     } catch (e) {
-      Alert.alert('Could not request ride', apiErrorMessage(e));
+      Alert.alert('Could not request ride', validationMessage(e));
     } finally {
       setRequesting(false);
     }
@@ -119,7 +130,23 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
   const selectedQuote = quotes.find((q) => q.vehicle_type === vehicleType);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+      <SuccessModal
+        visible={!!requested}
+        title="Ride requested"
+        message="We're finding the nearest available driver. You'll get a notification when one is assigned."
+        details={[
+          { label: 'Pickup', value: pickup },
+          { label: 'Drop-off', value: dropoff },
+          ...(requested?.fare != null ? [{ label: 'Estimated fare', value: `R ${Number(requested.fare).toFixed(2)}` }] : []),
+        ]}
+        primaryLabel="Track my ride"
+        onPrimary={() => {
+          const id = requested?.id;
+          setRequested(null);
+          if (id) navigation.navigate('RideTrack', { rideId: id });
+        }}
+      />
       <View style={styles.mapWrap}>
         {pickupCoords && dropoffCoords ? (
           <RideMap pickup={pickupCoords} dropoff={dropoffCoords} height={220} />
@@ -130,11 +157,10 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
 
       <View style={styles.sheet}>
         <Text style={styles.label}>Pick up</Text>
-        <PaInput value={pickup} onChangeText={setPickup} placeholder="Home address" />
-        <PaButton title="📍 Use my current location" variant="ghost" onPress={useMyLocation} style={{ marginBottom: 14 }} />
+        <AddressAutocomplete value={pickup} onChange={changePickup} placeholder="Start typing your address" allowCurrentLocation />
 
         <Text style={styles.label}>Drop off</Text>
-        <PaInput value={dropoff} onChangeText={setDropoff} placeholder="Clinic, pharmacy or lab" />
+        <AddressAutocomplete value={dropoff} onChange={changeDropoff} placeholder="Clinic, pharmacy or lab address" />
 
         <Pressable onPress={() => setWaitAndReturn((v) => !v)} style={[styles.checkRow, waitAndReturn && styles.checkRowOn]}>
           <Text style={styles.checkText}>Return leg</Text>
@@ -177,6 +203,23 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
       </View>
     </ScrollView>
   );
+}
+
+function paramPoint(lat: unknown, lng: unknown): GeoPoint | null {
+  const la = Number(lat);
+  const ln = Number(lng);
+  if (lat == null || lng == null || !Number.isFinite(la) || !Number.isFinite(ln)) return null;
+  return { lat: la, lng: ln };
+}
+
+/** Laravel 422s carry per-field messages; show them all (e.g. both addresses not found). */
+function validationMessage(e: unknown) {
+  const errors = (e as any)?.response?.data?.errors;
+  if (errors && typeof errors === 'object') {
+    const msgs = Object.values(errors).flat().filter((m): m is string => typeof m === 'string');
+    if (msgs.length) return msgs.join('\n');
+  }
+  return apiErrorMessage(e);
 }
 
 const styles = StyleSheet.create({

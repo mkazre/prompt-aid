@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
@@ -7,6 +7,7 @@ import { LabRequest, Order } from '../../api/types';
 import { PaBadge, PaRow } from '../../components/pa';
 import { useAuth } from '../../context/AuthContext';
 import { pa, paFonts, type } from '../../theme';
+import WidgetHost from '../../widgets/WidgetHost';
 
 interface TimelineEntry {
   key: string;
@@ -27,6 +28,8 @@ export default function RecordScreen({ navigation }: any) {
   const [labRequests, setLabRequests] = useState<LabRequest[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [widgetKeys, setWidgetKeys] = useState<string[] | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -75,10 +78,17 @@ export default function RecordScreen({ navigation }: any) {
   }, [labRequests, orders]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 40 }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(); setRefreshKey((k) => k + 1); }} />}
+    >
       <Text style={[type.h2, { marginBottom: 12 }]}>My record</Text>
 
-      {alerts.length > 0 && (
+      <WidgetHost screen="record" refreshKey={refreshKey} onLoaded={setWidgetKeys} style={{ marginBottom: 16 }} />
+
+      {/* The health-summary widget already shows these chips. */}
+      {widgetKeys !== null && !widgetKeys.includes('record_health_summary') && alerts.length > 0 && (
         <View style={styles.alertCard}>
           <Text style={styles.alertLabel}>Alerts</Text>
           <View style={styles.alertRow}>

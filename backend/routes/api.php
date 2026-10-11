@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\ClinicController;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\DoctorMatchController;
 use App\Http\Controllers\Api\EmergencyContactController;
+use App\Http\Controllers\Api\HealthArticleController;
+use App\Http\Controllers\Api\GeocodeController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\LabRequestController;
 use App\Http\Controllers\Api\MedicalSchemeController;
@@ -14,14 +16,21 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\Api\WidgetController;
 use App\Http\Controllers\TriageSubmissionController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', fn () => response()->json(['ok' => true, 'app' => 'Prompt Aid API']));
 
+// Search-as-you-type (grouped: specialities, conditions, doctors, clinics, products) + CMS pages for the app.
+Route::middleware('throttle:90,1')->get('/search', \App\Http\Controllers\Api\SearchController::class);
+Route::get('/app-pages/{key}', [\App\Http\Controllers\Api\AccountController::class, 'page'])->where('key', 'terms|about|privacy');
+
 Route::post('/triage/submit', [TriageSubmissionController::class, 'store']);
 Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
+Route::get('/health-articles', [HealthArticleController::class, 'index']);
+Route::get('/health-articles/{slug}', [HealthArticleController::class, 'show']);
 
 // --- Public ---
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -42,11 +51,49 @@ Route::get('/products', [PharmacyController::class, 'products']);
 Route::post('/rides/quote', [RideController::class, 'quote']);
 Route::post('/rides/quote-by-address', [RideController::class, 'quoteByAddress']);
 
+// Address typeahead + reverse lookup (OpenStreetMap Nominatim proxy, cached).
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/geocode/autocomplete', [GeocodeController::class, 'autocomplete']);
+    Route::get('/geocode/reverse', [GeocodeController::class, 'reverse']);
+});
+
+// Chat attachment download — authorised by a short-lived relative signature
+// minted only for users who passed ConversationPolicy::view (see Message::attachmentUrl).
+Route::get('/messages/{message}/attachment', [\App\Http\Controllers\Api\ConversationController::class, 'attachment'])
+    ->middleware('signed:relative')
+    ->whereNumber('message')
+    ->name('chat.attachment');
+
 // --- Authenticated (any role) ---
 Route::middleware('auth:sanctum')->group(function () {
+    require __DIR__.'/api_doctor_match.php';
+    require __DIR__.'/api_privacy.php';
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/profile', [ProfileController::class, 'update']);
+    Route::middleware('throttle:10,1')->post('/profile/password', [\App\Http\Controllers\Api\AccountController::class, 'changePassword']);
+
+    // Config-driven home/screen widgets — role-scoped inside the controller.
+    Route::get('/app-widgets', [WidgetController::class, 'index']);
+    Route::get('/widgets/data', [WidgetController::class, 'data']);
+
+    // --- Comms: chat, in-app notifications, video (patient + doctor; policy/ownership-checked in controllers) ---
+    Route::get('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'index']);
+    Route::post('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'store']);
+    Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show'])->whereNumber('conversation');
+    Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'messages'])->whereNumber('conversation');
+    Route::middleware('throttle:60,1')->post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'send'])->whereNumber('conversation');
+    Route::post('/conversations/{conversation}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markRead'])->whereNumber('conversation');
+
+    Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllRead']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markRead'])->whereNumber('id');
+    Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy'])->whereNumber('id');
+    Route::delete('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'clear']);
+
+    Route::get('/appointments/{appointment}/video', [\App\Http\Controllers\Api\VideoConsultController::class, 'show'])->whereNumber('appointment');
+    Route::post('/appointments/{appointment}/video/end', [\App\Http\Controllers\Api\VideoConsultController::class, 'end'])->whereNumber('appointment');
 
     // --- Patient-only ---
     Route::middleware('role:'.User::ROLE_PATIENT)->group(function () {
@@ -83,6 +130,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Doctor-only ---
     Route::middleware('role:'.User::ROLE_DOCTOR)->prefix('doctor')->group(function () {
+        // Settings hub + calendar booking (all scoped to the signed-in doctor).
+        Route::get('/settings', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'overview']);
+        Route::post('/profile', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'updateProfile']);
+        Route::put('/fee', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'updateFee']);
+        Route::get('/services', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'services']);
+        Route::post('/services', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'storeService']);
+        Route::put('/services/{id}', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'updateService']);
+        Route::delete('/services/{id}', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'destroyService']);
+        Route::get('/time-off', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'timeOff']);
+        Route::post('/time-off', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'storeTimeOff']);
+        Route::delete('/time-off/{id}', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'destroyTimeOff']);
+        Route::get('/sessions', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'sessions']);
+        Route::put('/sessions', [\App\Http\Controllers\Api\DoctorSettingsController::class, 'replaceSessions']);
+        Route::get('/slots', [\App\Http\Controllers\Api\DoctorBookingController::class, 'slots']);
+        Route::post('/appointments', [\App\Http\Controllers\Api\DoctorBookingController::class, 'store']);
+        Route::post('/appointments/{id}/reschedule', [\App\Http\Controllers\Api\DoctorBookingController::class, 'reschedule']);
+        Route::get('/appointments/{id}/encounter', [\App\Http\Controllers\Api\DoctorEncounterController::class, 'show']);
+        Route::post('/appointments/{id}/encounter', [\App\Http\Controllers\Api\DoctorEncounterController::class, 'store']);
+
         Route::get('/stats', [DoctorController::class, 'stats']);
         Route::get('/appointments', [DoctorController::class, 'appointments']);
         Route::post('/appointments/{id}/status', [DoctorController::class, 'updateAppointmentStatus']);
@@ -112,13 +178,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/rides/available', [RideController::class, 'available']);
         Route::get('/rides', [RideController::class, 'myRides']);
         Route::post('/rides/{ride}/accept', [RideController::class, 'accept']);
+        Route::post('/rides/{ride}/decline', [RideController::class, 'decline']);
+        Route::post('/rides/{ride}/no-show', [RideController::class, 'noShow']);
         Route::post('/rides/{ride}/status', [RideController::class, 'updateStatus']);
-        Route::post('/location', [RideController::class, 'updateLocation']);
+        Route::post('/location', [RideController::class, 'updateLocation'])->middleware('throttle:60,1');
         Route::post('/availability', [RideController::class, 'toggleAvailability']);
+        Route::get('/documents', [\App\Http\Controllers\Api\DriverDocumentController::class, 'index']);
+        Route::post('/documents', [\App\Http\Controllers\Api\DriverDocumentController::class, 'store']);
+        Route::delete('/documents/{id}', [\App\Http\Controllers\Api\DriverDocumentController::class, 'destroy']);
     });
 
     // --- Shared ride detail/cancel (patient or driver, ownership-checked in controller) ---
     Route::get('/rides/{ride}', [RideController::class, 'show']);
+    Route::get('/rides/{ride}/live', [RideController::class, 'live'])->middleware('throttle:120,1');
+    Route::get('/rides/{ride}/cancel-preview', [RideController::class, 'cancelPreview']);
     Route::post('/rides/{ride}/cancel', [RideController::class, 'cancel']);
 
     // --- Pharmacy vendor only ---

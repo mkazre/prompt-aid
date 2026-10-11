@@ -17,16 +17,27 @@ class WebAppointmentController extends Controller
             'start_time' => ['required'],
             'visit_type' => ['required', 'in:clinic,telemed'],
             'reason' => ['nullable', 'string', 'max:1000'],
+            'service_id' => ['nullable', 'integer'],
         ]);
 
         $doctor = DoctorProfile::findOrFail($data['doctor_profile_id']);
 
+        // Only this doctor's own active services can be attached.
+        $serviceId = ! empty($data['service_id'])
+            ? $doctor->services()->whereKey($data['service_id'])->where('is_active', true)->value('id')
+            : null;
+
+        $patient = $request->user()->patientProfile;
+        if (! $patient) {
+            return back()->withErrors(['start_time' => 'Appointments can only be booked from a patient account.']);
+        }
+
         try {
             $booking->book(
-                $request->user()->patientProfile,
+                $patient,
                 $doctor,
                 $data['clinic_id'],
-                null,
+                $serviceId,
                 $data['date'],
                 $data['start_time'],
                 $data['visit_type'],

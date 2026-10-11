@@ -43,6 +43,10 @@ export interface DoctorMiniProfile {
   specialization: string;
   status: string;
   is_accepting_appointments: boolean;
+  bio?: string | null;
+  qualification?: string | null;
+  experience_years?: number | null;
+  consultation_fee?: number;
 }
 
 export type ThirdPartyCategory =
@@ -110,6 +114,9 @@ export interface Doctor {
   is_accepting_appointments: boolean;
   availability_summary: string | null;
   clinics: Clinic[];
+  avatar_url?: string | null;
+  /** Active services — only on GET /doctors/{id}. */
+  services?: ServiceItem[];
 }
 
 export interface EncounterVitals {
@@ -127,6 +134,11 @@ export interface Encounter {
   diagnosis: string | null;
   notes: string | null;
   follow_up_date: string | null;
+  prescription?: {
+    id: number;
+    notes: string | null;
+    items?: { id: number; medicine_name: string; dosage: string | null; frequency: string | null; duration_days: number | null; instructions: string | null }[];
+  } | null;
 }
 
 export interface Appointment {
@@ -144,12 +156,16 @@ export interface Appointment {
   // UI degrades gracefully until the backend exposes them.
   mode?: 'in_person' | 'video';
   meet_url?: string | null;
+  // In-app video (join URL itself comes from GET /appointments/{id}/video).
+  is_video?: boolean;
+  can_join_video?: boolean;
+  video_ended_at?: string | null;
   doctor?: Doctor;
   clinic?: Clinic;
   patient?: PatientProfile;
-  // Only present when the backend eager-loads the `encounter` relation, which
-  // DoctorController::appointments() does not currently do — see doctor
-  // screens for the TODOs tracking this gap.
+  service?: ServiceItem | null;
+  // Only present when the backend eager-loads the `encounter` relation —
+  // GET /doctor/appointments/{id}/encounter does (used by EncounterScreen).
   encounter?: Encounter | null;
 }
 
@@ -367,4 +383,99 @@ export interface Paginated<T> {
   data: T[];
   links?: unknown;
   meta?: unknown;
+}
+
+// --- Search, booking sessions & doctor settings ---------------------------
+
+export interface ServiceItem {
+  id: number;
+  clinic_id: number;
+  doctor_profile_id: number | null;
+  name: string;
+  category: string | null;
+  description: string | null;
+  price: number;
+  duration_minutes: number;
+  is_active: boolean;
+}
+
+export type SearchResultType = 'speciality' | 'service_category' | 'condition' | 'symptom' | 'doctor' | 'clinic' | 'product';
+
+export interface SearchResult {
+  type: SearchResultType;
+  id?: number | string | null;
+  name: string;
+  subtitle?: string | null;
+  specialization?: string | null;
+  urgent?: boolean;
+  avatar_url?: string | null;
+  logo_url?: string | null;
+  rating_avg?: number;
+  rating_count?: number;
+  product?: Product;
+}
+
+export interface SearchGroups {
+  specialities: SearchResult[];
+  conditions: SearchResult[];
+  doctors: SearchResult[];
+  clinics: SearchResult[];
+  products: SearchResult[];
+}
+
+export interface SlotCell {
+  time: string;
+  available: boolean;
+  booked: boolean;
+  past: boolean;
+  blocked: boolean;
+}
+
+export interface SlotSession {
+  label: string;
+  start: string;
+  end: string;
+  slot_minutes: number;
+  slots: SlotCell[];
+}
+
+export interface SlotSchedule {
+  slots: string[];
+  sessions?: SlotSession[];
+  time_off?: string | null;
+}
+
+export interface DoctorTimeOffItem {
+  id: number;
+  date: string;
+  end_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  reason: string | null;
+}
+
+export interface DoctorSessionItem {
+  id?: number;
+  clinic_id: number;
+  clinic_name?: string | null;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  slot_minutes: number;
+  is_active: boolean;
+}
+
+export interface AppPageSection {
+  type: 'heading' | 'paragraph' | 'bullet';
+  text: string;
+  title?: string;
+}
+
+export interface AppPage {
+  key: string;
+  title: string;
+  slug: string;
+  url: string;
+  updated_at: string | null;
+  content: AppPageSection[];
 }

@@ -77,7 +77,26 @@ class DoctorController extends Controller
         ]);
 
         $appointment = Appointment::query()->where('doctor_profile_id', $doctor->id)->findOrFail($id);
+        $previous = $appointment->status;
         $appointment->update(['status' => $data['status']]);
+
+        if ($previous !== $data['status'] && $appointment->patient?->user) {
+            $when = $appointment->date?->format('d M').' at '.substr((string) $appointment->start_time, 0, 5);
+            $messages = [
+                'confirmed' => ['Appointment confirmed', "Dr. {$request->user()->name} confirmed your appointment on {$when}."],
+                'cancelled' => ['Appointment cancelled', "Dr. {$request->user()->name} cancelled your appointment on {$when}."],
+                'completed' => ['Consultation completed', "Your consultation with Dr. {$request->user()->name} is complete."],
+                'no_show' => ['Missed appointment', "You were marked as a no-show for your appointment on {$when}."],
+            ];
+            if (isset($messages[$data['status']])) {
+                app(\App\Contracts\NotificationDispatcherInterface::class)->push(
+                    $appointment->patient->user,
+                    $messages[$data['status']][0],
+                    $messages[$data['status']][1],
+                    ['type' => 'appointment', 'data' => ['route' => 'appointment', 'params' => ['appointment_id' => $appointment->id], 'url' => '/account/appointments']]
+                );
+            }
+        }
 
         return new AppointmentResource($appointment->fresh(['patient.user', 'clinic', 'service']));
     }

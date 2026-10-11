@@ -10,6 +10,8 @@ import { PaChipButton, PaStatCell, PaStatGrid } from '../../components/pa/doctor
 import { pa, paFonts, type } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { DoctorStackParamList } from '../../navigation/DoctorTabs';
+import WidgetHost from '../../widgets/WidgetHost';
+import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 
 type Nav = NativeStackNavigationProp<DoctorStackParamList>;
 
@@ -21,6 +23,10 @@ export default function DoctorDashboardScreen() {
   const [today, setToday] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  // Rendered widget keys (null while loading) — hardcoded blocks below hide when their widget replaces them.
+  const [widgetKeys, setWidgetKeys] = useState<string[] | null>(null);
+  const widgetOn = (key: string) => widgetKeys === null || widgetKeys.includes(key);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,7 +61,7 @@ export default function DoctorDashboardScreen() {
   }
 
   function openAppointment(appointment: Appointment) {
-    if (appointment.mode === 'video' && appointment.meet_url) {
+    if (appointment.is_video || appointment.mode === 'video' || appointment.visit_type === 'telemed') {
       navigation.navigate('ConsultRoom', { appointment });
     } else {
       navigation.navigate('DoctorEncounter', { appointment });
@@ -75,23 +81,30 @@ export default function DoctorDashboardScreen() {
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 48 }}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={pa.signal} />}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(); setRefreshKey((k) => k + 1); }} tintColor={pa.signal} />}
     >
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>{greeting},</Text>
           <Text style={styles.name}>Dr. {user?.name?.replace(/^Dr\.?\s*/i, '')}</Text>
         </View>
-        <PaAvatar name={user?.name} size={48} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <CommsHeaderIcons showMessages />
+          <PaAvatar name={user?.name} size={48} />
+        </View>
       </View>
 
-      <PaStatGrid>
-        <PaStatCell label="Booked" value={stats?.total_appointments ?? today.length} />
-        <PaStatCell label="Waiting" value={waiting} valueColor={waiting > 0 ? pa.signal : pa.ink} />
-      </PaStatGrid>
+      <WidgetHost screen="home" refreshKey={refreshKey} onLoaded={setWidgetKeys} style={{ marginBottom: 16 }} />
 
-      <PaSectionLabel style={{ marginBottom: 8 }}>Today's appointments</PaSectionLabel>
-      {today.length === 0 ? (
+      {!widgetOn('doctor_total_appointments') ? (
+        <PaStatGrid>
+          <PaStatCell label="Booked" value={stats?.total_appointments ?? today.length} />
+          <PaStatCell label="Waiting" value={waiting} valueColor={waiting > 0 ? pa.signal : pa.ink} />
+        </PaStatGrid>
+      ) : null}
+
+      {widgetOn('doctor_today_appointments') ? null : <PaSectionLabel style={{ marginBottom: 8 }}>Today's appointments</PaSectionLabel>}
+      {widgetOn('doctor_today_appointments') ? null : today.length === 0 ? (
         <PaCard><PaEmptyState message="No appointments today." /></PaCard>
       ) : (
         today.map((a) => (
@@ -115,6 +128,7 @@ export default function DoctorDashboardScreen() {
               {!['completed', 'cancelled', 'no_show'].includes(a.status) && (
                 <PaChipButton title="Cancel" tone="stop" loading={updatingId === a.id} onPress={() => updateStatus(a.id, 'cancelled')} />
               )}
+              <PaChipButton title="Message" onPress={() => (navigation as any).navigate('Chat', { appointmentId: a.id, title: a.patient?.name ?? 'Patient' })} />
             </View>
           </PaCard>
         ))

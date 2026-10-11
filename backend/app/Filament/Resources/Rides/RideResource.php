@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Rides;
 use App\Filament\Resources\Rides\Pages\CreateRide;
 use App\Filament\Resources\Rides\Pages\EditRide;
 use App\Filament\Resources\Rides\Pages\ListRides;
+use App\Filament\Resources\Rides\Pages\ViewRide;
 use App\Filament\Resources\Rides\Schemas\RideForm;
 use App\Filament\Resources\Rides\Tables\RidesTable;
 use App\Models\Ride;
@@ -82,6 +83,7 @@ class RideResource extends Resource
         return [
             'index' => ListRides::route('/'),
             'create' => CreateRide::route('/create'),
+            'view' => ViewRide::route('/{record}'),
             'edit' => EditRide::route('/{record}/edit'),
         ];
     }

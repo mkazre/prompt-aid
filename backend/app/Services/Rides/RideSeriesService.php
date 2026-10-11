@@ -70,6 +70,7 @@ class RideSeriesService
             appointmentId: $outbound->appointment_id,
             vehicleType: $outbound->vehicle_type,
             autoAssign: $scheduledFor ? false : (bool) Setting::get('ride_auto_assign_scheduled', true),
+            scheduledFor: $scheduledFor,
         );
 
         $returnLeg->update([
@@ -156,6 +157,7 @@ class RideSeriesService
                 dropoffLng: (float) ($dropoff['lng'] ?? 0),
                 vehicleType: $series->vehicle_type,
                 autoAssign: (bool) Setting::get('ride_auto_assign_scheduled', false),
+                scheduledFor: $scheduledFor,
             );
 
             $ride->update([

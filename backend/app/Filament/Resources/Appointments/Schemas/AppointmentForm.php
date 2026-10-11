@@ -46,6 +46,12 @@ class AppointmentForm
                             ])
                             ->required()->default('pending'),
                         TextInput::make('requested_specialty')->label('Requested specialty (on-demand)'),
+                        TextInput::make('meet_url')
+                            ->label('External video link override (Google Meet)')
+                            ->url()
+                            ->maxLength(255)
+                            ->helperText('Only used when "Allow external Google Meet link override" is on in Theme settings → Video consults; otherwise the in-app room is used.')
+                            ->visible(fn () => (bool) \App\Models\Setting::get('video_allow_meet_override', false)),
                         Textarea::make('reason')->columnSpanFull(),
                         Textarea::make('cancel_reason')->columnSpanFull(),
                     ]),

@@ -8,6 +8,8 @@ import { PaAvatar, PaBadge, PaQuickAction, PaSatsChip } from '../../components/p
 import { pa, paFonts } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { META } from '../../services/triage';
+import WidgetHost from '../../widgets/WidgetHost';
+import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 
 export default function HomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -17,6 +19,11 @@ export default function HomeScreen({ navigation }: any) {
   const [prescriptions, setPrescriptions] = useState<PrescriptionUpload[]>([]);
   const [latestTriage, setLatestTriage] = useState<LatestTriage | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  // Keys of admin-configured widgets that rendered; null while loading. A
+  // hardcoded block below is hidden when the widget that replaces it is on.
+  const [widgetKeys, setWidgetKeys] = useState<string[] | null>(null);
+  const widgetOn = (key: string) => widgetKeys === null || widgetKeys.includes(key);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,16 +56,19 @@ export default function HomeScreen({ navigation }: any) {
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(); setRefreshKey((k) => k + 1); }} />}
     >
       <View style={styles.greetRow}>
         <View>
           <Text style={styles.greetSmall}>Good {timeOfDay()}</Text>
           <Text style={styles.greetName}>{user?.name?.split(' ')[0]}</Text>
         </View>
-        <Pressable onPress={() => navigation.getParent()?.navigate('Profile')}>
-          <PaAvatar name={user?.name} size={44} />
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <CommsHeaderIcons showMessages />
+          <Pressable onPress={() => navigation.getParent()?.navigate('Profile')}>
+            <PaAvatar name={user?.name} size={44} />
+          </Pressable>
+        </View>
       </View>
 
       <Pressable style={styles.emergencyBanner} onPress={() => navigation.navigate('TriageStart')}>
@@ -70,7 +80,9 @@ export default function HomeScreen({ navigation }: any) {
         <Text style={styles.emergencyArrow}>→</Text>
       </Pressable>
 
-      {triageIsRecent && latestTriage ? (
+      <WidgetHost screen="home" refreshKey={refreshKey} onLoaded={setWidgetKeys} style={{ marginBottom: 14 }} />
+
+      {!widgetOn('patient_latest_triage') && triageIsRecent && latestTriage ? (
         <Pressable style={styles.triageCard} onPress={() => navigation.navigate('TriageStart', { selfReported: undefined })}>
           <View style={{ flex: 1 }}>
             <Text style={styles.triageEyebrow}>Your last triage result</Text>
@@ -80,7 +92,7 @@ export default function HomeScreen({ navigation }: any) {
         </Pressable>
       ) : null}
 
-      {nextAppt ? (
+      {!widgetOn('patient_next_appointment') && nextAppt ? (
         <View style={styles.apptCard}>
           <View style={styles.apptEyebrowRow}>
             <View style={styles.beaconDot} />
@@ -92,6 +104,9 @@ export default function HomeScreen({ navigation }: any) {
             <Pressable style={styles.beaconBtn} onPress={() => navigation.getParent()?.navigate('Rides')}>
               <Text style={styles.beaconBtnText}>Track shuttle</Text>
             </Pressable>
+            <Pressable style={styles.ghostBtn} onPress={() => navigation.navigate('Chat', { appointmentId: nextAppt.id, title: `Dr. ${nextAppt.doctor?.name ?? ''}` })}>
+              <Text style={styles.ghostBtnText}>Message</Text>
+            </Pressable>
             <Pressable style={styles.ghostBtn} onPress={() => navigation.getParent()?.navigate('Profile', { screen: 'Appointments' })}>
               <Text style={styles.ghostBtnText}>Details</Text>
             </Pressable>
@@ -99,14 +114,16 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       ) : null}
 
+      {!widgetOn('patient_search_shortcuts') ? (
       <View style={styles.grid2}>
         <PaQuickAction number="01" label="Find a doctor" onPress={() => navigation.getParent()?.navigate('Care')} />
         <PaQuickAction number="02" label="Order medicine" onPress={() => navigation.getParent()?.navigate('Pharmacy')} />
         <PaQuickAction number="03" label="Book a shuttle" onPress={() => navigation.getParent()?.navigate('Rides')} />
         <PaQuickAction number="04" label="Upload a script" onPress={() => navigation.getParent()?.navigate('Pharmacy', { screen: 'ScriptUpload' })} />
       </View>
+      ) : null}
 
-      {(labResults.length || prescriptions.length) ? (
+      {!widgetOn('patient_pending_lab_results') && (labResults.length || prescriptions.length) ? (
         <>
           <Text style={styles.sectionLabel}>Waiting for you</Text>
           {labResults.map((l) => (

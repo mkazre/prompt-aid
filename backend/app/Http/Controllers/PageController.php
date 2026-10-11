@@ -81,7 +81,7 @@ class PageController extends Controller
             ->where('status', 'active')
             ->with(['user', 'clinics', 'availabilities' => fn ($q) => $q->where('is_active', true)])
             ->when($request->filled('specialization'), fn ($q) => $q->where('specialization', 'like', '%'.$request->string('specialization').'%'))
-            ->when($request->filled('search'), fn ($q) => $q->whereHas('user', fn ($uq) => $uq->where('name', 'like', '%'.$request->string('search').'%')))
+            ->when($request->filled('search'), fn ($q) => $q->matchingSearch((string) $request->string('search')))
             ->when($request->filled('clinic_id'), fn ($q) => $q->whereHas('clinics', fn ($cq) => $cq->where('clinics.id', $request->integer('clinic_id'))))
             ->paginate(9)
             ->withQueryString();
@@ -109,9 +109,14 @@ class PageController extends Controller
             'date' => ['required', 'date'],
         ]);
 
-        $slots = $booking->availableSlots($doctor, $request->integer('clinic_id'), $request->string('date'));
+        $slots = $booking->availableSlots($doctor, $request->integer('clinic_id'), (string) $request->string('date'));
+        $schedule = $booking->slotSchedule($doctor, $request->integer('clinic_id'), (string) $request->string('date'));
 
-        return response()->json(['slots' => $slots->values()]);
+        return response()->json([
+            'slots' => $slots->values(),
+            'sessions' => $schedule['sessions'],
+            'time_off' => $schedule['time_off'],
+        ]);
     }
 
     public function contact()

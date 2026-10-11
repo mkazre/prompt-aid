@@ -15,8 +15,12 @@ use Illuminate\Support\Facades\Log;
  */
 class MockNotificationDispatcher implements NotificationDispatcherInterface
 {
-    public function sms(User $user, string $body): bool
+    public function __construct(protected InAppNotifier $inApp) {}
+
+    public function sms(User $user, string $body, array $context = []): bool
     {
+        $this->inApp($user, $context['title'] ?? 'Message from Prompt Aid', $body, $context);
+
         return $this->log($user, 'sms', null, $body);
     }
 
@@ -35,14 +39,32 @@ class MockNotificationDispatcher implements NotificationDispatcherInterface
         return true;
     }
 
-    public function email(User $user, string $subject, string $body): bool
+    public function email(User $user, string $subject, string $body, array $context = []): bool
     {
+        $this->inApp($user, $subject, $body, $context);
+
         return $this->log($user, 'email', $subject, $body);
     }
 
-    public function push(User $user, string $subject, string $body): bool
+    public function push(User $user, string $subject, string $body, array $context = []): bool
     {
+        $this->inApp($user, $subject, $body, $context);
+
         return $this->log($user, 'push', $subject, $body);
+    }
+
+    /**
+     * Mirror the message into the recipient's in-app feed. Callers pass
+     * `['in_app' => false]` when the same event is already sent through
+     * another channel call, to avoid a duplicate card.
+     */
+    protected function inApp(User $user, string $title, string $body, array $context): void
+    {
+        if (($context['in_app'] ?? true) === false) {
+            return;
+        }
+
+        $this->inApp->send($user, $context['type'] ?? 'general', $title, $body, $context['data'] ?? []);
     }
 
     public function whatsApp(string $toPhone, string $body): bool

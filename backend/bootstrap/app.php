@@ -14,6 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
 
+        // Cron-optional background jobs after the response is sent (App\Support\Tick).
+        $middleware->append(\App\Http\Middleware\RunTickAfterResponse::class);
+
+        // POPIA: re-consent interstitial (web pages only) + access logging of health-data API show endpoints.
+        $middleware->appendToGroup('web', \App\Http\Middleware\RequireCurrentConsents::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\LogSensitiveApiAccess::class);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);

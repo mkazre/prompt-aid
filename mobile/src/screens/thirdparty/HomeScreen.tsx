@@ -8,6 +8,8 @@ import { useAuth } from '../../context/AuthContext';
 import { pa, paFonts, type } from '../../theme';
 import { PaBadge, PaButton, PaCard, PaEmptyState, PaEyebrow } from '../../components/pa';
 import { PaChipRow, categoryEmoji, categoryLabel, categoryNoun, elapsedLabel } from '../../components/pa/partner-extras';
+import WidgetHost from '../../widgets/WidgetHost';
+import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 
 export default function ThirdPartyHomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -17,6 +19,7 @@ export default function ThirdPartyHomeScreen({ navigation }: any) {
   const [mine, setMine] = useState<LabRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,7 +59,10 @@ export default function ThirdPartyHomeScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-      <PaEyebrow>{categoryLabel(profile?.category)} PARTNER QUEUE</PaEyebrow>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <PaEyebrow>{categoryLabel(profile?.category)} PARTNER QUEUE</PaEyebrow>
+        <CommsHeaderIcons />
+      </View>
       <Text style={styles.title}>Hi {user?.name?.split(' ')[0]} {categoryEmoji(profile?.category)}</Text>
       <Text style={styles.subtitle}>
         New {categoryNoun(profile?.category, true)} from Prompt Aid doctors{profile?.company_name ? ` for ${profile.company_name}` : ''}.
@@ -65,9 +71,10 @@ export default function ThirdPartyHomeScreen({ navigation }: any) {
       <FlatList
         data={filtered}
         keyExtractor={(r) => String(r.id)}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(); setRefreshKey((k) => k + 1); }} />}
         ListHeaderComponent={
           <>
+            <WidgetHost screen="home" refreshKey={refreshKey} style={{ marginBottom: 16 }} />
             {mine.length > 0 && (
               <>
                 <Text style={styles.sectionTitle}>In progress</Text>

@@ -105,7 +105,11 @@ class OrderService
                 $prescriptionUpload->update(['order_id' => $order->id]);
             }
 
-            $this->notifier->email($patient->user, 'Order placed', "Your order {$order->order_no} from {$pharmacy->name} has been placed.");
+            $this->notifier->email($patient->user, 'Order placed', "Your order {$order->order_no} from {$pharmacy->name} has been placed.", ['type' => 'order', 'data' => ['route' => 'orders', 'params' => ['order_id' => $order->id], 'url' => '/account/orders']]);
+
+            if ($pharmacy->vendor) {
+                app(\App\Services\Notifications\InAppNotifier::class)->send($pharmacy->vendor, 'order', 'New order received', "{$patient->user->name} placed order {$order->order_no}.", ['route' => 'vendor_orders', 'params' => ['order_id' => $order->id]]);
+            }
 
             if ($pharmacy->vendor) {
                 StaffNotifier::alert(
@@ -144,7 +148,7 @@ class OrderService
 
         if ($upload->order && $upload->order->status === Order::STATUS_AWAITING_PRESCRIPTION) {
             $upload->order->update(['status' => Order::STATUS_PENDING_PAYMENT]);
-            $this->notifier->email($upload->patient->user, 'Prescription approved', 'Your prescription has been approved — you can now pay for your order.');
+            $this->notifier->email($upload->patient->user, 'Prescription approved', 'Your prescription has been approved — you can now pay for your order.', ['type' => 'prescription', 'data' => ['route' => 'orders', 'params' => ['order_id' => $upload->order_id], 'url' => '/account/prescriptions']]);
         }
     }
 
@@ -154,7 +158,7 @@ class OrderService
 
         if ($upload->order) {
             $upload->order->update(['status' => Order::STATUS_CANCELLED]);
-            $this->notifier->email($upload->patient->user, 'Prescription rejected', "Your prescription upload was rejected: {$notes}");
+            $this->notifier->email($upload->patient->user, 'Prescription rejected', "Your prescription upload was rejected: {$notes}", ['type' => 'prescription', 'data' => ['route' => 'prescriptions', 'params' => [], 'url' => '/account/prescriptions']]);
         }
     }
 
@@ -162,8 +166,12 @@ class OrderService
     {
         $order->update(['status' => $status]);
 
+        $orderLink = ['type' => 'order', 'data' => ['route' => 'orders', 'params' => ['order_id' => $order->id], 'url' => '/account/orders']];
+
         if ($status === Order::STATUS_DELIVERED) {
-            $this->notifier->push($order->patient->user, 'Order delivered', "Your order {$order->order_no} has been delivered. Enjoy!");
+            $this->notifier->push($order->patient->user, 'Order delivered', "Your order {$order->order_no} has been delivered. Enjoy!", $orderLink);
+        } elseif ($order->patient?->user) {
+            app(\App\Services\Notifications\InAppNotifier::class)->send($order->patient->user, 'order', 'Order update', "Your order {$order->order_no} is now ".str_replace('_', ' ', $status).'.', $orderLink['data']);
         }
 
         return $order->fresh();

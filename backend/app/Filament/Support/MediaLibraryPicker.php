@@ -21,6 +21,8 @@ class MediaLibraryPicker
         'clinics/covers',
         'pharmacies/logos',
         'avatars',
+        'app-widgets',
+        'health-articles',
     ];
 
     /**

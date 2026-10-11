@@ -20,12 +20,19 @@
       @forelse ($appointments as $appt)
         <tr>
           <td><div class="t-main">{{ $appt->date->format('d M Y') }} {{ \Illuminate\Support\Carbon::parse($appt->start_time)->format('H:i') }}</div><div class="t-sub">{{ $appt->booking_ref }}</div></td>
-          <td>{{ $appt->doctor->user->name }}</td>
-          <td>{{ $appt->isVideo() ? 'Video consultation' : 'In person' }} · {{ $appt->clinic->name }}</td>
+          <td>{{ $appt->doctor?->user?->name ?? 'Matching…' }}</td>
+          <td>{{ $appt->isVideo() ? 'Video consultation' : 'In person' }}{{ $appt->clinic ? ' · '.$appt->clinic->name : '' }}</td>
           <td><span class="pa-badge {{ in_array($appt->status, ['completed', 'confirmed', 'checked_in']) ? 'is-go' : (in_array($appt->status, ['cancelled', 'no_show']) ? 'is-stop' : 'is-wait') }}">{{ str($appt->status)->headline() }}</span></td>
           <td class="t-right">
             @if ($appt->isVideo() && $appt->canJoinVideoNow())
-              <a class="pa-btn-quiet pa-btn-sm" href="{{ $appt->meet_url }}" target="_blank">Join video</a>
+              <a class="pa-btn pa-btn-sm" href="{{ route('account.appointments.video', $appt) }}" target="_blank" rel="noopener">Join video</a>
+            @endif
+            @if ($appt->doctor_profile_id && $appt->status !== 'matching')
+              <form method="POST" action="{{ route('account.messages.start') }}" style="display:inline">
+                @csrf
+                <input type="hidden" name="appointment_id" value="{{ $appt->id }}">
+                <button class="pa-btn-ghost pa-btn-sm" type="submit">Message doctor</button>
+              </form>
             @endif
             @if (in_array($appt->status, ['pending', 'confirmed']))
               <form method="POST" action="{{ route('account.appointments.cancel', $appt) }}" style="display:inline" onsubmit="return confirm('Cancel this appointment?');">

@@ -1,13 +1,13 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PharmacyOrdersScreen from '../screens/pharmacy/OrdersScreen';
 import PharmacyOrderDetailScreen from '../screens/pharmacy/OrderDetailScreen';
 import PharmacyScriptsScreen from '../screens/pharmacy/ScriptsScreen';
 import PharmacyStockScreen from '../screens/pharmacy/StockScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import AccountStackNavigator from './AccountStack';
 import { pa, paFonts } from '../theme';
+import { tabBarScreenOptions, tabIcon } from './tabBarTheme';
 
 const Tab = createBottomTabNavigator();
 const OrdersStack = createNativeStackNavigator();
@@ -21,25 +21,15 @@ function OrdersStackNavigator() {
   );
 }
 
-function Icon({ label, focused }: { label: string; focused: boolean }) {
-  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{label}</Text>;
-}
-
 export default function PharmacyTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: pa.signal,
-        tabBarInactiveTintColor: pa.muted,
-        tabBarStyle: { backgroundColor: pa.surface, borderTopColor: pa.line },
-        tabBarLabelStyle: { fontFamily: paFonts.bold, fontSize: 11 },
-      }}
+      screenOptions={tabBarScreenOptions}
     >
-      <Tab.Screen name="Orders" component={OrdersStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="📦" focused={focused} /> }} />
-      <Tab.Screen name="Scripts" component={PharmacyScriptsScreen} options={{ tabBarIcon: ({ focused }) => <Icon label="📋" focused={focused} /> }} />
-      <Tab.Screen name="Stock" component={PharmacyStockScreen} options={{ tabBarIcon: ({ focused }) => <Icon label="💊" focused={focused} /> }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarIcon: ({ focused }) => <Icon label="👤" focused={focused} /> }} />
+      <Tab.Screen name="Orders" component={OrdersStackNavigator} options={{ tabBarIcon: tabIcon('cube-outline') }} />
+      <Tab.Screen name="Scripts" component={PharmacyScriptsScreen} options={{ tabBarIcon: tabIcon('clipboard-outline') }} />
+      <Tab.Screen name="Stock" component={PharmacyStockScreen} options={{ tabBarIcon: tabIcon('medical-outline') }} />
+      <Tab.Screen name="Profile" component={AccountStackNavigator} options={{ tabBarIcon: tabIcon('person-outline') }} />
     </Tab.Navigator>
   );
 }

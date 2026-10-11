@@ -1,5 +1,4 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DriverHomeScreen from '../screens/driver/HomeScreen';
@@ -10,12 +9,16 @@ import TripsScreen from '../screens/driver/TripsScreen';
 import TripDetailScreen from '../screens/driver/TripDetailScreen';
 import EarningsScreen from '../screens/driver/EarningsScreen';
 import DocumentsScreen from '../screens/driver/DocumentsScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import AppPageScreen from '../screens/AppPageScreen';
 import { pa, paFonts } from '../theme';
+import { tabBarScreenOptions, tabIcon } from './tabBarTheme';
 
 const Tab = createBottomTabNavigator();
 const DriveStack = createNativeStackNavigator();
 const OffersStack = createNativeStackNavigator();
 const TripsStack = createNativeStackNavigator();
+const ProfileStack = createNativeStackNavigator();
 
 const stackHeaderOptions = { headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerStyle: { backgroundColor: pa.surface } };
 
@@ -46,26 +49,26 @@ function TripsStackNavigator() {
   );
 }
 
-function Icon({ label, focused }: { label: string; focused: boolean }) {
-  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{label}</Text>;
+function ProfileStackNavigator() {
+  return (
+    <ProfileStack.Navigator screenOptions={stackHeaderOptions}>
+      <ProfileStack.Screen name="DriverProfileHome" component={DocumentsScreen} options={{ headerShown: false }} />
+      <ProfileStack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change password' }} />
+      <ProfileStack.Screen name="AppPage" component={AppPageScreen} options={{ title: '' }} />
+    </ProfileStack.Navigator>
+  );
 }
 
 export default function DriverTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: pa.signal,
-        tabBarInactiveTintColor: pa.muted2,
-        tabBarLabelStyle: { fontFamily: paFonts.bold, fontSize: 10 },
-        tabBarStyle: { backgroundColor: pa.surface, borderTopColor: pa.line },
-      }}
+      screenOptions={tabBarScreenOptions}
     >
-      <Tab.Screen name="Drive" component={DriveStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="🚗" focused={focused} /> }} />
-      <Tab.Screen name="Offers" component={OffersStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="📣" focused={focused} /> }} />
-      <Tab.Screen name="Trips" component={TripsStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="🧭" focused={focused} /> }} />
-      <Tab.Screen name="Earnings" component={EarningsScreen} options={{ tabBarIcon: ({ focused }) => <Icon label="💰" focused={focused} /> }} />
-      <Tab.Screen name="Profile" component={DocumentsScreen} options={{ tabBarIcon: ({ focused }) => <Icon label="📄" focused={focused} />, title: 'Documents' }} />
+      <Tab.Screen name="Drive" component={DriveStackNavigator} options={{ tabBarIcon: tabIcon('car-outline') }} />
+      <Tab.Screen name="Offers" component={OffersStackNavigator} options={{ tabBarIcon: tabIcon('megaphone-outline') }} />
+      <Tab.Screen name="Trips" component={TripsStackNavigator} options={{ tabBarIcon: tabIcon('navigate-outline') }} />
+      <Tab.Screen name="Earnings" component={EarningsScreen} options={{ tabBarIcon: tabIcon('wallet-outline') }} />
+      <Tab.Screen name="Profile" component={ProfileStackNavigator} options={{ tabBarIcon: tabIcon('person-circle-outline'), title: 'Profile' }} />
     </Tab.Navigator>
   );
 }

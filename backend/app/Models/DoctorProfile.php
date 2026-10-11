@@ -22,6 +22,7 @@ class DoctorProfile extends Model
         'user_id', 'specialization', 'qualification', 'experience_years', 'bio',
         'consultation_fee', 'registration_no', 'signature', 'rating_avg', 'rating_count', 'status',
         'is_accepting_appointments', 'availability', 'current_lat', 'current_lng', 'location_updated_at',
+        'last_seen_at', 'last_offered_at', 'last_assigned_at',
     ];
 
     protected function casts(): array
@@ -29,6 +30,9 @@ class DoctorProfile extends Model
         return [
             'is_accepting_appointments' => 'boolean',
             'location_updated_at' => 'datetime',
+            'last_seen_at' => 'datetime',
+            'last_offered_at' => 'datetime',
+            'last_assigned_at' => 'datetime',
         ];
     }
 
@@ -73,6 +77,37 @@ class DoctorProfile extends Model
         $end = $active->max('end_time');
 
         return "{$dayLabel}, ".substr($start, 0, 5).'–'.substr($end, 0, 5);
+    }
+
+    /**
+     * Free-text doctor search: name, specialization, or a condition/symptom
+     * (admin-managed Conditions) whose linked specialization matches.
+     */
+    public function scopeMatchingSearch(\Illuminate\Database\Eloquent\Builder $query, string $term): \Illuminate\Database\Eloquent\Builder
+    {
+        $term = trim($term);
+        if ($term === '') {
+            return $query;
+        }
+
+        $like = '%'.addcslashes($term, '%_\\').'%';
+
+        $specs = \Illuminate\Support\Facades\Schema::hasTable('conditions')
+            ? Condition::query()
+                ->where('is_active', true)
+                ->whereNotNull('specialization')
+                ->where(fn ($c) => $c->where('name', 'like', $like)->orWhere('synonyms', 'like', $like))
+                ->pluck('specialization')->unique()->values()->all()
+            : [];
+
+        return $query->where(function ($w) use ($like, $specs) {
+            $w->whereHas('user', fn ($u) => $u->where('name', 'like', $like))
+                ->orWhere('specialization', 'like', $like);
+
+            if ($specs) {
+                $w->orWhereIn('specialization', $specs);
+            }
+        });
     }
 
     public function user(): BelongsTo

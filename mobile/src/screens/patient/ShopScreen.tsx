@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
@@ -8,6 +8,7 @@ import { PaEmptyState, PaEyebrow } from '../../components/pa';
 import { PaChips } from '../../components/pa/patient-commerce-extras';
 import { pa, paFonts, paRadius, type } from '../../theme';
 import { useCart } from '../../context/CartContext';
+import WidgetHost from '../../widgets/WidgetHost';
 
 const CATEGORY_OPTIONS = ['All', 'Prescription', 'OTC', 'Devices', 'Vitamins'];
 
@@ -18,23 +19,39 @@ const CATEGORY_OPTIONS = ['All', 'Prescription', 'OTC', 'Devices', 'Vitamins'];
  * and the mockup's chip set (Prescription / OTC / Devices / Vitamins) is a
  * simplified view over free-text categories seeded on the backend.
  */
-export default function ShopScreen({ navigation }: any) {
+export default function ShopScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
+  // Set by the "Shop by category" widget (or route params from other widgets).
+  const [serviceCategory, setServiceCategory] = useState<{ id: number; name: string } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  // The seeded shop banner is the "upload a script" CTA, so the hardcoded row hides while it's on.
+  const [bannerOn, setBannerOn] = useState(true);
   const { totalCount } = useCart();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/products', { params: search ? { search } : undefined });
+      const params: Record<string, string | number> = {};
+      if (search) params.search = search;
+      if (serviceCategory) params.service_category_id = serviceCategory.id;
+      const { data } = await api.get('/products', { params });
       setProducts(data.data);
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, serviceCategory]);
+
+  const rp = route?.params ?? {};
+  useEffect(() => {
+    if (rp.categoryId === undefined && rp.search === undefined) return;
+    if (rp.categoryId) setServiceCategory({ id: Number(rp.categoryId), name: rp.categoryName ?? 'Category' });
+    if (typeof rp.search === 'string') setSearch(rp.search);
+    navigation.setParams({ categoryId: undefined, categoryName: undefined, search: undefined });
+  }, [rp.categoryId, rp.search]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -62,6 +79,7 @@ export default function ShopScreen({ navigation }: any) {
         style={styles.textInput}
       />
 
+      {!bannerOn ? (
       <Pressable style={styles.scriptRow} onPress={() => navigation.navigate('ScriptUpload')}>
         <View>
           <Text style={styles.scriptTitle}>Upload a script</Text>
@@ -69,8 +87,14 @@ export default function ShopScreen({ navigation }: any) {
         </View>
         <Text style={styles.scriptArrow}>→</Text>
       </Pressable>
+      ) : null}
 
       <PaChips options={CATEGORY_OPTIONS} value={category} onChange={setCategory} />
+      {serviceCategory ? (
+        <Pressable onPress={() => setServiceCategory(null)} style={styles.activeCat}>
+          <Text style={styles.activeCatText}>{serviceCategory.name}  ✕</Text>
+        </Pressable>
+      ) : null}
 
       <FlatList
         data={filtered}
@@ -79,6 +103,16 @@ export default function ShopScreen({ navigation }: any) {
         columnWrapperStyle={{ gap: 10 }}
         contentContainerStyle={{ paddingBottom: 40, gap: 10 }}
         ListEmptyComponent={!loading ? <PaEmptyState message="No products found." /> : null}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(); setRefreshKey((k) => k + 1); }} />}
+        ListHeaderComponent={
+          <WidgetHost
+            screen="shop"
+            refreshKey={refreshKey}
+            onLoaded={(keys) => setBannerOn(keys.includes('shop_promo_banner'))}
+            style={{ marginBottom: 16 }}
+            context={{ onCategory: (c) => { setCategory('All'); setServiceCategory(c); } }}
+          />
+        }
         renderItem={({ item }) => (
           <Pressable style={styles.tile} onPress={() => navigation.navigate('ProductDetail', { product: item })}>
             {item.image ? (
@@ -128,6 +162,8 @@ const styles = StyleSheet.create({
   scriptTitle: { fontFamily: paFonts.black, fontSize: 14, color: '#fff' },
   scriptHint: { fontFamily: paFonts.regular, fontSize: 12, color: '#8A857C', marginTop: 2 },
   scriptArrow: { color: '#fff', fontFamily: paFonts.black, fontSize: 16 },
+  activeCat: { alignSelf: 'flex-start', backgroundColor: pa.ink, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 10 },
+  activeCatText: { fontFamily: paFonts.bold, fontSize: 12, color: '#fff' },
   tile: { flex: 1, backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, borderRadius: paRadius.sm, padding: 12 },
   tileImage: { width: '100%', height: 70, borderRadius: paRadius.sm, marginBottom: 8 },
   tileSlot: { width: '100%', height: 70, borderRadius: paRadius.sm, marginBottom: 8, backgroundColor: pa.lineSoft, alignItems: 'center', justifyContent: 'center' },

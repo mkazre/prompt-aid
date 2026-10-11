@@ -227,6 +227,15 @@ class EditProviderApplication extends EditRecord
             $user,
             'Your Prompt Aid account is ready',
             "Hi {$record->contact_name}, your provider application for {$record->business_name} was approved.\n\nLogin email: {$record->email}\nTemporary password: {$temporaryPassword}\n\nPlease log in and change your password as soon as possible.",
+            // Never mirror the temporary password into the in-app feed.
+            ['in_app' => false],
+        );
+
+        app(\App\Services\Notifications\InAppNotifier::class)->send(
+            $user,
+            'account',
+            'Welcome to Prompt Aid',
+            "Your provider application for {$record->business_name} was approved. Please change your temporary password.",
         );
 
         return $user;

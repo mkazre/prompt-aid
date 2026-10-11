@@ -14,9 +14,14 @@ import DriverTabs from './DriverTabs';
 import ThirdPartyTabs from './ThirdPartyTabs';
 import DoctorTabs from './DoctorTabs';
 import PharmacyTabs from './PharmacyTabs';
+import NotificationsScreen from '../screens/comms/NotificationsScreen';
+import ChatListScreen from '../screens/comms/ChatListScreen';
+import ChatScreen from '../screens/comms/ChatScreen';
+import VideoCallScreen from '../screens/comms/VideoCallScreen';
 import { colors, pa } from '../theme';
 
 const Stack = createNativeStackNavigator();
+const AppStack = createNativeStackNavigator();
 
 function AuthStack() {
   return (
@@ -31,6 +36,24 @@ function AuthStack() {
   );
 }
 
+/**
+ * Signed-in shell: the role's tab navigator ("Main") plus screens every
+ * role can reach from anywhere — notifications, chat and the in-app video
+ * call. `navigation.navigate('Chat' | 'ChatList' | 'Notifications' |
+ * 'VideoCall', ...)` from any nested tab screen bubbles up to here.
+ */
+function SignedInStack({ Tabs }: { Tabs: React.ComponentType<any> }) {
+  return (
+    <AppStack.Navigator screenOptions={{ headerShown: false }}>
+      <AppStack.Screen name="Main" component={Tabs} />
+      <AppStack.Screen name="Notifications" component={NotificationsScreen} />
+      <AppStack.Screen name="ChatList" component={ChatListScreen} />
+      <AppStack.Screen name="Chat" component={ChatScreen} />
+      <AppStack.Screen name="VideoCall" component={VideoCallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
+    </AppStack.Navigator>
+  );
+}
+
 export default function RootNavigator() {
   const { user, loading } = useAuth();
 
@@ -42,21 +65,20 @@ export default function RootNavigator() {
     );
   }
 
+  const Tabs =
+    user?.role === 'driver'
+      ? DriverTabs
+      : user?.role === 'third_party'
+        ? ThirdPartyTabs
+        : user?.role === 'doctor'
+          ? DoctorTabs
+          : user?.role === 'pharmacy_admin'
+            ? PharmacyTabs
+            : PatientTabs;
+
   return (
     <NavigationContainer>
-      {!user ? (
-        <AuthStack />
-      ) : user.role === 'driver' ? (
-        <DriverTabs />
-      ) : user.role === 'third_party' ? (
-        <ThirdPartyTabs />
-      ) : user.role === 'doctor' ? (
-        <DoctorTabs />
-      ) : user.role === 'pharmacy_admin' ? (
-        <PharmacyTabs />
-      ) : (
-        <PatientTabs />
-      )}
+      {!user ? <AuthStack /> : <SignedInStack key={user.role} Tabs={Tabs} />}
     </NavigationContainer>
   );
 }

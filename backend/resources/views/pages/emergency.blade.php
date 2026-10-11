@@ -251,8 +251,25 @@
       state.address = addr;
       state.lat = null;
       state.lng = null;
-      locLabel.textContent = 'Address entered.';
+      locLabel.textContent = 'Looking up address…';
       locStatus.textContent = addr;
+      // Resolve to real coordinates (OpenStreetMap via /api/geocode) so results rank by distance.
+      fetch('{{ url('/api/geocode/autocomplete') }}?q=' + encodeURIComponent(addr), { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (list) {
+          if (state.address !== addr) return;
+          if (list && list.length) {
+            state.lat = list[0].lat;
+            state.lng = list[0].lng;
+            state.address = list[0].label;
+            locLabel.textContent = 'Address found.';
+            locStatus.textContent = list[0].label;
+          } else {
+            locLabel.textContent = 'Address entered.';
+            locStatus.textContent = addr + ' (could not pin it on the map — results may not be sorted by distance)';
+          }
+        })
+        .catch(function () { if (state.address === addr) locLabel.textContent = 'Address entered.'; });
     }
   });
 

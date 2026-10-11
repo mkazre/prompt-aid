@@ -57,13 +57,14 @@ class RidesTable
                 Action::make('assignDriver')
                     ->label('Assign driver')
                     ->icon('heroicon-o-user-plus')
-                    ->visible(fn (Ride $record): bool => $record->driver_profile_id === null)
+                    ->visible(fn (Ride $record): bool => $record->driver_profile_id === null && $record->status === Ride::STATUS_REQUESTED)
                     ->schema([
                         Select::make('driver_profile_id')
                             ->label('Driver')
-                            ->options(fn (): array => DriverProfile::query()
+                            ->options(fn (Ride $record): array => DriverProfile::query()
                                 ->where('availability', DriverProfile::AVAILABLE)
                                 ->where('status', 'active')
+                                ->whereIn('vehicle_type', RideDispatchService::compatibleVehicleTypes((string) $record->vehicle_type))
                                 ->with('user')
                                 ->get()
                                 ->mapWithKeys(fn (DriverProfile $driver): array => [$driver->id => "{$driver->user->name} ({$driver->vehicle_type})"])
@@ -73,9 +74,17 @@ class RidesTable
                     ])
                     ->action(function (array $data, Ride $record, RideDispatchService $dispatch): void {
                         $driver = DriverProfile::query()->findOrFail($data['driver_profile_id']);
-                        $dispatch->assignDriver($record, $driver);
-                        Notification::make()->title('Driver assigned')->success()->send();
+                        try {
+                            $dispatch->reassignByAdmin($record, $driver);
+                            Notification::make()->title('Driver assigned')->success()->send();
+                        } catch (\App\Services\Rides\RideActionException $e) {
+                            Notification::make()->title($e->getMessage())->danger()->send();
+                        }
                     }),
+                Action::make('view')
+                    ->label('View')
+                    ->icon('heroicon-o-eye')
+                    ->url(fn (Ride $record): string => \App\Filament\Resources\Rides\RideResource::getUrl('view', ['record' => $record])),
                 EditAction::make(),
             ])
             ->toolbarActions([

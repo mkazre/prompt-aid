@@ -53,9 +53,12 @@ class LabRequestService
                 $request->items()->create($item);
             }
 
-            $this->notifier->email($patient->user, 'Lab request logged', "Dr. {$doctor->user->name} has requested tests for you. A lab partner will be in touch to collect a sample.");
+            $this->notifier->email($patient->user, 'Lab request logged', "Dr. {$doctor->user->name} has requested tests for you. A lab partner will be in touch to collect a sample.", ['type' => 'lab', 'data' => ['route' => 'lab_results', 'params' => ['lab_request_id' => $request->id], 'url' => '/account/results']]);
 
             $labPartners = User::query()->where('role', User::ROLE_THIRD_PARTY)->where('status', 'active')->get();
+            foreach ($labPartners as $partner) {
+                app(\App\Services\Notifications\InAppNotifier::class)->send($partner, 'lab', 'New lab request available', "Dr. {$doctor->user->name} logged a {$priority} request ({$request->request_ref}).", ['route' => 'lab_requests', 'params' => ['lab_request_id' => $request->id]]);
+            }
             if ($labPartners->isNotEmpty()) {
                 StaffNotifier::alert(
                     $labPartners,
@@ -80,7 +83,9 @@ class LabRequestService
             'accepted_at' => now(),
         ]);
 
-        $this->notifier->push($request->patient->user, 'Lab request accepted', "{$thirdParty->company_name} will collect your sample soon.");
+        $this->notifier->push($request->patient->user, 'Lab request accepted', "{$thirdParty->company_name} will collect your sample soon.", ['type' => 'lab', 'data' => ['route' => 'lab_results', 'params' => ['lab_request_id' => $request->id], 'url' => '/account/results']]);
+
+        app(\App\Services\Notifications\InAppNotifier::class)->send($request->doctor->user, 'lab', 'Lab request accepted', "{$thirdParty->company_name} accepted the {$request->request_ref} request for {$request->patient->user->name}.", ['route' => 'doctor_lab_requests', 'params' => ['lab_request_id' => $request->id]]);
 
         StaffNotifier::alert(
             $request->doctor->user,
@@ -120,8 +125,8 @@ class LabRequestService
 
         $request->update(['status' => LabRequest::STATUS_COMPLETED, 'completed_at' => now()]);
 
-        $this->notifier->email($request->patient->user, 'Your lab results are ready', "Results for your {$request->request_ref} request are now available in your dashboard.");
-        $this->notifier->email($request->doctor->user, 'Lab results uploaded', "Results for {$request->patient->user->name}'s {$request->request_ref} request are ready to review.");
+        $this->notifier->email($request->patient->user, 'Your lab results are ready', "Results for your {$request->request_ref} request are now available in your dashboard.", ['type' => 'lab', 'data' => ['route' => 'lab_results', 'params' => ['lab_request_id' => $request->id], 'url' => '/account/results']]);
+        $this->notifier->email($request->doctor->user, 'Lab results uploaded', "Results for {$request->patient->user->name}'s {$request->request_ref} request are ready to review.", ['type' => 'lab', 'data' => ['route' => 'doctor_lab_requests', 'params' => ['lab_request_id' => $request->id]]]);
 
         StaffNotifier::alert(
             $request->doctor->user,

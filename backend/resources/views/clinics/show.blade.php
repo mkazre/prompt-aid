@@ -53,7 +53,7 @@
     <div class="pa-card pa-card-pad">
       <h3 style="margin-bottom:14px">Where to find us</h3>
       <div style="font-size:15px;line-height:1.6;color:var(--pa-ink-soft)">{{ $clinic->name }}<br />{{ $clinic->address }}@if($clinic->city), {{ $clinic->city }}@endif
-        <div style="margin-top:14px"><a class="pa-btn-ghost pa-btn-sm" href="{{ route('shuttle') }}?to={{ urlencode($clinic->name) }}"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Book a shuttle here</a></div>
+        <div style="margin-top:14px"><a class="pa-btn-ghost pa-btn-sm" href="{{ $clinic->shuttleUrl() }}"><span class="pa-tick-beacon" style="width:6px;height:6px"></span>Book a shuttle here</a></div>
       </div>
     </div>
   </div>

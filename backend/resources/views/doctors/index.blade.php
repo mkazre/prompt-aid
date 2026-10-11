@@ -1,7 +1,11 @@
 <x-layout title="Find a doctor · Prompt Aid">
 <div class="pa-pagehead"><div class="inner">
   <div class="pa-crumb"><a href="{{ url('/') }}">Home</a> <span style="color:#CFC8B8">/</span> Find care</div>
-  <h1>Find a doctor</h1><p class="pa-muted" style="font-size:15px;margin:6px 0 24px">{{ number_format($doctors->total()) }} doctors across South Africa.</p>
+  <h1>Find a doctor</h1><p class="pa-muted" style="font-size:15px;margin:6px 0 16px">{{ number_format($doctors->total()) }} doctors across South Africa.</p>
+  <form method="GET" action="{{ route('doctors.index') }}" role="search" class="pa-doc-search">
+    <input class="pa-field" type="text" name="search" value="{{ request('search') }}" data-pa-search placeholder="Search doctor, speciality, symptom or clinic" aria-label="Search doctors, specialities, symptoms or clinics" />
+    <button type="submit" class="pa-btn">Search</button>
+  </form>
   <div class="pa-tabs" style="gap:2px">
     <a class="pa-tab is-on" href="{{ route('doctors.index') }}" style="border-bottom:0">All providers</a>
     <a class="pa-tab" href="{{ route('doctors.index') }}" style="border-bottom:0">Doctors</a>
@@ -30,6 +34,12 @@
     </form>
   </aside>
   <div>
+    @if (\App\Support\DoctorNowSettings::bool('doctor_now_enabled') && (auth()->guest() || auth()->user()->isPatient()))
+      <div class="pa-dn-cta">
+        <div><h3>Don't want to wait for a slot?</h3><p>See the next available doctor now — by video, or at rooms near you.</p></div>
+        <a class="pa-btn-beacon" href="{{ auth()->check() ? route('account.doctor-now') : route('login') }}">See a doctor now</a>
+      </div>
+    @endif
     <div class="pa-spread" style="margin-bottom:16px">
       <div style="font-size:14px;color:var(--pa-muted)"><strong style="color:var(--pa-ink)">{{ $doctors->total() }}</strong> results</div>
     </div>
