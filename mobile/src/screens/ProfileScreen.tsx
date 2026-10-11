@@ -1,76 +1,107 @@
-import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { api, apiErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Card, PrimaryButton } from '../components/UI';
-import { colors, font, spacing } from '../theme';
+import { PaAvatar } from '../components/pa';
+import AccountTiles from '../components/AccountTiles';
+import { Field, PrimaryButton, SectionTitle, SettingTile, Sheet, SoftCard } from '../components/settings-ui';
+import { avatarUrl } from '../services/app';
+import { pa, paFonts } from '../theme';
 
-export default function ProfileScreen({ navigation }: any) {
-  const { user, logout } = useAuth();
+/**
+ * Profile & settings for patient, pharmacy vendor and lab/partner roles:
+ * editable name/phone (PUT /profile), role shortcuts, and the shared
+ * account tiles (password, T&C, about, logout, version).
+ */
+export default function ProfileScreen({ navigation, route }: any) {
+  const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const [editing, setEditing] = useState(false);
   const isPatient = user?.role === 'patient';
+  const photo = avatarUrl(user?.avatar);
+  // Pushed inside the patient Record stack (has a header) vs. a tab root.
+  const hasHeader = route?.name === 'ProfileHome';
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Image source={require('../../assets/icon.png')} style={styles.avatar} />
-        <Text style={styles.name}>{user?.name}</Text>
-        <Text style={styles.role}>{roleLabel(user?.role)}</Text>
-      </View>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: hasHeader ? 16 : insets.top + 12, paddingBottom: 48 }}>
+      {!hasHeader ? <Text style={styles.title}>Profile</Text> : null}
 
-      <Card style={{ marginTop: spacing.lg }}>
-        <Row label="Email" value={user?.email} />
-        <Row label="Phone" value={user?.phone ?? '—'} />
-        <Row label="Status" value={user?.status} />
-      </Card>
+      <SoftCard style={styles.profile}>
+        {photo ? <Image source={{ uri: photo }} style={styles.photo} /> : <PaAvatar name={user?.name} size={56} />}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.name} numberOfLines={1}>{user?.name}</Text>
+          <Text style={styles.sub} numberOfLines={1}>{roleLabel(user?.role)}</Text>
+          <Text style={styles.sub} numberOfLines={1}>{user?.phone ?? user?.email}</Text>
+        </View>
+        <Pressable onPress={() => setEditing(true)} hitSlop={12} style={styles.edit} accessibilityLabel="Edit profile">
+          <Ionicons name="create-outline" size={20} color={pa.info} />
+        </Pressable>
+      </SoftCard>
 
-      {isPatient && (
-        <Card style={{ marginTop: spacing.md, padding: 0 }}>
-          <MenuItem icon="🧪" label="My Lab & Diagnostic Results" onPress={() => navigation.navigate('LabResults')} />
-          <MenuItem icon="💊" label="My Pharmacy Orders" onPress={() => navigation.navigate('Orders')} last />
-        </Card>
-      )}
+      {isPatient ? (
+        <>
+          <SectionTitle>My health</SectionTitle>
+          <View style={styles.grid}>
+            <SettingTile icon="calendar-outline" title="Appointments" onPress={() => navigation.navigate('Appointments')} />
+            <SettingTile icon="flask-outline" title="Lab results" onPress={() => navigation.navigate('LabResults')} />
+            <SettingTile icon="bag-handle-outline" title="Orders" subtitle="Pharmacy" onPress={() => navigation.navigate('Orders')} />
+            <SettingTile icon="receipt-outline" title="Invoices" onPress={() => navigation.navigate('Invoices')} />
+          </View>
+        </>
+      ) : null}
 
-      <View style={{ marginTop: spacing.lg }}>
-        <PrimaryButton title="Sign out" variant="danger" onPress={logout} />
-      </View>
-    </View>
+      <AccountTiles navigation={navigation} />
+
+      {editing ? <EditSheet onClose={() => setEditing(false)} /> : null}
+    </ScrollView>
   );
 }
 
-function MenuItem({ icon, label, onPress, last }: { icon: string; label: string; onPress: () => void; last?: boolean }) {
-  return (
-    <Pressable onPress={onPress} style={[styles.menuItem, !last && styles.menuItemBorder]}>
-      <Text style={styles.menuIcon}>{icon}</Text>
-      <Text style={styles.menuLabel}>{label}</Text>
-      <Text style={styles.menuChevron}>›</Text>
-    </Pressable>
-  );
-}
+function EditSheet({ onClose }: { onClose: () => void }) {
+  const { user, refreshMe } = useAuth();
+  const [name, setName] = useState(user?.name ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [saving, setSaving] = useState(false);
 
-function Row({ label, value }: { label: string; value?: string | null }) {
+  async function save() {
+    if (!name.trim()) {
+      Alert.alert('Name required', 'Enter your name.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.put('/profile', { name: name.trim(), phone: phone.trim() || null });
+      await refreshMe();
+      onClose();
+    } catch (e) {
+      Alert.alert('Could not save', apiErrorMessage(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
-    </View>
+    <Sheet visible onClose={onClose} title="Edit profile" footer={<PrimaryButton title="Save" onPress={save} loading={saving} />}>
+      <Field label="Full name" value={name} onChangeText={setName} />
+      <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <Text style={{ fontFamily: paFonts.regular, fontSize: 12, color: pa.muted }}>Email: {user?.email}</Text>
+    </Sheet>
   );
 }
 
 function roleLabel(role?: string) {
-  return { driver: 'Shuttle Driver', third_party: 'Lab / Diagnostics Partner', pharmacy_admin: 'Pharmacy Vendor' }[role ?? ''] ?? 'Patient';
+  return { driver: 'Shuttle driver', third_party: 'Lab / diagnostics partner', pharmacy_admin: 'Pharmacy vendor', doctor: 'Doctor' }[role ?? ''] ?? 'Patient';
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.gray50, padding: spacing.lg },
-  header: { alignItems: 'center', marginTop: spacing.lg },
-  avatar: { width: 84, height: 84, borderRadius: 42 },
-  name: { fontFamily: font.bold, fontSize: 20, color: colors.secondary, marginTop: spacing.sm },
-  role: { fontFamily: font.medium, fontSize: 13, color: colors.accent, marginTop: 2 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.gray100 },
-  rowLabel: { fontFamily: font.regular, color: colors.gray600 },
-  rowValue: { fontFamily: font.medium, color: colors.gray900 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
-  menuItemBorder: { borderBottomWidth: 1, borderBottomColor: colors.gray100 },
-  menuIcon: { fontSize: 18, marginRight: spacing.sm },
-  menuLabel: { flex: 1, fontFamily: font.medium, fontSize: 14, color: colors.gray800 },
-  menuChevron: { fontSize: 18, color: colors.gray400 },
+  container: { flex: 1, backgroundColor: pa.paper },
+  title: { fontFamily: paFonts.black, fontSize: 22, color: pa.ink, marginBottom: 16 },
+  profile: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 24 },
+  photo: { width: 56, height: 56, borderRadius: 28 },
+  name: { fontFamily: paFonts.black, fontSize: 17, color: pa.ink },
+  sub: { fontFamily: paFonts.regular, fontSize: 13, color: pa.muted, marginTop: 2 },
+  edit: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#EAF1F8', alignItems: 'center', justifyContent: 'center' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
 });

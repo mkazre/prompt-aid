@@ -47,6 +47,12 @@ class AuthController extends Controller
             'main_member_name' => ['nullable', 'string', 'max:255'],
             'document' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
             'document_type' => ['nullable', 'in:'.PatientDocument::TYPE_ID.','.PatientDocument::TYPE_MEDICAL_AID_CARD],
+            // POPIA consents — all OPTIONAL so existing app builds (which
+            // send none) keep working; nothing is recorded unless sent.
+            'accept_terms' => ['nullable', 'boolean'],
+            'accept_health_data' => ['nullable', 'boolean'],
+            'consents' => ['nullable', 'array'],
+            'consents.*' => ['string'],
         ]);
 
         if ($validator->fails()) {
@@ -85,6 +91,10 @@ class AuthController extends Controller
                 'status' => 'pending_approval',
             ]);
         }
+
+        app(\App\Services\Privacy\ConsentService::class)->recordRegistration(
+            $user, \App\Services\Privacy\ConsentService::purposesFromRequest($request), 'app', $request
+        );
 
         $token = $user->createToken('mobile')->plainTextToken;
 

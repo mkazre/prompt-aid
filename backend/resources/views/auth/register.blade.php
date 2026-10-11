@@ -25,8 +25,13 @@
       <div class="pa-formrow"><label class="pa-label">Mobile</label><input class="pa-field" name="phone" value="{{ old('phone') }}" placeholder="082 000 0000" /></div>
       <div class="pa-formrow"><label class="pa-label">Email</label><input class="pa-field" type="email" name="email" required value="{{ old('email') }}" placeholder="you@example.co.za" /></div>
       <div class="pa-formrow"><label class="pa-label">Password</label><input class="pa-field" type="password" name="password" required placeholder="At least 8 characters" /></div>
-      <label class="pa-check"><input type="checkbox" required style="margin-right:6px">I consent to Prompt Aid processing my health information as set out in the <a href="{{ route('legal-popia') }}">POPIA notice</a>.</label>
-      <label class="pa-check"><input type="checkbox" required style="margin-right:6px">I accept the <a href="{{ route('terms') }}">terms of use</a>.</label>
+      <label class="pa-check"><input type="checkbox" name="accept_health_data" value="1" required @checked(old('accept_health_data')) style="margin-right:6px">I consent to Prompt Aid processing my health information as set out in the <a href="{{ route('legal-popia') }}">POPIA notice</a>.</label>
+      <label class="pa-check"><input type="checkbox" name="accept_terms" value="1" required @checked(old('accept_terms')) style="margin-right:6px">I accept the <a href="{{ route('terms') }}">terms of use</a> and <a href="{{ route('privacy') }}">privacy policy</a>.</label>
+      <div class="pa-consent-optional">
+        <div class="pa-consent-optional-title">Optional — you can change these any time under Privacy &amp; data</div>
+        <label class="pa-check"><input type="checkbox" name="consent_sms_whatsapp" value="1" @checked(old('consent_sms_whatsapp')) style="margin-right:6px">Send me appointment and trip updates by SMS or WhatsApp.</label>
+        <label class="pa-check"><input type="checkbox" name="consent_marketing" value="1" @checked(old('consent_marketing')) style="margin-right:6px">Send me health tips, news and offers.</label>
+      </div>
       <button type="submit" class="pa-btn pa-btn-block pa-btn-lg" style="margin-top:16px">Create account</button>
     </form>
     <div style="font-size:13px;color:var(--pa-muted);text-align:center;margin-top:16px">Already registered? <a href="{{ route('login') }}">Log in</a></div>

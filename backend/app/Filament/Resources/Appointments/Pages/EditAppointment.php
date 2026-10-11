@@ -13,6 +13,7 @@ class EditAppointment extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Resources\Appointments\AppointmentVideoAction::make(),
             DeleteAction::make(),
         ];
     }

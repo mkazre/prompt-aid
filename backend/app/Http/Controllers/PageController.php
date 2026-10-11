@@ -145,9 +145,14 @@ class PageController extends Controller
             'date' => ['required', 'date'],
         ]);
 
-        $slots = $booking->availableSlots($doctor, $request->integer('clinic_id'), $request->string('date'));
+        $slots = $booking->availableSlots($doctor, $request->integer('clinic_id'), (string) $request->string('date'));
+        $schedule = $booking->slotSchedule($doctor, $request->integer('clinic_id'), (string) $request->string('date'));
 
-        return response()->json(['slots' => $slots->values()]);
+        return response()->json([
+            'slots' => $slots->values(),
+            'sessions' => $schedule['sessions'],
+            'time_off' => $schedule['time_off'],
+        ]);
     }
 
     public function contact()

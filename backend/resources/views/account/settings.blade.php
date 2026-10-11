@@ -33,8 +33,8 @@
     <div class="pa-card-head"><h3>Your data</h3></div>
     <div class="pa-card-body">
       <p style="font-size:15px;color:var(--pa-ink-soft)">Under POPIA you may request a copy of everything we hold, ask us to correct it, or close your account. Clinical records are kept for six years from the last entry as the HPCSA requires, even after closure.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn-ghost" href="{{ route('legal-popia') }}">Read the POPIA notice</a><a class="pa-btn-ghost" style="color:var(--pa-signal);border-color:var(--pa-signal)" href="{{ route('contact') }}">Request data access or account closure</a></div>
-      <p class="pa-muted" style="margin-top:14px;font-size:13px">Record sharing with individual practitioners and notification preferences aren't available to manage from here yet — contact us if you need access changed.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn-ghost" href="{{ route('legal-popia') }}">Read the POPIA notice</a><a class="pa-btn-ghost" style="color:var(--pa-signal);border-color:var(--pa-signal)" href="{{ route('account.privacy') }}">Manage consents, download or delete my data</a></div>
+      <p class="pa-muted" style="margin-top:14px;font-size:13px">See who has opened your health record, change marketing/SMS/location/scheme-sharing consents and make POPIA requests on the <a href="{{ route('account.privacy') }}">Your data &amp; consents</a> page.</p>
     </div>
   </div>
 </div>

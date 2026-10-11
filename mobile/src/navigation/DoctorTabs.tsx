@@ -1,5 +1,4 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DoctorDashboardScreen from '../screens/doctor/DashboardScreen';
@@ -7,13 +6,21 @@ import DoctorCalendarScreen from '../screens/doctor/CalendarScreen';
 import DoctorEncounterScreen from '../screens/doctor/EncounterScreen';
 import DoctorPatientsScreen from '../screens/doctor/PatientsScreen';
 import DoctorSettingsScreen from '../screens/doctor/SettingsScreen';
+import DoctorServicesScreen from '../screens/doctor/ServicesScreen';
+import DoctorHolidayScreen from '../screens/doctor/HolidayScreen';
+import DoctorSessionsScreen from '../screens/doctor/SessionsScreen';
+import DoctorEditProfileScreen from '../screens/doctor/EditProfileScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import AppPageScreen from '../screens/AppPageScreen';
 import ConsultRoomScreen from '../screens/ConsultRoomScreen';
 import { Appointment } from '../api/types';
 import { pa, paFonts } from '../theme';
+import { tabBarScreenOptions, tabIcon } from './tabBarTheme';
 
 const Tab = createBottomTabNavigator();
 const DashboardStack = createNativeStackNavigator();
 const CalendarStack = createNativeStackNavigator();
+const SettingsStack = createNativeStackNavigator();
 
 /** Shared across both stacks below — the encounter and consult-room screens are pushed from either "My day" or the calendar. */
 export type DoctorStackParamList = {
@@ -50,25 +57,29 @@ function CalendarStackNavigator() {
   );
 }
 
-function Icon({ label, focused }: { label: string; focused: boolean }) {
-  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{label}</Text>;
+function SettingsStackNavigator() {
+  return (
+    <SettingsStack.Navigator screenOptions={stackHeaderOptions}>
+      <SettingsStack.Screen name="DoctorSettingsHome" component={DoctorSettingsScreen} options={{ headerShown: false }} />
+      <SettingsStack.Screen name="DoctorServices" component={DoctorServicesScreen} options={{ title: 'Services' }} />
+      <SettingsStack.Screen name="DoctorHoliday" component={DoctorHolidayScreen} options={{ title: 'Holiday' }} />
+      <SettingsStack.Screen name="DoctorSessions" component={DoctorSessionsScreen} options={{ title: 'Sessions' }} />
+      <SettingsStack.Screen name="DoctorEditProfile" component={DoctorEditProfileScreen} options={{ title: 'Edit profile' }} />
+      <SettingsStack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change password' }} />
+      <SettingsStack.Screen name="AppPage" component={AppPageScreen} options={{ title: '' }} />
+    </SettingsStack.Navigator>
+  );
 }
 
 export default function DoctorTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: pa.signal,
-        tabBarInactiveTintColor: pa.muted,
-        tabBarStyle: { backgroundColor: pa.surface, borderTopColor: pa.line },
-        tabBarLabelStyle: { fontFamily: paFonts.bold, fontSize: 11 },
-      }}
+      screenOptions={tabBarScreenOptions}
     >
-      <Tab.Screen name="DoctorDashboard" component={DashboardStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="🖥️" focused={focused} />, title: 'Today' }} />
-      <Tab.Screen name="DoctorCalendar" component={CalendarStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="📅" focused={focused} />, title: 'Calendar' }} />
-      <Tab.Screen name="DoctorPatients" component={DoctorPatientsScreen} options={{ tabBarIcon: ({ focused }) => <Icon label="👥" focused={focused} />, title: 'Patients' }} />
-      <Tab.Screen name="DoctorSettings" component={DoctorSettingsScreen} options={{ tabBarIcon: ({ focused }) => <Icon label="☰" focused={focused} />, title: 'Settings' }} />
+      <Tab.Screen name="DoctorDashboard" component={DashboardStackNavigator} options={{ tabBarIcon: tabIcon('today-outline'), title: 'Today' }} />
+      <Tab.Screen name="DoctorCalendar" component={CalendarStackNavigator} options={{ tabBarIcon: tabIcon('calendar-outline'), title: 'Calendar' }} />
+      <Tab.Screen name="DoctorPatients" component={DoctorPatientsScreen} options={{ tabBarIcon: tabIcon('people-outline'), title: 'Patients' }} />
+      <Tab.Screen name="DoctorSettings" component={SettingsStackNavigator} options={{ tabBarIcon: tabIcon('settings-outline'), title: 'Settings' }} />
     </Tab.Navigator>
   );
 }

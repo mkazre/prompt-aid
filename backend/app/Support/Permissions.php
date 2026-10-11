@@ -23,8 +23,10 @@ class Permissions
      */
     public const RESOURCES = [
         'appointments' => 'Clinical',
+        'conversations' => 'Clinical',
         'clinics' => 'Clinical',
         'doctor-profiles' => 'Clinical',
+        'doctor-matches' => 'Clinical',
         'encounters' => 'Clinical',
         'lab-requests' => 'Clinical',
         'patient-profiles' => 'Clinical',
@@ -41,6 +43,8 @@ class Permissions
         'pharmacies' => 'Marketplace',
         'products' => 'Marketplace',
 
+        'app-widgets' => 'Site',
+        'health-articles' => 'Site',
         'menus' => 'Site',
         'page-templates' => 'Site',
         'pages' => 'Site',
@@ -58,6 +62,7 @@ class Permissions
         'users' => 'Users & Access',
 
         'audit-logs' => 'System',
+        'conditions' => 'System',
         'emergency-contacts' => 'System',
         'notification-log' => 'System',
         'provider-applications' => 'System',
@@ -65,6 +70,13 @@ class Permissions
         'triage-config' => 'System',
 
         'triage-submissions' => 'Overview',
+
+        // POPIA compliance pack (super_admin-only resources).
+        'consents' => 'Privacy',
+        'data-access-logs' => 'Privacy',
+        'dsr-requests' => 'Privacy',
+        'legal-documents' => 'Privacy',
+        'security-incidents' => 'Privacy',
     ];
 
     /**
@@ -73,10 +85,15 @@ class Permissions
      */
     public const PAGES = [
         'live-dispatch.view' => ['group' => 'Ride Service', 'label' => 'Live Dispatch'],
+        'shuttle-settings.manage' => ['group' => 'Ride Service', 'label' => 'Shuttle settings (pricing, cancellation, dispatch)'],
+        'ride-simulator.run' => ['group' => 'Ride Service', 'label' => 'TEST trip simulator'],
         'media-library.view' => ['group' => 'Site', 'label' => 'Media Library'],
         'site-content.view' => ['group' => 'Site', 'label' => 'Site content (home page, emergency popup, labels)'],
         'roles-permissions.view' => ['group' => 'System', 'label' => 'Roles & Permissions (view)'],
         'roles-permissions.manage' => ['group' => 'System', 'label' => 'Roles & Permissions (manage)'],
+        'broadcast-notifications.send' => ['group' => 'System', 'label' => 'Broadcast notifications'],
+        'privacy-settings.manage' => ['group' => 'Privacy', 'label' => 'Privacy settings (retention, Information Officer)'],
+        'doctor-now-settings.manage' => ['group' => 'System', 'label' => 'On-demand doctors settings'],
     ];
 
     /**
@@ -147,7 +164,7 @@ class Permissions
             User::ROLE_DOCTOR => self::keysFor([
                 'appointments', 'doctor-profiles', 'encounters', 'lab-requests',
                 'patient-profiles', 'prescriptions', 'reviews', 'services',
-                'invoices', 'claims',
+                'invoices', 'claims', 'conversations',
             ]),
 
             default => [],

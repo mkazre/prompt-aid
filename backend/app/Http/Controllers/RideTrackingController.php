@@ -2,36 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmergencyContact;
 use App\Models\Ride;
+use App\Services\Rides\RideStatusPresenter;
+use App\Support\ShuttleSettings;
 use Illuminate\Http\Request;
 
 class RideTrackingController extends Controller
 {
-    public function show(Request $request, Ride $ride)
+    public function show(Request $request, Ride $ride, RideStatusPresenter $presenter)
     {
-        abort_unless($ride->patient_profile_id === $request->user()->patientProfile->id, 403);
+        $this->authorizePatient($request, $ride);
 
-        return view('rides.track', ['ride' => $ride->load(['driver.user'])]);
+        $ride->load(['driver.user', 'review', 'returnLeg', 'charges']);
+
+        return view('rides.track', [
+            'ride' => $ride,
+            'initial' => $presenter->forPatient($ride),
+            'emergencyContacts' => EmergencyContact::activeOrdered(),
+            'cancelReasons' => ShuttleSettings::json('shuttle_cancel_reasons_patient'),
+        ]);
     }
 
-    /** Lightweight JSON polled by the tracking map — session-authenticated, no Sanctum token needed. */
-    public function status(Request $request, Ride $ride)
+    /**
+     * Polled every ~3.5 s by the tracking map (session auth). Also drives the
+     * lazy dispatch + TEST simulator progression. `rk`/`tk` = route keys
+     * the client already has (polylines are omitted when unchanged).
+     */
+    public function status(Request $request, Ride $ride, RideStatusPresenter $presenter)
     {
-        abort_unless($ride->patient_profile_id === $request->user()->patientProfile->id, 403);
+        $this->authorizePatient($request, $ride);
 
-        $ride->load('driver.user');
+        return response()->json($presenter->forPatient($ride, $request->query('rk'), $request->query('tk')));
+    }
 
-        return response()->json([
-            'status' => $ride->status,
-            'eta_minutes' => $ride->eta_minutes,
-            'driver' => $ride->driver ? [
-                'name' => $ride->driver->user->name,
-                'vehicle_make' => $ride->driver->vehicle_make,
-                'vehicle_model' => $ride->driver->vehicle_model,
-                'vehicle_plate_no' => $ride->driver->vehicle_plate_no,
-                'current_lat' => $ride->driver->current_lat,
-                'current_lng' => $ride->driver->current_lng,
-            ] : null,
-        ]);
+    protected function authorizePatient(Request $request, Ride $ride): void
+    {
+        $pid = $request->user()?->patientProfile?->id;
+        abort_unless($pid && $ride->patient_profile_id === $pid, 403);
     }
 }

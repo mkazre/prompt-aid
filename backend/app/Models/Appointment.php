@@ -35,6 +35,7 @@ class Appointment extends Model
         'booking_ref', 'patient_profile_id', 'doctor_profile_id', 'clinic_id', 'service_id',
         'date', 'start_time', 'end_time', 'visit_type', 'status', 'reason', 'cancel_reason', 'ride_requested',
         'mode', 'meet_url', 'meet_event_id', 'meet_created_at', 'requested_specialty',
+        'video_room', 'video_ended_at',
     ];
 
     protected function casts(): array
@@ -43,6 +44,7 @@ class Appointment extends Model
             'date' => 'date',
             'ride_requested' => 'boolean',
             'meet_created_at' => 'datetime',
+            'video_ended_at' => 'datetime',
         ];
     }
 
@@ -51,11 +53,53 @@ class Appointment extends Model
         static::creating(function (self $appointment) {
             $appointment->booking_ref ??= 'APT-'.strtoupper(uniqid());
         });
+
+        // Every video consult gets its own unguessable room name, generated
+        // server-side (see App\Services\Video\VideoRoomService). Existing
+        // rows get one on save; new rows right after insert, once the id
+        // is known.
+        static::saving(function (self $appointment) {
+            if ($appointment->exists && $appointment->isVideo() && ! $appointment->video_room) {
+                $appointment->video_room = self::generateVideoRoom($appointment->id);
+            }
+        });
+
+        static::created(function (self $appointment) {
+            if ($appointment->isVideo() && ! $appointment->video_room) {
+                $appointment->video_room = self::generateVideoRoom($appointment->id);
+                $appointment->saveQuietly();
+            }
+        });
+    }
+
+    /** e.g. promptaid-1234-9f86d081884c7d65 — the 16 random hex chars carry the unguessability. */
+    public static function generateVideoRoom(int $id): string
+    {
+        return 'promptaid-'.$id.'-'.bin2hex(random_bytes(8));
     }
 
     public function isVideo(): bool
     {
-        return $this->mode === self::MODE_VIDEO;
+        // Slot bookings express video as visit_type=telemed without setting mode.
+        return $this->mode === self::MODE_VIDEO || $this->visit_type === 'telemed';
+    }
+
+    public function videoWindowStart(): ?\Carbon\Carbon
+    {
+        if (! $this->date || ! $this->start_time) {
+            return null;
+        }
+
+        return \Carbon\Carbon::parse("{$this->date->toDateString()} {$this->start_time}")->subMinutes(10);
+    }
+
+    public function videoWindowEnd(): ?\Carbon\Carbon
+    {
+        if (! $this->date || ! ($this->end_time ?: $this->start_time)) {
+            return null;
+        }
+
+        return \Carbon\Carbon::parse("{$this->date->toDateString()} ".($this->end_time ?: $this->start_time))->addMinutes(30);
     }
 
     /**
@@ -64,14 +108,18 @@ class Appointment extends Model
      */
     public function canJoinVideoNow(): bool
     {
-        if (! $this->isVideo() || ! $this->meet_url) {
+        if (! $this->isVideo() || ! $this->doctor_profile_id) {
             return false;
         }
 
-        $start = \Carbon\Carbon::parse("{$this->date->toDateString()} {$this->start_time}");
-        $end = \Carbon\Carbon::parse("{$this->date->toDateString()} {$this->end_time}");
+        if (in_array($this->status, [self::STATUS_CANCELLED, self::STATUS_NO_SHOW, self::STATUS_MATCHING], true)) {
+            return false;
+        }
 
-        return now()->between($start->clone()->subMinutes(10), $end->clone()->addMinutes(30));
+        $start = $this->videoWindowStart();
+        $end = $this->videoWindowEnd();
+
+        return $start && $end && now()->between($start, $end);
     }
 
     public function patient(): BelongsTo

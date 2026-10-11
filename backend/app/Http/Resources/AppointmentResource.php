@@ -20,6 +20,11 @@ class AppointmentResource extends JsonResource
             'status' => $this->status,
             'mode' => $this->mode,
             'meet_url' => $this->meet_url,
+            // In-app video: the join URL itself only comes from
+            // GET /api/appointments/{id}/video (participant + window checked).
+            'is_video' => $this->isVideo(),
+            'can_join_video' => $this->canJoinVideoNow(),
+            'video_ended_at' => $this->video_ended_at?->toIso8601String(),
             'requested_specialty' => $this->requested_specialty,
             'reason' => $this->reason,
             'cancel_reason' => $this->cancel_reason,

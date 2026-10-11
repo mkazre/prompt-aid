@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PatientDocument extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
 
     public const TYPE_ID = 'id';
 

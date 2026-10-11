@@ -55,6 +55,9 @@ class TriageSubmissionController extends Controller
                     icon: 'heroicon-o-exclamation-triangle',
                     color: $data['level'] === 'red' ? 'danger' : 'warning',
                 );
+                foreach ($admins as $admin) {
+                    app(\App\Services\Notifications\InAppNotifier::class)->send($admin, 'triage', strtoupper($data['level'])." pre-triage result — {$submission->reference}", 'A patient self-assessed as '.$data['level'].'.', ['url' => '/staff']);
+                }
                 $submission->update(['staff_notified' => true]);
             }
 

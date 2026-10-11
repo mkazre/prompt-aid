@@ -32,9 +32,16 @@ class RegistrationWizardController extends Controller
             'email' => ['required', 'email', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'unique:users,phone'],
             'password' => ['required', 'string', 'min:8'],
+            // POPIA consent capture (recorded on the final step, see ConsentService).
+            'accept_terms' => ['accepted'],
+            'accept_health_data' => ['accepted'],
+        ], [
+            'accept_terms.accepted' => 'Please accept the terms of use and privacy policy to continue.',
+            'accept_health_data.accepted' => 'We need your consent to process your health information to provide care.',
         ]);
 
         $wizard = $request->session()->get(self::SESSION_KEY, []);
+        $wizard['consents'] = \App\Services\Privacy\ConsentService::purposesFromRequest($request);
         // Kept in the session (server-side, not the cookie itself) only for
         // the few minutes it takes to finish the wizard; User::create()
         // hashes it once, on the final step.
@@ -150,6 +157,8 @@ class RegistrationWizardController extends Controller
             $document,
             $documentType
         );
+
+        app(\App\Services\Privacy\ConsentService::class)->recordRegistration($user, $wizard['consents'] ?? [], 'web', $request);
 
         $request->session()->forget(self::SESSION_KEY);
 

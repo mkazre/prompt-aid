@@ -47,6 +47,7 @@ class AppointmentsTable
                 SelectFilter::make('clinic_id')->relationship('clinic', 'name')->label('Clinic'),
             ])
             ->recordActions([
+                \App\Filament\Resources\Appointments\AppointmentVideoAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

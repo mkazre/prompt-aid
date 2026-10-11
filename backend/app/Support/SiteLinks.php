@@ -53,7 +53,7 @@ class SiteLinks
                 'levels' => $emergency['levels'],
             ],
             'urls' => [
-                'doctorNow' => route('instant-consult'),
+                'doctorNow' => route('account.doctor-now'),
                 'findCare' => route('doctors.index'),
                 'virtualConsult' => route('virtual-consult'),
                 'whatsapp' => self::whatsappUrl(),

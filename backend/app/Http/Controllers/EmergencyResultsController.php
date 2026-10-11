@@ -105,7 +105,9 @@ class EmergencyResultsController extends Controller
             ->map(function (array $r) use ($lat, $lng) {
                 $r['distance_km'] = $this->geo->distanceKm($lat, $lng, $r['lat'], $r['lng']);
                 $r['eta_minutes'] = $this->geo->etaMinutes($r['distance_km']);
-                $quotes = $this->dispatch->quotesFor($lat, $lng, $r['lat'], $r['lng']);
+                // Straight-line estimate on purpose: one routing call per facility would
+                // flood the OSRM server on a page that lists many facilities.
+                $quotes = $this->dispatch->quotesFor($lat, $lng, $r['lat'], $r['lng'], false);
                 $r['shuttle_fare'] = $quotes[0]['fare'] ?? null;
 
                 return $r;

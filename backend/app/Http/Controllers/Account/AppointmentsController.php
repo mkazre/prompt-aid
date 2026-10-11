@@ -21,6 +21,21 @@ class AppointmentsController extends Controller
         ]);
     }
 
+    /**
+     * Server-side join: participant + window checked here, so the room URL
+     * never appears in the page source.
+     */
+    public function video(Request $request, Appointment $appointment, \App\Services\Video\VideoRoomService $video)
+    {
+        abort_unless($video->isParticipant($appointment, $request->user()), 404);
+
+        if (! $appointment->canJoinVideoNow()) {
+            return redirect()->route('account.appointments')->with('error', 'The video room opens 10 minutes before your appointment and closes 30 minutes after it ends.');
+        }
+
+        return redirect()->away($video->joinPayload($appointment, $request->user())['join_url']);
+    }
+
     public function cancel(Request $request, Appointment $appointment, AppointmentBookingService $booking)
     {
         // Route-model binding alone doesn't scope to the logged-in patient.

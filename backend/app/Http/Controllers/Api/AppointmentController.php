@@ -40,9 +40,17 @@ class AppointmentController extends Controller
             'date' => ['required', 'date', 'after_or_equal:today'],
         ]);
 
-        $slots = $this->bookingService->availableSlots($doctor, $request->integer('clinic_id'), $request->string('date'));
+        $slots = $this->bookingService->availableSlots($doctor, $request->integer('clinic_id'), (string) $request->string('date'));
 
-        return response()->json(['slots' => $slots->values()]);
+        // `slots` (free start times) stays for older app builds; `sessions`
+        // groups every slot by availability session with booked/past flags.
+        $schedule = $this->bookingService->slotSchedule($doctor, $request->integer('clinic_id'), (string) $request->string('date'));
+
+        return response()->json([
+            'slots' => $slots->values(),
+            'sessions' => $schedule['sessions'],
+            'time_off' => $schedule['time_off'],
+        ]);
     }
 
     public function store(Request $request)
@@ -59,6 +67,10 @@ class AppointmentController extends Controller
 
         $doctor = DoctorProfile::findOrFail($data['doctor_profile_id']);
         $patient = $request->user()->patientProfile;
+
+        if (! empty($data['service_id']) && ! $doctor->services()->whereKey($data['service_id'])->where('is_active', true)->exists()) {
+            return response()->json(['message' => 'That service is not offered by this doctor.'], 422);
+        }
 
         try {
             $appointment = $this->bookingService->book(

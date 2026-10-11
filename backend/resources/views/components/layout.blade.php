@@ -58,6 +58,17 @@
   </nav>
   <div class="actions">
     @auth
+      @php
+        try {
+            $layoutUnread = \App\Models\UserNotification::query()->where('user_id', auth()->id())->whereNull('read_at')->count();
+        } catch (\Throwable $e) {
+            $layoutUnread = 0;
+        }
+      @endphp
+      <a class="pa-bell" href="{{ route('account.notifications') }}" aria-label="Notifications{{ $layoutUnread ? ' ('.$layoutUnread.' unread)' : '' }}" title="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        @if ($layoutUnread > 0)<span class="pa-bell-count">{{ $layoutUnread > 99 ? '99+' : $layoutUnread }}</span>@endif
+      </a>
       <a class="pa-btn-ghost" href="{{ route('dashboard') }}">My account</a>
       <form method="POST" action="{{ route('logout') }}" style="display:inline">
         @csrf
@@ -95,8 +106,21 @@
 <div class="legal"><div class="inner2">
   <span>&copy; {{ date('Y') }} Prompt Aid (Pty) Ltd. Registered with the HPCSA and SAPC.</span>
   <span><a href="{{ route('legal-popia') }}">POPIA</a> · <a href="{{ route('terms') }}">Terms</a> · <a href="{{ route('privacy') }}">Privacy</a></span>
-</div></div>
+</div>
+@php
+  $footerIo = null;
+  try {
+      $footerIo = \App\Support\PrivacySettings::bool('privacy_io_show_in_footer') ? \App\Support\PrivacySettings::informationOfficer() : null;
+  } catch (\Throwable $e) {
+      $footerIo = null;
+  }
+@endphp
+@if ($footerIo)
+<div class="inner2 pa-footer-io">Information Officer: {{ $footerIo['name'] }}@if ($footerIo['email']) · <a href="mailto:{{ $footerIo['email'] }}">{{ $footerIo['email'] }}</a>@endif @if ($footerIo['phone']) · {{ $footerIo['phone'] }}@endif</div>
+@endif
+</div>
 </footer>
+@include('privacy.partials.cookie-notice')
 @php
   $layoutEmergencyContactsForJs = \App\Models\EmergencyContact::activeOrdered()
     ->map(fn ($c) => ['label' => $c->label, 'phone' => $c->phone, 'tel' => $c->tel_url, 'isPrimary' => (bool) $c->is_primary])

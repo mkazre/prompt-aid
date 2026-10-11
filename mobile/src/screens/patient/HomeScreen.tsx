@@ -3,13 +3,15 @@ import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
-import { Appointment, Doctor, LabRequest, LatestTriage, PrescriptionUpload } from '../../api/types';
+import { Appointment, LabRequest, LatestTriage, PrescriptionUpload } from '../../api/types';
 import { PaAvatar, PaBadge, PaQuickAction, PaSatsChip } from '../../components/pa';
 import { pa, paFonts } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { META } from '../../services/triage';
+import WidgetHost from '../../widgets/WidgetHost';
+import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 import { TriagePromptModal } from '../../components/pa/triage-extras';
-import { PaLiveStatus, navigateForEmergencyAction } from '../../components/pa/care-extras';
+import { navigateForEmergencyAction } from '../../components/pa/care-extras';
 import { STATUS_COLOURS, useSiteContent, websiteUrl } from '../../services/siteContent';
 
 interface TopService { kind: string; group: string; id: number; name: string; rating_avg: number; rating_count: number }
@@ -25,8 +27,12 @@ export default function HomeScreen({ navigation }: any) {
   const [prescriptions, setPrescriptions] = useState<PrescriptionUpload[]>([]);
   const [latestTriage, setLatestTriage] = useState<LatestTriage | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  // Keys of admin-configured widgets that rendered; null while loading. A
+  // hardcoded block below is hidden when the widget that replaces it is on.
+  const [widgetKeys, setWidgetKeys] = useState<string[] | null>(null);
+  const widgetOn = (key: string) => widgetKeys === null || widgetKeys.includes(key);
   const [scaleOpen, setScaleOpen] = useState(false);
-  const [topDoctors, setTopDoctors] = useState<Doctor[]>([]);
   const [topServices, setTopServices] = useState<TopService[]>([]);
   const content = useSiteContent();
 
@@ -40,10 +46,7 @@ export default function HomeScreen({ navigation }: any) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      api.get('/top-rated').then(({ data }) => {
-        setTopDoctors(data.doctors?.data ?? data.doctors ?? []);
-        setTopServices(data.services ?? []);
-      }).catch(() => {});
+      api.get('/top-rated').then(({ data }) => setTopServices(data.services ?? [])).catch(() => {});
       const [apptRes, labRes, presRes, triageRes] = await Promise.all([
         api.get('/appointments'),
         api.get('/lab-requests').catch(() => ({ data: { data: [] } })),
@@ -72,16 +75,19 @@ export default function HomeScreen({ navigation }: any) {
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(); setRefreshKey((k) => k + 1); }} />}
     >
       <View style={styles.greetRow}>
         <View>
           <Text style={styles.greetSmall}>Good {timeOfDay()}</Text>
           <Text style={styles.greetName}>{user?.name?.split(' ')[0]}</Text>
         </View>
-        <Pressable onPress={() => navigation.getParent()?.navigate('Profile')}>
-          <PaAvatar name={user?.name} size={44} />
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <CommsHeaderIcons showMessages />
+          <Pressable onPress={() => navigation.getParent()?.navigate('Profile')}>
+            <PaAvatar name={user?.name} size={44} />
+          </Pressable>
+        </View>
       </View>
 
       <TriagePromptModal
@@ -98,12 +104,14 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.blip} />
         <View style={{ flex: 1 }}>
           <Text style={styles.emergencyTitle}>Emergency?</Text>
-          <Text style={styles.emergencySub}>{content.emergency.eyebrow} — get help, a doctor in 30 min, or book care</Text>
+          <Text style={styles.emergencySub}>{content.emergency.eyebrow} — get help, a doctor now, or book care</Text>
         </View>
         <Text style={styles.emergencyArrow}>→</Text>
       </Pressable>
 
-      {triageIsRecent && latestTriage ? (
+      <WidgetHost screen="home" refreshKey={refreshKey} onLoaded={setWidgetKeys} style={{ marginBottom: 14 }} />
+
+      {!widgetOn('patient_latest_triage') && triageIsRecent && latestTriage ? (
         <Pressable style={styles.triageCard} onPress={() => navigation.navigate('TriageStart', { selfReported: undefined })}>
           <View style={{ flex: 1 }}>
             <Text style={styles.triageEyebrow}>Your last triage result</Text>
@@ -113,7 +121,7 @@ export default function HomeScreen({ navigation }: any) {
         </Pressable>
       ) : null}
 
-      {nextAppt ? (
+      {!widgetOn('patient_next_appointment') && nextAppt ? (
         <View style={styles.apptCard}>
           <View style={styles.apptEyebrowRow}>
             <View style={styles.beaconDot} />
@@ -125,6 +133,9 @@ export default function HomeScreen({ navigation }: any) {
             <Pressable style={styles.beaconBtn} onPress={() => navigation.getParent()?.navigate('Rides')}>
               <Text style={styles.beaconBtnText}>Track shuttle</Text>
             </Pressable>
+            <Pressable style={styles.ghostBtn} onPress={() => navigation.navigate('Chat', { appointmentId: nextAppt.id, title: `Dr. ${nextAppt.doctor?.name ?? ''}` })}>
+              <Text style={styles.ghostBtnText}>Message</Text>
+            </Pressable>
             <Pressable style={styles.ghostBtn} onPress={() => navigation.getParent()?.navigate('Profile', { screen: 'Appointments' })}>
               <Text style={styles.ghostBtnText}>Details</Text>
             </Pressable>
@@ -132,38 +143,44 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       ) : null}
 
+      {!widgetOn('patient_search_shortcuts') ? (
       <View style={styles.grid2}>
-        <PaQuickAction number="01" label="Find a doctor" onPress={() => navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: 'gp' } })} />
-        <PaQuickAction number="02" label="Virtual consult" onPress={() => navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: 'video' } })} />
-        <PaQuickAction number="03" label="Pharmacy" onPress={() => navigation.getParent()?.navigate('Pharmacy')} />
-        <PaQuickAction number="04" label="Book a shuttle" onPress={() => navigation.getParent()?.navigate('Rides')} />
-        <PaQuickAction number="05" label="Radiology" onPress={() => navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: 'radiology' } })} />
-        <PaQuickAction number="06" label="Laboratory" onPress={() => navigation.getParent()?.navigate('Care', { screen: 'FindCare', params: { group: 'laboratories' } })} />
+        <PaQuickAction number="01" label="Find a doctor" onPress={() => navigation.getParent()?.navigate('Care')} />
+        <PaQuickAction number="02" label="Order medicine" onPress={() => navigation.getParent()?.navigate('Pharmacy')} />
+        <PaQuickAction number="03" label="Book a shuttle" onPress={() => navigation.getParent()?.navigate('Rides')} />
+        <PaQuickAction number="04" label="Upload a script" onPress={() => navigation.getParent()?.navigate('Pharmacy', { screen: 'ScriptUpload' })} />
       </View>
+      ) : null}
 
+      {!widgetOn('patient_pending_lab_results') && (labResults.length || prescriptions.length) ? (
+        <>
+          <Text style={styles.sectionLabel}>Waiting for you</Text>
+          {labResults.map((l) => (
+            <Pressable key={l.id} style={styles.row} onPress={() => navigation.getParent()?.navigate('Profile', { screen: 'LabResults' })}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Lab result ready</Text>
+                <Text style={styles.rowSub}>{l.items?.[0]?.test_name ?? l.request_ref}</Text>
+              </View>
+              <PaBadge tone="go" label="New" />
+            </Pressable>
+          ))}
+          {prescriptions.map((p) => (
+            <View key={p.id} style={styles.row}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>Script under review</Text>
+                <Text style={styles.rowSub}>Uploaded {new Date(p.created_at).toLocaleDateString()}</Text>
+              </View>
+              <PaBadge tone="wait" label="Pending" />
+            </View>
+          ))}
+        </>
+      ) : null}
       <View style={styles.statusNote}>
         <View style={{ flexDirection: 'row', gap: 5, marginBottom: 6 }}>
           {(['green', 'orange', 'red'] as const).map((c) => <View key={c} style={[styles.statusDot, { backgroundColor: STATUS_COLOURS[c].fg }]} />)}
         </View>
         <Text style={styles.statusNoteText}>{content.home.status_note}</Text>
       </View>
-
-      {topDoctors.length ? (
-        <>
-          <Text style={styles.sectionLabel}>{content.home.top_doctors_heading}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
-            {topDoctors.map((d) => (
-              <Pressable key={d.id} style={styles.miniCard} onPress={() => navigation.getParent()?.navigate('Care', { screen: 'DoctorDetail', params: { doctorId: d.id } })}>
-                <PaAvatar name={d.name} size={38} />
-                <Text style={styles.miniTitle} numberOfLines={1}>{d.name}</Text>
-                <Text style={styles.miniSub} numberOfLines={1}>{d.specialization}</Text>
-                <PaLiveStatus status={d.live_status} label={d.live_status_label} />
-                <Text style={styles.miniSub}>{d.rating_count ? `★ ${d.rating_avg.toFixed(1)} (${d.rating_count})` : 'New'} · R {Math.round(d.consultation_fee)}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </>
-      ) : null}
 
       {topServices.length ? (
         <>
@@ -211,29 +228,6 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       ) : null}
 
-      {(labResults.length || prescriptions.length) ? (
-        <>
-          <Text style={styles.sectionLabel}>Waiting for you</Text>
-          {labResults.map((l) => (
-            <Pressable key={l.id} style={styles.row} onPress={() => navigation.getParent()?.navigate('Profile', { screen: 'LabResults' })}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>Lab result ready</Text>
-                <Text style={styles.rowSub}>{l.items?.[0]?.test_name ?? l.request_ref}</Text>
-              </View>
-              <PaBadge tone="go" label="New" />
-            </Pressable>
-          ))}
-          {prescriptions.map((p) => (
-            <View key={p.id} style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>Script under review</Text>
-                <Text style={styles.rowSub}>Uploaded {new Date(p.created_at).toLocaleDateString()}</Text>
-              </View>
-              <PaBadge tone="wait" label="Pending" />
-            </View>
-          ))}
-        </>
-      ) : null}
     </ScrollView>
   );
 }
@@ -246,20 +240,9 @@ function timeOfDay() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: pa.paper },
-  greetRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
-  greetSmall: { fontSize: 13, color: pa.muted, fontFamily: paFonts.regular },
-  greetName: { fontSize: 24, fontFamily: paFonts.black, color: pa.ink },
+  slogan: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, color: pa.signal, marginBottom: 10 },
   headline: { fontFamily: paFonts.black, fontSize: 22, lineHeight: 26, color: pa.ink, marginBottom: 6 },
   lead: { fontFamily: paFonts.regular, fontSize: 13, color: pa.inkSoft, marginBottom: 14 },
-  miniCard: { width: 168, backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, padding: 12, gap: 5 },
-  miniTitle: { fontFamily: paFonts.bold, fontSize: 14, color: pa.ink },
-  miniSub: { fontFamily: paFonts.regular, fontSize: 11, color: pa.muted },
-  rowArrow: { fontSize: 16, color: pa.muted },
-  benefit: { flexDirection: 'row', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: pa.lineSoft },
-  benefitNum: { fontFamily: paFonts.black, fontSize: 18, color: pa.signal, width: 28 },
-  learnMore: { fontFamily: paFonts.bold, fontSize: 12, color: pa.signal, marginTop: 4 },
-  slogan: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, color: pa.signal, marginBottom: 10 },
   statusNote: { backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, padding: 14, marginTop: 4, marginBottom: 14 },
   statusDot: { width: 9, height: 9, borderRadius: 5 },
   statusNoteText: { fontFamily: paFonts.regular, fontSize: 12, color: pa.inkSoft, lineHeight: 18 },
@@ -268,6 +251,14 @@ const styles = StyleSheet.create({
   topicTitle: { fontFamily: paFonts.black, fontSize: 17, color: '#fff', marginBottom: 14 },
   topicBtn: { flex: 1, backgroundColor: '#fff', paddingVertical: 12, alignItems: 'center' },
   topicBtnText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
+  rowArrow: { fontSize: 16, color: pa.muted },
+  benefit: { flexDirection: 'row', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: pa.lineSoft },
+  benefitNum: { fontFamily: paFonts.black, fontSize: 18, color: pa.signal, width: 28 },
+  learnMore: { fontFamily: paFonts.bold, fontSize: 12, color: pa.signal, marginTop: 4 },
+  container: { flex: 1, backgroundColor: pa.paper },
+  greetRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  greetSmall: { fontSize: 13, color: pa.muted, fontFamily: paFonts.regular },
+  greetName: { fontSize: 24, fontFamily: paFonts.black, color: pa.ink },
   emergencyBanner: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#C8102E', padding: 15, marginBottom: 14, minHeight: 56 },
   blip: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' },
   emergencyTitle: { fontFamily: paFonts.black, fontSize: 15, color: '#fff' },

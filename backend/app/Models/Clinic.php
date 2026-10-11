@@ -52,4 +52,23 @@ class Clinic extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    /** One-line address used as a shuttle drop-off label. */
+    public function shuttleAddress(): string
+    {
+        return implode(', ', array_filter([$this->name, $this->address, $this->city]));
+    }
+
+    /** Link to the shuttle page with this clinic pre-filled as the drop-off. */
+    public function shuttleUrl(): string
+    {
+        $params = ['to' => $this->shuttleAddress()];
+
+        if ($this->lat !== null && $this->lng !== null) {
+            $params['to_lat'] = (string) $this->lat;
+            $params['to_lng'] = (string) $this->lng;
+        }
+
+        return route('shuttle', $params).'#request';
+    }
 }

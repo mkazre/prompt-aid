@@ -12,12 +12,13 @@ class DoctorTimeOff extends Model
 
     protected $table = 'doctor_time_off';
 
-    protected $fillable = ['doctor_profile_id', 'date', 'start_time', 'end_time', 'reason'];
+    protected $fillable = ['doctor_profile_id', 'date', 'end_date', 'start_time', 'end_time', 'reason'];
 
     protected function casts(): array
     {
         return [
             'date' => 'date',
+            'end_date' => 'date',
         ];
     }
 

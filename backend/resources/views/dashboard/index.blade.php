@@ -7,11 +7,29 @@
     <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn-ghost" href="{{ route('account.profile') }}">Profile</a><a class="pa-btn" href="{{ route('doctors.index') }}">Book care</a></div>
   </div>
 
+  @if (\App\Support\DoctorNowSettings::bool('doctor_now_enabled'))
+    <div class="pa-dn-cta">
+      <div><h3>Need a doctor right now?</h3><p>Get matched with the next available doctor — video in minutes, or at rooms near you.</p></div>
+      <a class="pa-btn-beacon" href="{{ route('account.doctor-now') }}">See a doctor now</a>
+    </div>
+  @endif
+
+  {{-- Admin-configured widgets (Site → App Widgets, patient · home) — rendered per widget in DashboardController::widgetBlocks(). --}}
+  @if (! empty($widgetBlocks ?? []))
+    <div class="paw-grid">
+      @foreach ($widgetBlocks as $block)
+        <section class="paw-cell paw-{{ $block['span'] }}" data-widget="{{ $block['key'] }}">{!! $block['html'] !!}</section>
+      @endforeach
+    </div>
+  @endif
+
   @php
     $nextAppt = $appointments->first(fn ($a) => $a->date->isToday() || $a->date->isFuture());
     $activeScripts = $labRequests->flatMap->items->count();
     $outstanding = $invoices->where('status', '!=', 'paid')->sum('total');
   @endphp
+  {{-- Legacy summary row — the widgets above cover the same four numbers, so it only shows when no widgets are enabled. --}}
+  @if (empty($widgetBlocks ?? []))
   <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px">
     <div class="pa-stat">
       <div class="k">Next appointment</div>
@@ -34,6 +52,7 @@
       <div class="d wait">{{ $labRequests->flatMap->results->count() }} result(s) ready</div>
     </div>
   </div>
+  @endif
 
   <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start">
     <div>
@@ -122,49 +141,53 @@
 
   <div class="pa-card" style="margin-top:22px">
     <div class="pa-card-head"><h3>🚐 Request a shuttle</h3></div>
-    <form method="POST" action="{{ route('rides.store') }}" style="padding:18px 22px;display:grid;gap:16px">
+    @php
+      // Real coordinates only: prefill pickup from the patient's saved address when it has coords.
+      $shuttleProfile = auth()->user()->patientProfile;
+      $shuttleHasHome = $shuttleProfile && $shuttleProfile->address && $shuttleProfile->lat !== null && $shuttleProfile->lng !== null;
+      $shuttleClinics = \App\Models\Clinic::where('status', 'active')->orderBy('name')->get();
+      $shuttleFirstClinic = $shuttleClinics->first();
+    @endphp
+    {{-- Quote first (real fares for every vehicle), then confirm on the shuttle page -> rides.store --}}
+    <form method="POST" action="{{ route('shuttle.quote') }}" style="padding:18px 22px;display:grid;gap:16px" id="dashboard-shuttle-form">
       @csrf
       <div class="pa-formrow">
-        <label class="pa-label">Pickup address</label>
-        <input type="text" name="pickup_address" required class="pa-field" placeholder="Your address">
-        <input type="hidden" name="pickup_lat" value="{{ auth()->user()->patientProfile->lat ?? -26.1076 }}">
-        <input type="hidden" name="pickup_lng" value="{{ auth()->user()->patientProfile->lng ?? 28.0567 }}">
+        <label class="pa-label" for="dash-pickup">Pickup address</label>
+        <input type="text" id="dash-pickup" name="pickup_address" required maxlength="255" class="pa-field" placeholder="Start typing your address" value="{{ $shuttleHasHome ? $shuttleProfile->address : '' }}" data-pa-address-autocomplete>
+        <input type="hidden" name="pickup_lat" value="{{ $shuttleHasHome ? $shuttleProfile->lat : '' }}">
+        <input type="hidden" name="pickup_lng" value="{{ $shuttleHasHome ? $shuttleProfile->lng : '' }}">
+        <button type="button" class="pa-ac-locate" data-pa-geolocate="pickup_address">Use my current location</button>
       </div>
-      <div class="pa-formgrid">
-        <div>
-          <label class="pa-label">Clinic</label>
-          <select name="clinic_id" class="pa-field">
-            @foreach (\App\Models\Clinic::where('status', 'active')->get() as $clinic)
-              <option value="{{ $clinic->id }}" data-lat="{{ $clinic->lat }}" data-lng="{{ $clinic->lng }}" data-address="{{ $clinic->address }}">{{ $clinic->name }}</option>
+      <div class="pa-formrow">
+        <label class="pa-label" for="dash-clinic">Clinic</label>
+        @if ($shuttleFirstClinic)
+          <select id="dash-clinic" class="pa-field">
+            @foreach ($shuttleClinics as $clinic)
+              <option value="{{ $clinic->id }}" data-lat="{{ $clinic->lat }}" data-lng="{{ $clinic->lng }}" data-address="{{ $clinic->shuttleAddress() }}">{{ $clinic->name }}</option>
             @endforeach
           </select>
-        </div>
-        <div>
-          <label class="pa-label">Vehicle type</label>
-          <select name="vehicle_type" class="pa-field">
-            @foreach (\App\Models\RideRateCard::where('is_active', true)->get() as $card)
-              <option value="{{ $card->vehicle_type }}">{{ str($card->vehicle_type)->headline() }} — from R{{ number_format($card->minimum_fare, 0) }}</option>
-            @endforeach
-          </select>
-        </div>
+          <input type="hidden" name="dropoff_address" value="{{ $shuttleFirstClinic->shuttleAddress() }}">
+          <input type="hidden" name="dropoff_lat" value="{{ $shuttleFirstClinic->lat }}">
+          <input type="hidden" name="dropoff_lng" value="{{ $shuttleFirstClinic->lng }}">
+        @else
+          <input type="text" name="dropoff_address" required maxlength="255" class="pa-field" placeholder="Clinic, pharmacy or lab address" data-pa-address-autocomplete>
+          <input type="hidden" name="dropoff_lat" value="">
+          <input type="hidden" name="dropoff_lng" value="">
+        @endif
       </div>
-      <button class="pa-btn pa-btn-lg">Request ride</button>
+      <button class="pa-btn pa-btn-lg">Get fare estimate</button>
     </form>
   </div>
 </div>
 </div>
 
 <script>
-    document.querySelector('select[name="clinic_id"]')?.addEventListener('change', function () {
+    document.getElementById('dash-clinic')?.addEventListener('change', function () {
         const opt = this.selectedOptions[0];
         const form = this.closest('form');
-        let latInput = form.querySelector('input[name="dropoff_lat"]');
-        let lngInput = form.querySelector('input[name="dropoff_lng"]');
-        let addrInput = form.querySelector('input[name="dropoff_address"]');
-        if (!latInput) { latInput = document.createElement('input'); latInput.type = 'hidden'; latInput.name = 'dropoff_lat'; form.appendChild(latInput); }
-        if (!lngInput) { lngInput = document.createElement('input'); lngInput.type = 'hidden'; lngInput.name = 'dropoff_lng'; form.appendChild(lngInput); }
-        if (!addrInput) { addrInput = document.createElement('input'); addrInput.type = 'hidden'; addrInput.name = 'dropoff_address'; form.appendChild(addrInput); }
-        latInput.value = opt.dataset.lat; lngInput.value = opt.dataset.lng; addrInput.value = opt.dataset.address;
+        form.querySelector('input[name="dropoff_address"]').value = opt.dataset.address || '';
+        form.querySelector('input[name="dropoff_lat"]').value = opt.dataset.lat || '';
+        form.querySelector('input[name="dropoff_lng"]').value = opt.dataset.lng || '';
     });
 </script>
 </x-layout>

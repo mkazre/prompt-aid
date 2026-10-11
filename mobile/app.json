@@ -12,20 +12,26 @@
       "supportsTablet": true,
       "bundleIdentifier": "health.promptaid.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Prompt Aid uses your location to find nearby clinics and, for drivers, to share your live position with patients during an active ride."
+        "NSLocationWhenInUseUsageDescription": "Prompt Aid uses your location to find nearby clinics and, for drivers, to share your live position with patients during an active ride.",
+        "NSCameraUsageDescription": "Prompt Aid uses your camera for video consultations with your doctor and to photograph documents you choose to send.",
+        "NSMicrophoneUsageDescription": "Prompt Aid uses your microphone so you can talk to your doctor during video and audio consultations.",
+        "NSPhotoLibraryUsageDescription": "Prompt Aid lets you choose photos to send to your doctor in chat."
       }
     },
     "android": {
       "package": "health.promptaid.app",
       "adaptiveIcon": {
-        "backgroundColor": "#101012",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS"
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -36,6 +42,14 @@
       "expo-secure-store",
       "expo-font",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Prompt Aid lets you choose photos to send to your doctor in chat.",
+          "cameraPermission": "Prompt Aid uses your camera for video consultations and to photograph documents you choose to send.",
+          "microphonePermission": "Prompt Aid uses your microphone during video and audio consultations."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/splash.jpg",
@@ -44,11 +58,11 @@
         }
       ]
     ],
+    "owner": "khuphukiles-team",
     "extra": {
       "eas": {
-        "projectId": "bf3efb69-3e1b-497a-acf1-7f1aaace1de2"
+        "projectId": "a85aea25-5865-4630-9d0b-53427f90a6e8"
       }
-    },
-    "owner": "mkazre"
+    }
   }
 }

@@ -43,9 +43,21 @@
             <button type="submit" class="pa-btn pa-btn-block pa-btn-lg">{{ $panel === 'care' ? 'Search '.number_format($stats['providers']).' providers' : 'Find a virtual consult' }}</button>
           </form>
           @endforeach
-          <form method="GET" action="{{ route('shuttle') }}" data-pa-panel="ride" class="pa-hide">
-            <div class="pa-formrow"><label class="pa-label">Pick up</label><input class="pa-field" placeholder="Home address (entered on the next step)" disabled /></div>
-            <div class="pa-formrow" style="margin-bottom:22px"><label class="pa-label">Drop off</label><input class="pa-field" placeholder="Clinic, pharmacy or lab" disabled /></div>
+          <form method="POST" action="{{ route('shuttle.quote') }}" data-pa-panel="ride" class="pa-hide">
+            @csrf
+            <div class="pa-formrow">
+              <label class="pa-label" for="hero-pickup">Pick up</label>
+              <input class="pa-field" id="hero-pickup" name="pickup_address" required maxlength="255" placeholder="Start typing your address" data-pa-address-autocomplete />
+              <input type="hidden" name="pickup_lat" value="">
+              <input type="hidden" name="pickup_lng" value="">
+              <button type="button" class="pa-ac-locate" data-pa-geolocate="pickup_address">Use my current location</button>
+            </div>
+            <div class="pa-formrow" style="margin-bottom:22px">
+              <label class="pa-label" for="hero-dropoff">Drop off</label>
+              <input class="pa-field" id="hero-dropoff" name="dropoff_address" required maxlength="255" placeholder="Clinic, pharmacy or lab address" data-pa-address-autocomplete />
+              <input type="hidden" name="dropoff_lat" value="">
+              <input type="hidden" name="dropoff_lng" value="">
+            </div>
             <button type="submit" class="pa-btn pa-btn-block pa-btn-lg">Get a fare estimate</button>
           </form>
           <div class="pa-row" style="margin-top:16px;font-size:12px;color:var(--pa-muted)"><span style="width:6px;height:6px;background:var(--pa-go);display:block"></span>{{ $stats['openToday'] }} doctors have openings today</div>

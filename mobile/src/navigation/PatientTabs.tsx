@@ -1,5 +1,4 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/patient/HomeScreen';
@@ -23,7 +22,13 @@ import TriageResultScreen from '../screens/patient/TriageResultScreen';
 import ConsultRoomScreen from '../screens/ConsultRoomScreen';
 import InstantConsultScreen from '../screens/patient/InstantConsultScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import HealthArticlesScreen from '../screens/patient/HealthArticlesScreen';
+import HealthArticleDetailScreen from '../screens/patient/HealthArticleDetailScreen';
+import SearchScreen from '../screens/patient/SearchScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import AppPageScreen from '../screens/AppPageScreen';
 import { pa, paFonts } from '../theme';
+import { tabBarScreenOptions, tabIcon } from './tabBarTheme';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -47,6 +52,9 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="TriageResult" component={TriageResultScreen as any} options={{ title: 'Your result', headerBackVisible: false }} />
       <HomeStack.Screen name="ConsultRoom" component={ConsultRoomScreen} options={{ headerShown: false }} />
       <HomeStack.Screen name="InstantConsult" component={InstantConsultScreen} options={{ title: 'See a doctor now' }} />
+      <HomeStack.Screen name="HealthArticles" component={HealthArticlesScreen} options={{ title: 'Health articles' }} />
+      <HomeStack.Screen name="HealthArticleDetail" component={HealthArticleDetailScreen} options={{ title: '' }} />
+      <HomeStack.Screen name="Search" component={SearchScreen} options={{ headerShown: false, animation: 'fade' }} />
     </HomeStack.Navigator>
   );
 }
@@ -55,7 +63,8 @@ function CareStackNavigator() {
   return (
     <CareStack.Navigator screenOptions={stackHeaderOptions}>
       <CareStack.Screen name="FindCare" component={FindCareScreen} options={{ headerShown: false }} />
-      <CareStack.Screen name="DoctorDetail" component={DoctorDetailScreen} options={{ title: 'Book' }} />
+      <CareStack.Screen name="DoctorDetail" component={DoctorDetailScreen} options={{ title: 'Book appointment' }} />
+      <CareStack.Screen name="Search" component={SearchScreen} options={{ headerShown: false, animation: 'fade' }} />
     </CareStack.Navigator>
   );
 }
@@ -90,30 +99,22 @@ function RecordStackNavigator() {
       <RecordStack.Screen name="Orders" component={OrdersScreen} options={{ title: 'My Orders' }} />
       <RecordStack.Screen name="Invoices" component={InvoicesScreen} options={{ title: 'Invoices' }} />
       <RecordStack.Screen name="ProfileHome" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <RecordStack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change password' }} />
+      <RecordStack.Screen name="AppPage" component={AppPageScreen} options={{ title: '' }} />
     </RecordStack.Navigator>
   );
-}
-
-function Icon({ label, focused }: { label: string; focused: boolean }) {
-  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{label}</Text>;
 }
 
 export default function PatientTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: pa.signal,
-        tabBarInactiveTintColor: pa.muted,
-        tabBarStyle: { backgroundColor: pa.surface, borderTopColor: pa.line },
-        tabBarLabelStyle: { fontFamily: paFonts.bold, fontSize: 11 },
-      }}
+      screenOptions={tabBarScreenOptions}
     >
-      <Tab.Screen name="Home" component={HomeStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="🏠" focused={focused} /> }} />
-      <Tab.Screen name="Care" component={CareStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="🩺" focused={focused} /> }} />
-      <Tab.Screen name="Rides" component={ShuttleStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="🚐" focused={focused} />, title: 'Shuttle' }} />
-      <Tab.Screen name="Pharmacy" component={PharmacyStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="💊" focused={focused} /> }} />
-      <Tab.Screen name="Profile" component={RecordStackNavigator} options={{ tabBarIcon: ({ focused }) => <Icon label="📋" focused={focused} />, title: 'Record' }} />
+      <Tab.Screen name="Home" component={HomeStackNavigator} options={{ tabBarIcon: tabIcon('home-outline') }} />
+      <Tab.Screen name="Care" component={CareStackNavigator} options={{ tabBarIcon: tabIcon('medkit-outline') }} />
+      <Tab.Screen name="Rides" component={ShuttleStackNavigator} options={{ tabBarIcon: tabIcon('bus-outline'), title: 'Shuttle' }} />
+      <Tab.Screen name="Pharmacy" component={PharmacyStackNavigator} options={{ tabBarIcon: tabIcon('bag-handle-outline') }} />
+      <Tab.Screen name="Profile" component={RecordStackNavigator} options={{ tabBarIcon: tabIcon('document-text-outline'), title: 'Record' }} />
     </Tab.Navigator>
   );
 }

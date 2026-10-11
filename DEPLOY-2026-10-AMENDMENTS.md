@@ -21,6 +21,13 @@ The code from before this update is kept on GitHub in the branch
 
 ---
 
+## About the `*_migration.sql` files in the repo root
+
+They're from the September/October work done in VS Code, when database changes were run by
+hand in phpMyAdmin. **You don't need to run them any more.** The deploy runs the same changes
+automatically, and skips any you already applied, because each SQL file also recorded itself
+in Laravel's `migrations` table.
+
 ## Step 0 — Back up the database (2 minutes)
 
 cPanel → **phpMyAdmin** → select the Prompt Aid database → **Export** → **Go**. Keep the

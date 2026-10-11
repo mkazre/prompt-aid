@@ -7,6 +7,9 @@ import { PaPayMethodPicker, PaQtyStepper, PaSpreadRow, PayMethod } from '../../c
 import { pa, paFonts, paRadius, type } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import SuccessModal from '../../components/SuccessModal';
+
+const needsPrescriptionMessage = 'Your order was placed. Payment is still pending — you can pay from My Orders once the pharmacy has reviewed it.';
 
 /**
  * Cart / checkout — matches `checkout.html`, simplified to what the real
@@ -25,6 +28,33 @@ export default function CheckoutScreen({ navigation }: any) {
   const [uploading, setUploading] = useState(false);
   const [method, setMethod] = useState<PayMethod>('card');
   const [placing, setPlacing] = useState(false);
+  const [done, setDone] = useState<{ paid: boolean; orderNo: string | null; total: number } | null>(null);
+
+  const successModal = (
+    <SuccessModal
+      visible={!!done}
+      title={done?.paid ? 'Payment Success' : 'Order placed'}
+      message={
+        done?.paid
+          ? 'Your payment has been successful. The pharmacy is preparing your order.'
+          : needsPrescriptionMessage
+      }
+      details={[
+        ...(done?.orderNo ? [{ label: 'Order', value: done.orderNo }] : []),
+        ...(done ? [{ label: done.paid ? 'Paid' : 'Total', value: `R ${done.total.toFixed(2)}` }] : []),
+      ]}
+      primaryLabel="Track my order"
+      onPrimary={() => {
+        setDone(null);
+        navigation.getParent()?.navigate('Profile', { screen: 'Orders' });
+      }}
+      secondaryLabel="Keep shopping"
+      onSecondary={() => {
+        setDone(null);
+        navigation.navigate('Shop');
+      }}
+    />
+  );
 
   const total = subtotal + (lines.length ? 45 : 0);
   const needsPrescription = lines.some((l) => l.product.requires_prescription);
@@ -63,15 +93,17 @@ export default function CheckoutScreen({ navigation }: any) {
         prescription_upload_id: prescriptionId,
       });
       const orderId = data?.data?.id ?? data?.id;
+      const orderNo = data?.data?.order_no ?? data?.order_no ?? null;
+      const paidTotal = total;
+      let paid = false;
       try {
         await api.post(`/orders/${orderId}/pay`, { method });
+        paid = true;
       } catch (payError) {
-        // Order placed but payment failed/deferred — still a success from a checkout standpoint.
+        // Order placed but payment failed/deferred (e.g. awaiting script review) — the modal says so.
       }
       clear();
-      Alert.alert('Order placed', 'Track it from your Orders list.', [
-        { text: 'OK', onPress: () => navigation.getParent()?.navigate('Profile', { screen: 'Orders' }) },
-      ]);
+      setDone({ paid, orderNo, total: paidTotal });
     } catch (e) {
       Alert.alert('Checkout failed', apiErrorMessage(e));
     } finally {
@@ -85,6 +117,7 @@ export default function CheckoutScreen({ navigation }: any) {
         <Text style={type.h2}>Checkout</Text>
         <PaEmptyState message="Your basket is empty. Add something from the pharmacy shop first." />
         <PaButton title="Browse pharmacy" onPress={() => navigation.navigate('Shop')} />
+        {successModal}
       </View>
     );
   }

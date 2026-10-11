@@ -10,7 +10,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Ride extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Concerns\Auditable;
+
+    /** High-frequency / derived fields excluded from the audit trail (ETA refresh, simulator, dispatch counters). */
+    protected array $auditIgnore = [
+        'eta_minutes', 'eta_updated_at', 'simulation', 'dispatch_attempts', 'dispatch_started_at',
+        'route_geometry', 'fare_breakdown', 'updated_at',
+    ];
+
+    /** Secrets / bulky blobs never written to audit_logs in clear. */
+    protected array $auditRedact = ['trip_pin', 'share_token', 'quote_token', 'route_geometry'];
 
     public const STATUS_REQUESTED = 'requested';
 
@@ -32,7 +41,25 @@ class Ride extends Model
         'status', 'distance_km', 'eta_minutes', 'fare_estimate', 'fare_final', 'cancel_reason',
         'requested_at', 'accepted_at', 'started_at', 'completed_at',
         'ride_series_id', 'return_of_ride_id', 'is_return', 'scheduled_for', 'wait_and_return', 'priority',
+        // Shuttle v2
+        'trip_pin', 'share_token', 'dispatch_state', 'dispatch_started_at', 'dispatch_attempts',
+        'quoted_fare', 'surge_multiplier', 'quote_token', 'quote_expires_at', 'fare_breakdown',
+        'route_distance_km', 'route_duration_min', 'route_geometry', 'eta_updated_at', 'driver_arrived_at',
+        'cancelled_at', 'cancelled_by', 'cancellation_fee', 'cancellation_fee_status',
+        'patient_rating', 'patient_rating_comment', 'simulation',
     ];
+
+    /** Dispatch states (rides.dispatch_state) while status = requested. */
+    public const DISPATCH_SEARCHING = 'searching';
+
+    public const DISPATCH_QUEUE = 'queue';
+
+    public const DISPATCH_NO_DRIVERS = 'no_drivers';
+
+    public const DISPATCH_ASSIGNED = 'assigned';
+
+    /** Statuses in which a driver is attached and heading to / with the patient. */
+    public const DRIVER_ACTIVE_STATUSES = ['accepted', 'driver_enroute', 'arrived', 'in_progress'];
 
     protected function casts(): array
     {
@@ -44,6 +71,14 @@ class Ride extends Model
             'scheduled_for' => 'datetime',
             'is_return' => 'boolean',
             'wait_and_return' => 'boolean',
+            'dispatch_started_at' => 'datetime',
+            'quote_expires_at' => 'datetime',
+            'eta_updated_at' => 'datetime',
+            'driver_arrived_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'fare_breakdown' => 'array',
+            'route_geometry' => 'array',
+            'simulation' => 'array',
         ];
     }
 
@@ -52,6 +87,8 @@ class Ride extends Model
         static::creating(function (self $ride) {
             $ride->ride_ref ??= 'RIDE-'.strtoupper(uniqid());
             $ride->requested_at ??= now();
+            $ride->trip_pin ??= str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $ride->share_token ??= \Illuminate\Support\Str::random(40);
         });
     }
 
@@ -93,6 +130,31 @@ class Ride extends Model
     public function returnLeg(): HasOne
     {
         return $this->hasOne(self::class, 'return_of_ride_id');
+    }
+
+    public function locations(): HasMany
+    {
+        return $this->hasMany(RideLocation::class);
+    }
+
+    public function offers(): HasMany
+    {
+        return $this->hasMany(RideOffer::class);
+    }
+
+    public function charges(): HasMany
+    {
+        return $this->hasMany(RideCharge::class);
+    }
+
+    public function hasDriverEnRoute(): bool
+    {
+        return $this->driver_profile_id !== null && in_array($this->status, self::DRIVER_ACTIVE_STATUSES, true);
+    }
+
+    public function isSimulated(): bool
+    {
+        return is_array($this->simulation) && ! empty($this->simulation['active']);
     }
 
     public function isActive(): bool

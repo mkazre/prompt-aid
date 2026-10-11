@@ -21,6 +21,10 @@ trait Auditable
         static::updated(function ($model) {
             $changes = $model->getChanges();
             unset($changes['updated_at']);
+            // High-churn, non-compliance fields (e.g. a driver's live GPS
+            // ping every few seconds) listed in a model's $auditIgnore
+            // would otherwise flood audit_logs.
+            $changes = array_diff_key($changes, array_flip($model->auditIgnoredAttributes()));
             if (empty($changes)) {
                 return;
             }
@@ -41,6 +45,12 @@ trait Auditable
             'new_values' => $this->redactAuditValues($new),
             'ip' => Request::ip(),
         ]);
+    }
+
+    /** @return array<int, string> */
+    public function auditIgnoredAttributes(): array
+    {
+        return property_exists($this, 'auditIgnore') ? (array) $this->auditIgnore : [];
     }
 
     protected function redactAuditValues(?array $values): ?array

@@ -16,7 +16,10 @@
   </div>
   <div class="grp">My care</div>
   <a href="{{ route('dashboard') }}" class="{{ $active === 'overview' ? 'is-on' : '' }}"><span class="d"></span>Overview</a>
+  <a href="{{ route('account.doctor-now') }}" class="{{ $active === 'doctor-now' ? 'is-on' : '' }}"><span class="d"></span>See a doctor now</a>
   <a href="{{ route('account.appointments') }}" class="{{ $active === 'appointments' ? 'is-on' : '' }}"><span class="d"></span>Appointments</a>
+  <a href="{{ route('account.messages') }}" class="{{ $active === 'messages' ? 'is-on' : '' }}"><span class="d"></span>Messages</a>
+  <a href="{{ route('account.notifications') }}" class="{{ $active === 'notifications' ? 'is-on' : '' }}"><span class="d"></span>Notifications</a>
   <a href="{{ route('account.prescriptions') }}" class="{{ $active === 'prescriptions' ? 'is-on' : '' }}"><span class="d"></span>Prescriptions &amp; scripts</a>
   <a href="{{ route('account.results') }}" class="{{ $active === 'results' ? 'is-on' : '' }}"><span class="d"></span>Results</a>
   <a href="{{ route('account.record') }}" class="{{ $active === 'record' ? 'is-on' : '' }}"><span class="d"></span>Medical record</a>
@@ -27,6 +30,7 @@
   <div class="grp">Account</div>
   <a href="{{ route('account.profile') }}" class="{{ $active === 'profile' ? 'is-on' : '' }}"><span class="d"></span>Profile &amp; scheme</a>
   <a href="{{ route('account.settings') }}" class="{{ $active === 'settings' ? 'is-on' : '' }}"><span class="d"></span>Privacy &amp; security</a>
+  <a href="{{ route('account.privacy') }}" class="{{ $active === 'privacy' ? 'is-on' : '' }}"><span class="d"></span>Your data &amp; consents</a>
   <div style="padding:14px 16px;border-top:1px solid var(--pa-line)">
     <form method="POST" action="{{ route('logout') }}">
       @csrf

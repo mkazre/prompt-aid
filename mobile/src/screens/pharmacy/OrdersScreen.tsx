@@ -7,6 +7,8 @@ import { Order } from '../../api/types';
 import { PaBadge, PaCard, PaEmptyState, PaRow } from '../../components/pa';
 import { PaFilterChip } from '../../components/pa/pharmacy-extras';
 import { pa, type } from '../../theme';
+import WidgetHost from '../../widgets/WidgetHost';
+import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 
 type NavProp = { navigate: (screen: string, params?: { orderId: number }) => void };
 
@@ -25,6 +27,7 @@ export default function PharmacyOrdersScreen({ navigation }: { navigation: NavPr
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const load = useCallback(async (status: string) => {
     setLoading(true);
@@ -40,7 +43,10 @@ export default function PharmacyOrdersScreen({ navigation }: { navigation: NavPr
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-      <Text style={type.h2}>Orders</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={type.h2}>Orders</Text>
+        <CommsHeaderIcons />
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={{ paddingRight: 16 }}>
         {FILTERS.map((f) => (
           <PaFilterChip key={f.key} label={f.label} active={filter === f.key} onPress={() => setFilter(f.key)} />
@@ -49,7 +55,8 @@ export default function PharmacyOrdersScreen({ navigation }: { navigation: NavPr
       <FlatList
         data={orders}
         keyExtractor={(o) => String(o.id)}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => load(filter)} tintColor={pa.signal} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(filter); setRefreshKey((k) => k + 1); }} tintColor={pa.signal} />}
+        ListHeaderComponent={<WidgetHost screen="home" refreshKey={refreshKey} style={{ marginTop: 8, marginBottom: 16 }} />}
         ListEmptyComponent={!loading ? <PaEmptyState message="No orders here." /> : null}
         contentContainerStyle={{ paddingBottom: 48 }}
         renderItem={({ item }) => (
