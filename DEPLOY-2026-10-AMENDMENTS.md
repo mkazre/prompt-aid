@@ -1,166 +1,128 @@
-# Deploying the October 2026 amendments (Prompt 1–4)
+# Deploying the October 2026 amendments with cPanel Git Version Control
 
-What these notes cover: putting the changes from `Prompt 1.pdf` … `Prompt4.pdf` live on the
-cPanel site (promptaid.co.za) and in the mobile app. General cPanel setup is in
-[DEPLOYMENT.md](DEPLOYMENT.md). This file only covers this update.
+These steps put the Prompt 1–4 changes live on promptaid.co.za using **cPanel → Git Version
+Control**. You don't need Terminal or SSH. Clicking **Deploy** runs
+[`deploy/cpanel-deploy.sh`](deploy/cpanel-deploy.sh) on the server (wired up by
+[`.cpanel.yml`](.cpanel.yml)). That script:
 
-## ⚠️ Before you upload anything: back up the live site
+1. finds your live Laravel folder (the one with your real `.env`);
+2. saves a backup of the live code to `~/promptaid-backups/` (so you can roll back);
+3. switches the site to maintenance mode for the few seconds the update takes;
+4. copies the new code in **without touching** your `.env`, `vendor/`, `storage/` (patient
+   uploads, logs), `bootstrap/cache`, `public/storage`, or any `public_html/index.php`;
+5. runs the database migrations and rebuilds Laravel's caches;
+6. brings the site back up and writes everything it did to **`~/promptaid-deploy.log`**.
 
-The "Find a doctor" screenshot in `Prompt4.pdf` shows a **"Don't want to wait for a slot? /
-See a doctor now"** banner. That banner was never in this GitHub repo, so the live server has
-changes that GitHub doesn't. Uploading files from this repo will **overwrite** them.
+It never deletes files that exist only on the server, and it never touches the database except
+through the migrations (which only add tables, columns and rows).
 
-1. In cPanel → File Manager, compress `promptaid-src/backend/` (or at least `app/`,
-   `resources/views/`, `routes/`, `public/assets/`) and download the zip.
-2. In cPanel → phpMyAdmin, export the database.
+The code from before this update is kept on GitHub in the branch
+**`pre-october-2026-update`**.
 
-This update rebuilds the "See a doctor now" banner, so you don't lose it. The backup protects
-any other edits made directly on the server.
+---
 
-## 1. Upload the changed files
+## Step 0 — Back up the database (2 minutes)
 
-Upload everything under `backend/` that this update changed, into the same paths under
-`~/promptaid-src/backend/` on the server.
+cPanel → **phpMyAdmin** → select the Prompt Aid database → **Export** → **Go**. Keep the
+`.sql` file. (The deploy script backs up the code itself, but not the database.)
 
-**New files**
-```
-app/Filament/Pages/SiteContentSettings.php
-app/Filament/Resources/HealthTopics/            (whole folder)
-app/Filament/Resources/Testimonials/            (whole folder)
-app/Filament/Widgets/DoctorLiveStatusWidget.php
-app/Http/Controllers/HealthTopicController.php
-app/Http/Controllers/InstantConsultController.php
-app/Models/HealthTopic.php
-app/Models/Testimonial.php
-app/Support/SiteContent.php
-app/Support/SiteLinks.php
-database/migrations/2026_10_11_100000_promptaid_emergency_scale_updates.php
-database/migrations/2026_10_11_100001_add_offers_video_to_doctor_profiles_table.php
-database/migrations/2026_10_11_100002_create_health_topics_and_testimonials_tables.php
-database/migrations/2026_10_11_100003_seed_first_health_topic.php
-resources/views/components/care-tabs.blade.php
-resources/views/components/see-doctor-now.blade.php
-resources/views/filament/widgets/doctor-live-status.blade.php
-resources/views/pages/health-topic.blade.php
-resources/views/pages/instant-consult.blade.php
-resources/views/pages/provider-directory.blade.php
-resources/views/pages/testimonial-create.blade.php
-resources/views/partials/about-benefits.blade.php
-```
+> Why bother: the "See a doctor now" banner in your Prompt 4 screenshot was never on GitHub,
+> so someone has edited the live server directly. The deploy replaces those files with the
+> GitHub versions; the code backup in `~/promptaid-backups/` keeps the old copies.
 
-**Changed files**
-```
-app/Filament/Resources/DoctorProfiles/Schemas/DoctorProfileForm.php
-app/Filament/Resources/DoctorProfiles/Tables/DoctorProfilesTable.php
-app/Http/Controllers/Api/ClinicController.php
-app/Http/Controllers/Api/DoctorMatchController.php
-app/Http/Controllers/PageController.php
-app/Http/Controllers/ThirdPartyPageController.php
-app/Http/Resources/DoctorProfileResource.php
-app/Models/DoctorProfile.php
-app/Services/Doctors/DoctorMatchService.php
-app/Support/Permissions.php
-public/assets/css/promptaid.css
-public/assets/js/promptaid.js
-public/assets/js/triage.js
-resources/views/clinics/index.blade.php
-resources/views/components/layout.blade.php
-resources/views/doctors/index.blade.php
-resources/views/doctors/show.blade.php
-resources/views/home.blade.php
-resources/views/page-builder/render.blade.php
-resources/views/pages/emergency-results.blade.php
-resources/views/pages/emergency.blade.php
-resources/views/pages/lab-single.blade.php
-resources/views/pages/specialist-single.blade.php
-resources/views/pharmacies/index.blade.php
-routes/api.php
-routes/web.php
-```
+## Step 1 — Connect cPanel to GitHub (first time only)
 
-**Removed** (safe to delete on the server; nothing uses them any more):
-`resources/views/pages/labs.blade.php`, `resources/views/pages/specialists.blade.php`.
+cPanel → **Git™ Version Control** → **Create**, then:
 
-> **If you upload by FTP:** the host's upload scanner has silently emptied large Blade files
-> before (see `deploy:decode` in `app/Console/Commands/DecodeUpload.php`). After uploading,
-> check in File Manager that `home.blade.php`, `doctors/index.blade.php`,
-> `doctors/show.blade.php` and `public/assets/js/promptaid.js` are **not 0 bytes**. If any
-> are, re-upload that file with the `deploy:decode` method.
+| Field | Enter |
+|---|---|
+| Clone a Repository | **On** |
+| Clone URL | `https://github.com/mkazre/prompt-aid.git` |
+| Repository Path | `repositories/prompt-aid` (cPanel shows it as `/home/<you>/repositories/prompt-aid`) |
+| Repository Name | `prompt-aid` |
 
-With SSH you can skip the file list and run `git pull` in `~/promptaid-src` instead.
+Click **Create**. The repo is public, so no password or key is needed.
 
-## 2. Run the database migrations
+⚠️ The Repository Path must be a **new, empty folder**. Don't point it at `public_html` or at
+your existing live app folder (e.g. `promptaid-src`). The live site stays where it is, and the
+deploy script copies code into it.
 
-Four new migrations. They add tables and columns and update data. Nothing is dropped.
-- the emergency-scale timings (30 min / 8 hours / next few days), plus the dispatch number
-  081 670 9522 as the primary emergency contact;
-- an `offers_video` flag on doctors (on for everyone, so nothing disappears);
-- the `health_topics` and `testimonials` tables;
-- the first Topic of the month ("How can we combat Diabetes Mellitus in its deadly tracks").
+*If you already have a repository listed in Git Version Control for this site, use it (Manage →
+check its Clone URL is the one above) and skip to Step 2.*
 
-With SSH:
-```bash
-cd ~/promptaid-src/backend
-php artisan migrate --force
-```
-Without SSH: add a one-off cron job in cPanel, let it run once, then delete it:
-```
-php /home/cpaneluser/promptaid-src/backend/artisan migrate --force
-```
+## Step 2 — Deploy
 
-## 3. Clear the caches
+1. Git Version Control → your `prompt-aid` repository → **Manage**.
+2. **Basic Information** tab: make sure **Checked-Out Branch** is `main`.
+3. **Pull or Deploy** tab → **Update from Remote**.
+4. Then click **Deploy HEAD Commit**.
 
-```bash
-php artisan optimize:clear
-php artisan config:cache
-php artisan view:cache
-```
-Without SSH, run the same commands as one-off cron jobs.
+## Step 3 — Check it worked
 
-> **Do not run `php artisan route:cache`.** It already fails on `main` before this update,
-> because a web route and an API route both use the name `appointments.store`. Fix that
-> separately. Until then, leave routes uncached.
-
-## 4. Check it's live
+1. cPanel → **File Manager** → your home folder → open **`promptaid-deploy.log`**.
+   The last lines should read **`Deploy finished OK.`** and **`Site is back up.`**
+2. Open the site and work through this list:
 
 | Check | Where |
 |---|---|
-| Popup says **PromptAid Emergency Scale**, with the 4 actions and the green WhatsApp + blue video buttons | Any page (private window), or the header **Emergency** button |
-| Home: slogan, new headline, status colour note, benefits 01–10, top rated doctors and services, Topic of the month | `/` |
-| Nav: Pharmacy · Radiology · Laboratory | Header |
-| Find care tabs: General Practitioners · Dentists · Specialists · Allied · Radiology · Laboratories | `/doctors` |
-| Doctor profile: green/orange/red status, Operating hours, Contact details | any `/doctors/{id}` |
-| Doctor dashboard: status buttons and "Patients waiting" list | `/staff` logged in as a doctor |
-| Site content editor | `/staff` → Site → **Site content** |
-| Topics and testimonials | `/staff` → Site → **Topic of the month** / **Testimonials** |
+| Popup says **PromptAid Emergency Scale**, 4 actions, green WhatsApp + blue video buttons | any page in a private window, or the header **Emergency** button |
+| Slogan, new headline, status note, benefits 01–10, top rated doctors/services, Topic of the month | `/` |
+| Nav: Pharmacy · Radiology · Laboratory | header |
+| Tabs: General Practitioners · Dentists · Specialists · Allied · Radiology · Laboratories | `/doctors` |
+| Doctor page: green/orange/red status, Operating hours, Contact details | any doctor |
+| Doctor's status buttons + "Patients waiting" | `/staff` as a doctor |
+| Site content editor, Topic of the month, Testimonials | `/staff` → Site |
 
-**Header menu:** if anyone ever built a "header" menu under `/staff` → Site → Menus, that menu
-replaces the built-in nav. In that case, add Radiology (`/radiology`) and Laboratory
-(`/laboratories`) there, and rename "Pharmacy & tests" to "Pharmacy".
+### If the log says `FAILED`
 
-## 5. Things to set in the admin after deploying
+The script stops before changing anything risky and always brings the site back up.
 
-- **Site → Site content → Emergency popup:** confirm the dispatch number (081 670 9522) and
-  the **WhatsApp "Ask a doctor" number**. The PDFs gave no separate WhatsApp number, so it
-  starts as the dispatch number (27816709522).
+| Log message | Fix |
+|---|---|
+| `Could not pick the live app folder automatically` | Your app isn't in `~/promptaid-src/backend`. In File Manager, find the folder holding `artisan` and `.env`. On GitHub, edit `deploy/cpanel-deploy.sh` and set `APP_DIR="/home/<you>/that/folder"` at the top. Commit, then repeat Step 2. |
+| `No PHP 8.2+ command-line binary found` | Same as above, but set `PHP_BIN`. The usual value is `/opt/cpanel/ea-php83/root/usr/bin/php`; cPanel → MultiPHP Manager shows which version you use. |
+| `Database migration failed` | Send me the log lines above it. The code is already updated; your database is unchanged apart from any migrations that finished. |
+
+**Header menu:** if a "header" menu was ever built under `/staff` → Site → Menus, it replaces the
+built-in nav. In that case add Radiology (`/radiology`) and Laboratory (`/laboratories`) there,
+and rename "Pharmacy & tests" to "Pharmacy".
+
+## Rolling back
+
+In File Manager, open `promptaid-backups/` and extract the newest
+`code-before-<date>.tar.gz` into your live app folder (overwrite). If you use a separate
+`public_html`, extract `public-before-<date>.tar.gz` there as well. The new database tables can
+stay; the old code simply ignores them.
+
+## Future updates
+
+Every later change works the same way: once it's on `main` in GitHub, go to Git Version Control →
+Manage → Pull or Deploy → **Update from Remote** → **Deploy HEAD Commit**, then check
+`promptaid-deploy.log`.
+
+---
+
+## After deploying: set these in the admin
+
+- **Site → Site content → Emergency popup:** confirm the dispatch number (081 670 9522) and set
+  the **WhatsApp "Ask a doctor" number**. It starts as the dispatch number because the PDFs
+  didn't give a separate one.
 - **Site → Site content → Home page:** add App Store / Google Play links once the app is
-  published (the buttons only show when a link is filled in).
-- **Site → Site content → Benefits:** fill in the longer "About page" text for each benefit
-  (the About-page details are still to come from you).
-- **Site → Topic of the month:** replace or extend the starter diabetes article, or upload the
-  final article as a PDF/Word file.
-- **Doctor profiles:** doctors set their own green/orange/red status on their dashboard
-  (web or app). Admins can also set it in Doctor Profiles, together with **Offers
-  virtual / video consults**.
-- Only patients' **approved** testimonials, with consent ticked, appear on the website.
+  published. The buttons only appear when a link is filled in.
+- **Site → Site content → Benefits:** add the longer About-page text for each benefit.
+- **Site → Topic of the month:** check or replace the starter diabetes article, or upload the
+  final one as a PDF/Word file.
+- **Doctor profiles:** doctors set green/orange/red themselves on their dashboard (web or app).
+  Admins can also set it, together with **Offers virtual / video consults**.
+- Testimonials only appear on the site once you **approve** them and the patient has ticked
+  consent.
 
-## 6. Mobile app
+## Mobile app
 
-The app changes live in `mobile/` and ship through a new build, not cPanel:
+The app is built separately with Expo, not deployed through cPanel:
 ```bash
 cd mobile
 npx eas build --platform all
 npx eas submit
 ```
-The app reads its text and numbers from the new `/api/site-content` endpoint, so do the
-backend steps above first.
+It reads its text and numbers from the live `/api/site-content`, so deploy the website first.

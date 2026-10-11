@@ -60,7 +60,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Patient-only ---
     Route::middleware('role:'.User::ROLE_PATIENT)->group(function () {
-        Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show']);
+        // Named api.appointments.* so they don't shadow the website's
+        // appointments.store booking route (and so route:cache works).
+        Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show'])->names('api.appointments');
         Route::post('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
 
         Route::post('/request-doctor', [DoctorMatchController::class, 'store']);
