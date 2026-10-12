@@ -1,0 +1,97 @@
+/* Prompt Aid — support stream: announcement bar, newsletter footer signup,
+   floating WhatsApp button, help centre, support tickets, NPS survey,
+   doctor share / QR. Loaded after promptaid.css from components/layout. */
+
+/* ---- Announcement bar ---- */
+.pa-annc{font-size:14px;line-height:1.4}
+.pa-annc[hidden]{display:none}
+.pa-annc .inner{max-width:var(--pa-container);margin:0 auto;padding:10px var(--pa-gutter);display:flex;gap:16px;align-items:center;justify-content:space-between}
+.pa-annc-text{min-width:0;flex:1}
+.pa-annc-text strong{font-weight:900;margin-right:4px}
+.pa-annc-text a{font-weight:700;margin-left:8px;text-decoration:underline;white-space:nowrap}
+.pa-annc-x{background:none;border:0;font-size:22px;line-height:1;cursor:pointer;padding:2px 6px;opacity:.85;flex:none}
+.pa-annc-x:hover{opacity:1}
+
+/* ---- Newsletter (footer) ---- */
+.pa-news{max-width:var(--pa-container);margin:0 auto;padding:0 var(--pa-gutter) 28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:28px;align-items:start}
+.pa-news-copy p{font-size:14px;color:var(--pa-muted);margin:0}
+.pa-news-row{display:flex;gap:8px}
+.pa-news-row .pa-field{flex:1;min-width:0}
+.pa-news-consent{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--pa-muted);margin-top:10px;line-height:1.45}
+.pa-news-consent input{margin-top:2px;flex:none}
+.pa-news-msg{font-size:13px;margin-top:8px;min-height:1em}
+.pa-news-msg.is-ok{color:var(--pa-go);font-weight:700}
+.pa-news-msg.is-err{color:var(--pa-signal)}
+.pa-hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;opacity:0}
+
+/* ---- Floating WhatsApp button ---- */
+.pa-wa-fab{position:fixed;right:20px;bottom:20px;z-index:55;width:58px;height:58px;border-radius:999px;background:#1FA855;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px -6px rgba(16,16,18,.45);transition:transform .15s ease,bottom .2s ease;text-decoration:none}
+.pa-wa-fab:hover{transform:scale(1.06);background:#178A45;text-decoration:none}
+.pa-wa-label{position:absolute;right:68px;white-space:nowrap;background:var(--pa-ink);color:#fff;font-size:12px;font-weight:700;padding:6px 10px;border-radius:var(--pa-radius);opacity:0;pointer-events:none;transition:opacity .15s}
+.pa-wa-fab:hover .pa-wa-label,.pa-wa-fab:focus .pa-wa-label{opacity:1}
+/* Lift above the cookie notice while it is showing (JS adds the class as a :has() fallback). */
+body:has(#pa-cookie:not([hidden])) .pa-wa-fab,body.pa-cookie-open .pa-wa-fab{bottom:96px}
+@media (max-width:640px){
+  .pa-wa-fab{right:14px;bottom:14px;width:52px;height:52px}
+  .pa-wa-label{display:none}
+  body:has(#pa-cookie:not([hidden])) .pa-wa-fab,body.pa-cookie-open .pa-wa-fab{bottom:150px}
+}
+@media print{.pa-wa-fab,.pa-annc{display:none!important}}
+
+/* ---- Help centre ---- */
+.pa-help-search{display:flex;gap:8px;max-width:620px;padding-bottom:26px}
+.pa-help-search .pa-field{flex:1;min-width:0}
+.pa-help-group{margin-bottom:34px}
+.pa-help-cat{font-size:20px;margin:0 0 10px}
+.pa-help-item{background:var(--pa-surface);border:1px solid var(--pa-line);margin-bottom:-1px}
+.pa-help-item summary{cursor:pointer;list-style:none;padding:16px 44px 16px 20px;font-size:15px;font-weight:700;position:relative}
+.pa-help-item summary::-webkit-details-marker{display:none}
+.pa-help-item summary::after{content:'+';position:absolute;right:18px;top:12px;font-size:22px;font-weight:400;color:var(--pa-muted)}
+.pa-help-item[open] summary::after{content:'–'}
+.pa-help-item[open] summary{border-bottom:1px solid var(--pa-line-soft)}
+.pa-help-answer{padding:14px 20px 18px;font-size:15px;color:var(--pa-ink-soft)}
+.pa-help-answer p{margin:0 0 10px}
+.pa-help-answer p:last-child{margin-bottom:0}
+
+/* ---- Support tickets ---- */
+.pa-sup-row{display:flex;gap:14px;align-items:center;padding:16px 22px;border-bottom:1px solid var(--pa-line-soft);color:inherit;text-decoration:none}
+.pa-sup-row:last-child{border-bottom:0}
+.pa-sup-row:hover{background:var(--pa-surface-2);text-decoration:none}
+.pa-sup-subject{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pa-sup-meta{font-size:12px;color:var(--pa-muted);margin-top:3px}
+.pa-sup-err{color:var(--pa-signal);font-size:12px;margin-top:4px}
+.pa-sup-thread{display:grid;gap:12px}
+.pa-sup-msg{border:1px solid var(--pa-line);background:var(--pa-surface);padding:14px 18px;max-width:86%}
+.pa-sup-msg.is-me{justify-self:end;background:var(--pa-surface-2)}
+.pa-sup-msg.is-staff{justify-self:start;border-left:4px solid var(--pa-info)}
+.pa-sup-msg-head{display:flex;gap:12px;justify-content:space-between;font-size:12px;color:var(--pa-muted);margin-bottom:6px}
+.pa-sup-msg-head strong{color:var(--pa-ink)}
+.pa-sup-msg-body{font-size:15px;line-height:1.55;overflow-wrap:anywhere}
+.pa-sup-file{display:inline-block;margin-top:8px;font-size:13px;font-weight:700}
+
+/* ---- NPS survey ---- */
+.pa-nps{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px}
+.pa-nps-opt{position:relative;cursor:pointer}
+.pa-nps-opt input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.pa-nps-opt span{display:flex;align-items:center;justify-content:center;height:44px;border:1px solid var(--pa-line);font-weight:900;font-size:15px;background:var(--pa-surface)}
+.pa-nps-opt:hover span{border-color:var(--pa-ink)}
+.pa-nps-opt input:focus-visible + span{outline:2px solid var(--pa-info);outline-offset:1px}
+.pa-nps-opt.is-det input:checked + span{background:var(--pa-signal);border-color:var(--pa-signal);color:#fff}
+.pa-nps-opt.is-pas input:checked + span{background:var(--pa-beacon);border-color:var(--pa-beacon);color:var(--pa-ink)}
+.pa-nps-opt.is-pro input:checked + span{background:var(--pa-go);border-color:var(--pa-go);color:#fff}
+
+/* ---- Doctor share / QR ---- */
+.pa-share-row{display:flex;gap:8px;flex-wrap:wrap;margin:-6px 0 18px}
+.pa-qr-box{max-width:380px}
+.pa-qr-img{background:#fff;padding:12px;border:1px solid var(--pa-line);display:flex;justify-content:center}
+.pa-qr-img svg,.pa-qr-img img,.pa-qr-img canvas{width:240px;height:240px;display:block}
+
+@media (max-width:820px){
+  .pa-news{grid-template-columns:1fr;gap:14px}
+  .pa-annc .inner{padding:9px 16px}
+  .pa-sup-msg{max-width:100%}
+}
+@media (max-width:520px){
+  .pa-news-row,.pa-help-search{flex-direction:column}
+  .pa-nps{grid-template-columns:repeat(6,minmax(0,1fr))}
+}

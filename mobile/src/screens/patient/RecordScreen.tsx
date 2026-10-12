@@ -119,6 +119,7 @@ export default function RecordScreen({ navigation }: any) {
       />
       <PaRow title="Profile & sharing" subtitle="Personal details, scheme, sharing" onPress={() => navigation.navigate('ProfileHome')} />
       <PaRow title="Invite friends" subtitle="Share your referral code" onPress={() => navigation.navigate('Referrals')} />
+      <PaRow title="Help & support" subtitle="FAQs, contact support, your tickets" onPress={() => navigation.navigate('Support')} />
 
       <Text style={styles.sectionLabel}>Timeline</Text>
       {timeline.length === 0 && !loading ? (

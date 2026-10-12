@@ -44,6 +44,10 @@ function resolveTarget(role: Role | undefined, n: AppNotification): [string, any
     return ['Chat', { conversationId: p.conversation_id ?? n.data.conversation_id }];
   }
 
+  // Help & support thread and the "How was your visit?" survey are root screens (every role).
+  if (route === 'support_ticket' && p.ticket_id) return ['SupportThread', { ticketId: p.ticket_id }];
+  if (route === 'feedback' && p.token) return ['Feedback', { token: p.token }];
+
   const tab = (screen: string, params?: any) => ['Main', { screen, params }] as [string, any];
 
   switch (role) {

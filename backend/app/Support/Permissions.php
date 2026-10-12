@@ -73,6 +73,15 @@ class Permissions
 
         'triage-submissions' => 'Overview',
 
+        // Support stream: tickets, help centre, announcements, inbox, newsletter, NPS.
+        'support-tickets' => 'Support',
+        'faqs' => 'Support',
+        'faq-categories' => 'Support',
+        'announcements' => 'Support',
+        'contact-messages' => 'Support',
+        'newsletter-subscribers' => 'Support',
+        'feedback-surveys' => 'Support',
+
         // POPIA compliance pack (super_admin-only resources).
         'consents' => 'Privacy',
         'data-access-logs' => 'Privacy',
@@ -99,6 +108,7 @@ class Permissions
         'referrals.view' => ['group' => 'Marketplace', 'label' => 'Referrals report'],
         'commerce-settings.manage' => ['group' => 'System', 'label' => 'Commerce & alerts settings (invoices, referrals, agenda, document expiry)'],
         'expiring-documents.view' => ['group' => 'System', 'label' => 'Expiring documents'],
+        'support-settings.manage' => ['group' => 'Support', 'label' => 'Support settings (tickets, help centre, newsletter, surveys)'],
     ];
 
     /**

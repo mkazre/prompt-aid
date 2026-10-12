@@ -42,6 +42,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Doctor morning agenda alert + document expiry reminders.
         \App\Support\CommerceJobs::registerOnTick();
+        // Support stream: NPS survey hooks + sweep (see App\Support\SupportStream).
+        \App\Support\SupportStream::boot();
     }
 
     /**

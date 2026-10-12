@@ -75,6 +75,9 @@ Route::get('/messages/{message}/attachment', [\App\Http\Controllers\Api\Conversa
     ->whereNumber('message')
     ->name('chat.attachment');
 
+// Support stream: help FAQs, announcements, support tickets, feedback surveys.
+require __DIR__.'/api_support.php';
+
 // --- Authenticated (any role) ---
 Route::middleware('auth:sanctum')->group(function () {
     require __DIR__.'/api_doctor_match.php';

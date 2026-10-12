@@ -14,6 +14,7 @@ import { DoctorStackParamList } from '../../navigation/DoctorTabs';
 import WidgetHost from '../../widgets/WidgetHost';
 import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 import RunningLateModal from '../../components/RunningLateModal';
+import AnnouncementBanner from '../../components/AnnouncementBanner';
 
 type Nav = NativeStackNavigationProp<DoctorStackParamList>;
 
@@ -96,6 +97,8 @@ export default function DoctorDashboardScreen() {
           <PaAvatar name={user?.name} size={48} />
         </View>
       </View>
+
+      <AnnouncementBanner refreshKey={refreshKey} />
 
       <WidgetHost screen="home" refreshKey={refreshKey} onLoaded={setWidgetKeys} style={{ marginBottom: 16 }} />
 
