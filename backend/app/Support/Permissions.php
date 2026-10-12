@@ -27,6 +27,7 @@ class Permissions
         'clinics' => 'Clinical',
         'doctor-profiles' => 'Clinical',
         'doctor-matches' => 'Clinical',
+        'doctor-delay-notices' => 'Clinical',
         'encounters' => 'Clinical',
         'lab-requests' => 'Clinical',
         'patient-profiles' => 'Clinical',
@@ -42,6 +43,7 @@ class Permissions
         'orders' => 'Marketplace',
         'pharmacies' => 'Marketplace',
         'products' => 'Marketplace',
+        'promo-codes' => 'Marketplace',
 
         'app-widgets' => 'Site',
         'health-articles' => 'Site',
@@ -71,6 +73,15 @@ class Permissions
 
         'triage-submissions' => 'Overview',
 
+        // Support stream: tickets, help centre, announcements, inbox, newsletter, NPS.
+        'support-tickets' => 'Support',
+        'faqs' => 'Support',
+        'faq-categories' => 'Support',
+        'announcements' => 'Support',
+        'contact-messages' => 'Support',
+        'newsletter-subscribers' => 'Support',
+        'feedback-surveys' => 'Support',
+
         // POPIA compliance pack (super_admin-only resources).
         'consents' => 'Privacy',
         'data-access-logs' => 'Privacy',
@@ -95,6 +106,10 @@ class Permissions
         'privacy-settings.manage' => ['group' => 'Privacy', 'label' => 'Privacy settings (retention, Information Officer)'],
         'doctor-now-settings.manage' => ['group' => 'System', 'label' => 'On-demand doctors settings'],
         'health-settings.manage' => ['group' => 'System', 'label' => 'Patient health settings (reminders, vitals ranges, feature switches)'],
+        'referrals.view' => ['group' => 'Marketplace', 'label' => 'Referrals report'],
+        'commerce-settings.manage' => ['group' => 'System', 'label' => 'Commerce & alerts settings (invoices, referrals, agenda, document expiry)'],
+        'expiring-documents.view' => ['group' => 'System', 'label' => 'Expiring documents'],
+        'support-settings.manage' => ['group' => 'Support', 'label' => 'Support settings (tickets, help centre, newsletter, surveys)'],
     ];
 
     /**

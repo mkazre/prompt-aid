@@ -162,29 +162,9 @@ class PageController extends Controller
         ]);
     }
 
-    public function contactSubmit(Request $request)
+    /** Saved to the contact inbox (/staff → Support → Contact messages); see ContactMessageService. */
+    public function contactSubmit(Request $request, \App\Services\Support\ContactMessageService $contact)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'subject' => ['nullable', 'string', 'max:255'],
-            'message' => ['required', 'string', 'max:2000'],
-        ]);
-
-        $admins = User::query()->where('role', User::ROLE_SUPER_ADMIN)->where('status', 'active')->get();
-
-        if ($admins->isNotEmpty()) {
-            StaffNotifier::alert(
-                $admins,
-                "New contact message from {$data['name']}".(! empty($data['subject']) ? " — {$data['subject']}" : ''),
-                $data['message'],
-                icon: 'heroicon-o-envelope',
-                color: 'info',
-                url: 'mailto:'.$data['email'],
-                actionLabel: 'Reply by email',
-            );
-        }
-
-        return back()->with('success', "Thanks {$data['name']}, we've received your message and will get back to you soon.");
+        return $contact->handle($request);
     }
 }

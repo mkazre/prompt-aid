@@ -34,6 +34,7 @@
       @endif
       <p style="font-size:17px;color:var(--pa-ink-soft);margin-bottom:18px">{{ $doctor->specialization }}@if($doctor->qualification) · {{ $doctor->qualification }}@endif
         @if($doctor->registration_no) · HPCSA {{ $doctor->registration_no }}@endif</p>
+      @include('doctors.partials.share', ['doctor' => $doctor])
       <div style="display:flex;gap:32px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--pa-line)">
         <div><div class="pa-label" style="margin-bottom:4px">Consult</div><div class="pa-num" style="font-size:22px">R {{ number_format($doctor->consultation_fee, 0) }}</div></div>
         @if ($doctor->rating_count)

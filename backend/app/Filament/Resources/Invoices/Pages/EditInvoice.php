@@ -18,6 +18,11 @@ class EditInvoice extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('print')
+                ->icon('heroicon-o-printer')
+                ->color('gray')
+                ->url(fn () => route('staff.invoices.print', $this->record))
+                ->openUrlInNewTab(),
             Action::make('submitToScheme')
                 ->label('Submit to scheme')
                 ->icon('heroicon-o-clipboard-document-check')

@@ -39,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
 
         // POPIA retention / anonymisation sweeps (hourly, bounded per run).
         \App\Jobs\Privacy\RetentionJobs::registerOnTick();
+
+        // Doctor morning agenda alert + document expiry reminders.
+        \App\Support\CommerceJobs::registerOnTick();
+        // Support stream: NPS survey hooks + sweep (see App\Support\SupportStream).
+        \App\Support\SupportStream::boot();
     }
 
     /**

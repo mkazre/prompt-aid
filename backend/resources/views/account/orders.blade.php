@@ -16,8 +16,8 @@
           <td>{{ $order->pharmacy->name }}</td>
           <td>{{ $order->items->count() }} item(s)</td>
           <td><span class="pa-badge {{ in_array($order->status, ['delivered', 'confirmed']) ? 'is-go' : ($order->status === 'cancelled' ? 'is-stop' : 'is-wait') }}">{{ str($order->status)->headline() }}</span></td>
-          <td>R{{ number_format($order->total, 2) }}</td>
-          <td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.invoices') }}">Invoice</a></td>
+          <td>R{{ number_format($order->total, 2) }}@if ($order->discount_amount > 0)<div class="t-sub">incl. R{{ number_format($order->discount_amount, 2) }} off{{ $order->promo_code ? ' ('.$order->promo_code.')' : '' }}</div>@endif</td>
+          <td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.orders.print', $order) }}" target="_blank" rel="noopener">Invoice</a></td>
         </tr>
       @empty
         <tr><td colspan="6"><p class="pa-muted" style="padding:24px;text-align:center;font-size:14px">No orders yet. <a href="{{ route('shop.index') }}">Browse the marketplace</a>.</p></td></tr>

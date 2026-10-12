@@ -85,6 +85,9 @@ class DriverDocumentController extends Controller
             'type_label' => $d->typeLabel(),
             'original_name' => $d->original_name,
             'expires_at' => $d->expires_at?->format('Y-m-d'),
+            // 'expired' | 'expiring' (<= 30 days) | 'valid' | null (no expiry date)
+            'expiry_status' => \App\Services\Commerce\DocumentExpiryService::status($d->expires_at),
+            'days_until_expiry' => \App\Services\Commerce\DocumentExpiryService::daysUntil($d->expires_at),
             'status' => $d->status,
             'review_note' => $d->review_note,
             'uploaded_at' => $d->created_at?->toIso8601String(),

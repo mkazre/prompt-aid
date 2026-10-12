@@ -14,6 +14,7 @@ class ListAppointments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Actions\RunningLateAction::make(),
             CreateAction::make(),
         ];
     }

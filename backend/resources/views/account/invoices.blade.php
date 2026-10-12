@@ -33,8 +33,9 @@
           </td>
           <td>R{{ number_format($invoice->total, 2) }}</td>
           <td class="t-right">
+            <a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.invoices.print', $invoice) }}" target="_blank" rel="noopener">View / print</a>
             @if ($invoice->status !== 'paid')
-              <span class="pa-muted" style="font-size:12px">Pay via reception</span>
+              <div class="pa-muted" style="font-size:12px;margin-top:4px">Pay via reception</div>
             @endif
           </td>
         </tr>

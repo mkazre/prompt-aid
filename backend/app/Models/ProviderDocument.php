@@ -11,8 +11,15 @@ class ProviderDocument extends Model
     use HasFactory;
 
     protected $fillable = [
-        'provider_application_id', 'label', 'path', 'original_name',
+        'provider_application_id', 'label', 'path', 'original_name', 'expires_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'expires_at' => 'date',
+        ];
+    }
 
     public function application(): BelongsTo
     {

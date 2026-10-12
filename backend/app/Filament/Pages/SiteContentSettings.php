@@ -149,6 +149,16 @@ class SiteContentSettings extends Page
                                     ])->columns(2),
                                 ...$levels,
                             ]),
+                        Tab::make('WhatsApp button')
+                            ->schema([
+                                Section::make('Floating WhatsApp help button (website, bottom-right)')
+                                    ->description('Opens a WhatsApp chat with the "Ask a doctor" WhatsApp number from the Emergency popup tab.')
+                                    ->schema([
+                                        \Filament\Forms\Components\Toggle::make('whatsapp_button.enabled')->label('Show the button')->columnSpanFull(),
+                                        TextInput::make('whatsapp_button.label')->label('Tooltip / label')->maxLength(60),
+                                        Textarea::make('whatsapp_button.message')->label('Prefilled message')->rows(2)->maxLength(500),
+                                    ])->columns(2),
+                            ]),
                         Tab::make('Practitioner status')
                             ->schema($statuses),
                         Tab::make('Find care')
