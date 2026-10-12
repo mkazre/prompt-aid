@@ -44,6 +44,10 @@ function resolveTarget(role: Role | undefined, n: AppNotification): [string, any
     return ['Chat', { conversationId: p.conversation_id ?? n.data.conversation_id }];
   }
 
+  // Help & support thread and the "How was your visit?" survey are root screens (every role).
+  if (route === 'support_ticket' && p.ticket_id) return ['SupportThread', { ticketId: p.ticket_id }];
+  if (route === 'feedback' && p.token) return ['Feedback', { token: p.token }];
+
   const tab = (screen: string, params?: any) => ['Main', { screen, params }] as [string, any];
 
   switch (role) {
@@ -51,6 +55,7 @@ function resolveTarget(role: Role | undefined, n: AppNotification): [string, any
       if (route === 'appointment') return tab('Profile', { screen: 'Appointments' });
       if (route === 'orders') return tab('Profile', { screen: 'Orders' });
       if (route === 'lab_results') return tab('Profile', { screen: 'LabResults' });
+      if (route === 'referrals') return tab('Profile', { screen: 'Referrals' });
       if (route === 'prescriptions') return tab('Pharmacy');
       if (route === 'ride' && p.ride_id) return tab('Rides', { screen: 'RideTrack', params: { rideId: p.ride_id } });
       return null;
@@ -58,6 +63,7 @@ function resolveTarget(role: Role | undefined, n: AppNotification): [string, any
       if (route === 'doctor_appointment') return tab('DoctorCalendar');
       return tab('DoctorDashboard');
     case 'driver':
+      if (route === 'driver_documents') return tab('Profile');
       return tab('Trips');
     case 'pharmacy_admin':
       return tab('Orders');

@@ -44,6 +44,8 @@ class User extends Authenticatable implements FilamentUser
         'role_id',
         'avatar',
         'status',
+        'referral_code',
+        'referred_by_user_id',
     ];
 
     /**
@@ -72,6 +74,18 @@ class User extends Authenticatable implements FilamentUser
     public function doctorProfile(): HasOne
     {
         return $this->hasOne(DoctorProfile::class);
+    }
+
+    /** Who invited this user (referral programme, see ReferralService). */
+    public function referrer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(self::class, 'referred_by_user_id');
+    }
+
+    /** Users who signed up with this user's referral code. */
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(self::class, 'referred_by_user_id');
     }
 
     public function patientProfile(): HasOne

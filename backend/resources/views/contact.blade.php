@@ -19,10 +19,14 @@
     @if (session('success'))
       <div class="pa-note" style="margin-bottom:16px;border-color:var(--pa-go);color:var(--pa-go)">{{ session('success') }}</div>
     @endif
-    <form method="POST" action="{{ route('contact.submit') }}">
+    <form method="POST" action="{{ route('contact.submit') }}" data-pa-once>
       @csrf
-      <div class="pa-formrow"><label class="pa-label">Your name</label><input class="pa-field" name="name" required value="{{ old('name') }}" /></div>
-      <div class="pa-formrow"><label class="pa-label">Email</label><input class="pa-field" type="email" name="email" required value="{{ old('email') }}" /></div>
+      <div class="pa-formrow"><label class="pa-label">Your name</label><input class="pa-field" name="name" required value="{{ old('name', auth()->user()?->name) }}" /></div>
+      <div class="pa-formrow"><label class="pa-label">Email</label><input class="pa-field" type="email" name="email" required value="{{ old('email', auth()->user()?->email) }}" /></div>
+      @error('email')<div style="color:var(--pa-signal);font-size:12px;margin:-6px 0 10px">{{ $message }}</div>@enderror
+      <div class="pa-formrow"><label class="pa-label">Phone (optional)</label><input class="pa-field" type="tel" name="phone" maxlength="50" value="{{ old('phone', auth()->user()?->phone) }}" /></div>
+      {{-- Honeypot: hidden from people, bots fill it in. --}}
+      <input type="text" name="website" tabindex="-1" autocomplete="off" class="pa-hp" aria-hidden="true" />
       <div class="pa-formrow"><label class="pa-label">About</label><select class="pa-field" name="subject">
         <option>A booking</option><option>A pharmacy order</option><option>A shuttle trip</option>
         <option>A medical scheme claim</option><option>Listing my practice</option><option>My data under POPIA</option><option>Something else</option>

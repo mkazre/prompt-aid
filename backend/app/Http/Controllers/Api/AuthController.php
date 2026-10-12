@@ -53,6 +53,7 @@ class AuthController extends Controller
             'accept_health_data' => ['nullable', 'boolean'],
             'consents' => ['nullable', 'array'],
             'consents.*' => ['string'],
+            'referral_code' => ['nullable', 'string', 'max:20'],
         ]);
 
         if ($validator->fails()) {
@@ -95,6 +96,8 @@ class AuthController extends Controller
         app(\App\Services\Privacy\ConsentService::class)->recordRegistration(
             $user, \App\Services\Privacy\ConsentService::purposesFromRequest($request), 'app', $request
         );
+
+        app(\App\Services\Commerce\ReferralService::class)->attach($user, $data['referral_code'] ?? null);
 
         $token = $user->createToken('mobile')->plainTextToken;
 

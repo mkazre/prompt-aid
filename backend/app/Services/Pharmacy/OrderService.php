@@ -38,12 +38,13 @@ class OrderService
         ?float $deliveryLat = null,
         ?float $deliveryLng = null,
         ?PrescriptionUpload $prescriptionUpload = null,
+        ?string $promoCode = null,
     ): Order {
         if (empty($cartItems)) {
             throw new RuntimeException('Your cart is empty.');
         }
 
-        return DB::transaction(function () use ($patient, $pharmacy, $cartItems, $deliveryAddress, $deliveryLat, $deliveryLng, $prescriptionUpload) {
+        return DB::transaction(function () use ($patient, $pharmacy, $cartItems, $deliveryAddress, $deliveryLat, $deliveryLng, $prescriptionUpload, $promoCode) {
             $subtotal = 0;
             $needsPrescription = false;
             $lines = [];
@@ -72,7 +73,19 @@ class OrderService
             }
 
             $deliveryFee = (float) $pharmacy->delivery_fee;
-            $total = $subtotal + $deliveryFee;
+
+            // Promo code: discount on the basket subtotal (not delivery),
+            // re-validated here under a row lock so limits hold under load.
+            $promo = null;
+            $discount = 0.0;
+            if ($promoCode !== null && trim($promoCode) !== '') {
+                $promos = app(\App\Services\Commerce\PromoCodeService::class);
+                $result = $promos->evaluate($promoCode, $patient->user, \App\Models\PromoCode::CONTEXT_PHARMACY, (float) $subtotal, lock: true);
+                $promo = $result['promo'];
+                $discount = $result['discount'];
+            }
+
+            $total = round($subtotal - $discount + $deliveryFee, 2);
             $commission = round($subtotal * ((float) $pharmacy->commission_rate / 100), 2);
 
             $order = Order::query()->create([
@@ -81,6 +94,8 @@ class OrderService
                 'prescription_upload_id' => $prescriptionUpload?->id,
                 'subtotal' => $subtotal,
                 'delivery_fee' => $deliveryFee,
+                'discount_amount' => $promo ? $discount : null,
+                'promo_code' => $promo?->code,
                 'total' => $total,
                 'commission_amount' => $commission,
                 'delivery_address' => $deliveryAddress,
@@ -103,6 +118,10 @@ class OrderService
 
             if ($prescriptionUpload) {
                 $prescriptionUpload->update(['order_id' => $order->id]);
+            }
+
+            if ($promo) {
+                app(\App\Services\Commerce\PromoCodeService::class)->redeem($promo, $patient->user, \App\Models\PromoCode::CONTEXT_PHARMACY, (float) $subtotal, $discount, $order);
             }
 
             $this->notifier->email($patient->user, 'Order placed', "Your order {$order->order_no} from {$pharmacy->name} has been placed.", ['type' => 'order', 'data' => ['route' => 'orders', 'params' => ['order_id' => $order->id], 'url' => '/account/orders']]);

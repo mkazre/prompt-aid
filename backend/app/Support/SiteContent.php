@@ -65,6 +65,12 @@ class SiteContent
                 'green' => ['title' => 'It can wait', 'description' => 'Book a specialist, dentist, allied practitioner e.g. physio, radiology/x-ray, lab services.', 'timeframe' => 'In the next few days', 'action' => 'Book a non urgent service or consult'],
             ],
         ],
+        // Floating WhatsApp help button (website). Uses emergency.whatsapp_number.
+        'whatsapp_button' => [
+            'enabled' => true,
+            'label' => 'Chat with us on WhatsApp',
+            'message' => 'Hi PromptAid, I need some help with ',
+        ],
         'status' => [
             'green' => ['label' => 'Available in 30 min', 'description' => 'Open to see you immediately — within 30 minutes.'],
             'orange' => ['label' => 'Available today', 'description' => 'Available to see you today, at a booked slot in the queue.'],

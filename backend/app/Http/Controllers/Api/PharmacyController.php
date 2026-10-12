@@ -87,6 +87,7 @@ class PharmacyController extends Controller
             'delivery_lat' => ['nullable', 'numeric'],
             'delivery_lng' => ['nullable', 'numeric'],
             'prescription_upload_id' => ['nullable', 'integer', 'exists:prescription_uploads,id'],
+            'promo_code' => ['nullable', 'string', 'max:40'],
         ]);
 
         $pharmacy = Pharmacy::findOrFail($data['pharmacy_id']);
@@ -103,6 +104,7 @@ class PharmacyController extends Controller
                 $data['delivery_lat'] ?? null,
                 $data['delivery_lng'] ?? null,
                 $prescription,
+                $data['promo_code'] ?? null,
             );
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);

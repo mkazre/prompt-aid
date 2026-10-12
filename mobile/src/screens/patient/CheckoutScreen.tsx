@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { api, apiErrorMessage } from '../../api/client';
@@ -29,6 +29,10 @@ export default function CheckoutScreen({ navigation }: any) {
   const [method, setMethod] = useState<PayMethod>('card');
   const [placing, setPlacing] = useState(false);
   const [done, setDone] = useState<{ paid: boolean; orderNo: string | null; total: number } | null>(null);
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState<{ code: string; discount: number; message: string } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [checkingPromo, setCheckingPromo] = useState(false);
 
   const successModal = (
     <SuccessModal
@@ -56,7 +60,37 @@ export default function CheckoutScreen({ navigation }: any) {
     />
   );
 
-  const total = subtotal + (lines.length ? 45 : 0);
+  const discount = promo ? Math.min(promo.discount, subtotal) : 0;
+  const total = subtotal - discount + (lines.length ? 45 : 0);
+  const cartKey = lines.map((l) => `${l.product.id}x${l.qty}`).join(',');
+
+  async function applyPromo(code: string = promoInput) {
+    const trimmed = code.trim();
+    if (!trimmed || !lines.length) return;
+    setCheckingPromo(true);
+    setPromoError(null);
+    try {
+      const { data } = await api.post('/promo-codes/validate', {
+        code: trimmed,
+        context: 'pharmacy',
+        pharmacy_id: lines[0].product.pharmacy_id,
+        items: lines.map((l) => ({ product_id: l.product.id, qty: l.qty })),
+      });
+      setPromo({ code: data.code, discount: Number(data.discount) || 0, message: data.message });
+      setPromoInput(data.code);
+    } catch (e) {
+      setPromo(null);
+      setPromoError(apiErrorMessage(e));
+    } finally {
+      setCheckingPromo(false);
+    }
+  }
+
+  // Basket changed: re-check the applied code so the discount stays accurate.
+  useEffect(() => {
+    if (promo) applyPromo(promo.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartKey]);
   const needsPrescription = lines.some((l) => l.product.requires_prescription);
 
   async function attachPrescription() {
@@ -91,10 +125,11 @@ export default function CheckoutScreen({ navigation }: any) {
         items: lines.map((l) => ({ product_id: l.product.id, qty: l.qty })),
         delivery_address: deliveryAddress,
         prescription_upload_id: prescriptionId,
+        promo_code: promo?.code,
       });
       const orderId = data?.data?.id ?? data?.id;
       const orderNo = data?.data?.order_no ?? data?.order_no ?? null;
-      const paidTotal = total;
+      const paidTotal = Number(data?.data?.total ?? data?.total ?? total);
       let paid = false;
       try {
         await api.post(`/orders/${orderId}/pay`, { method });
@@ -103,6 +138,8 @@ export default function CheckoutScreen({ navigation }: any) {
         // Order placed but payment failed/deferred (e.g. awaiting script review) — the modal says so.
       }
       clear();
+      setPromo(null);
+      setPromoInput('');
       setDone({ paid, orderNo, total: paidTotal });
     } catch (e) {
       Alert.alert('Checkout failed', apiErrorMessage(e));
@@ -138,10 +175,35 @@ export default function CheckoutScreen({ navigation }: any) {
 
       <View style={styles.summaryBox}>
         <PaSpreadRow label="Subtotal" value={`R ${subtotal.toFixed(2)}`} />
+        {discount > 0 && <PaSpreadRow label={`Discount (${promo?.code})`} value={`− R ${discount.toFixed(2)}`} />}
         <PaSpreadRow label="Delivery" value="R 45.00" />
         <View style={styles.divider} />
         <PaSpreadRow label="You pay" value={`R ${total.toFixed(2)}`} bold />
       </View>
+
+      <Text style={styles.label}>Promo code</Text>
+      <View style={styles.promoRow}>
+        <TextInput
+          value={promoInput}
+          onChangeText={(t) => {
+            setPromoInput(t);
+            if (promo && t.trim().toUpperCase() !== promo.code) setPromo(null);
+            setPromoError(null);
+          }}
+          placeholder="Have a code?"
+          placeholderTextColor={pa.muted2}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          style={[styles.input, { flex: 1 }]}
+        />
+        {promo ? (
+          <PaButton title="Remove" variant="ghost" onPress={() => { setPromo(null); setPromoInput(''); }} style={{ minWidth: 96 }} />
+        ) : (
+          <PaButton title="Apply" variant="ghost" onPress={() => applyPromo()} loading={checkingPromo} disabled={!promoInput.trim()} style={{ minWidth: 96 }} />
+        )}
+      </View>
+      {promo ? <Text style={[styles.promoMsg, { color: pa.go }]}>{promo.message}</Text> : null}
+      {promoError ? <Text style={[styles.promoMsg, { color: pa.signal }]}>{promoError}</Text> : null}
 
       <Text style={styles.label}>Delivery address</Text>
       <TextInput
@@ -193,6 +255,8 @@ const styles = StyleSheet.create({
   lineName: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
   linePrice: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: 2 },
   summaryBox: { marginTop: 12, marginBottom: 4 },
+  promoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  promoMsg: { fontFamily: paFonts.regular, fontSize: 12, marginTop: 6 },
   divider: { borderTopWidth: 1, borderTopColor: pa.line, marginVertical: 6 },
   label: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: pa.muted, marginTop: 18, marginBottom: 8 },
   input: {

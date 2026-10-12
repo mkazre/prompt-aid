@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="{{ asset('assets/css/pa-a11y.css') }}" />
 <script src="{{ asset('assets/js/pa-a11y.js') }}"></script>
 @endif
+<link rel="stylesheet" href="{{ asset('assets/css/pa-support.css') }}" />
 @if ($themeColors || $themeShape)
 <style>
   :root{
@@ -34,6 +35,7 @@
 @stack('meta')
 </head>
 <body data-pa-root="{{ url('/') }}"{{ isset($noTriage) && $noTriage ? ' data-pa-no-triage' : '' }}>
+@include('partials.support.announcements')
 <div class="pa-alertbar"><div class="inner">
   <span class="pa-row"><span class="pa-blip"></span>24-hour emergency line <strong style="color:var(--pa-beacon)">{{ \App\Models\Setting::get('support_phone', '0800 776 678') }}</strong></span>
   <span class="pa-row" style="gap:22px;color:#A9A49A">
@@ -138,9 +140,10 @@
     <div class="ft">Company</div>
     <div class="fl"><a href="{{ route('about') }}">About</a><a href="{{ route('how-it-works') }}">How it works</a>@if ($featOn['topic'])<a href="{{ route('topic.show') }}">Topic of the month</a>@endif
 @if ($featOn['testimonials'])<a href="{{ route('testimonials.create') }}">Submit a testimonial</a>@endif
-<a href="{{ route('faq') }}">FAQ</a><a href="{{ route('contact') }}">Contact</a><a href="{{ route('legal-popia') }}">POPIA notice</a></div>
+<a href="{{ route('help') }}">Help centre</a><a href="{{ route('contact') }}">Contact</a><a href="{{ route('legal-popia') }}">POPIA notice</a></div>
   </div>
 </div>
+@include('partials.support.newsletter')
 <div class="legal"><div class="inner2">
   <span>&copy; {{ date('Y') }} Prompt Aid (Pty) Ltd. Registered with the HPCSA and SAPC.</span>
   <span><a href="{{ route('legal-popia') }}">POPIA</a> · <a href="{{ route('terms') }}">Terms</a> · <a href="{{ route('privacy') }}">Privacy</a></span>
@@ -159,6 +162,7 @@
 </div>
 </footer>
 @include('privacy.partials.cookie-notice')
+@include('partials.support.whatsapp-fab')
 @php
   $layoutEmergencyContactsForJs = \App\Models\EmergencyContact::activeOrdered()
     ->map(fn ($c) => ['label' => $c->label, 'phone' => $c->phone, 'tel' => $c->tel_url, 'isPrimary' => (bool) $c->is_primary])
@@ -187,6 +191,7 @@
 })();
 </script>
 <script src="{{ asset('assets/js/promptaid.js') }}"></script>
+<script src="{{ asset('assets/js/pa-support.js') }}" defer></script>
 @auth<script src="{{ asset('assets/js/pa-alerts.js') }}" defer></script>@endauth
 @stack('scripts')
 </body>

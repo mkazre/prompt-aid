@@ -68,7 +68,8 @@ Route::get('/assets/triage-config.json', [TriageConfigController::class, 'show']
 // content — real page-builder pages (see SeedSitePages), editable from
 // /staff/pages without a deploy. Named routes to the same renderer the
 // catch-all uses below, so route('about') etc. still resolve from Blade.
-foreach (['about', 'how-it-works', 'faq', 'privacy', 'terms', 'legal-popia'] as $contentSlug) {
+// (/faq is routed in web_support.php — it forwards to the /help centre.)
+foreach (['about', 'how-it-works', 'privacy', 'terms', 'legal-popia'] as $contentSlug) {
     Route::get("/{$contentSlug}", fn (
         \Illuminate\Http\Request $request,
         PageBuilderRenderController $controller,
@@ -193,7 +194,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/staff/preview/pages/{page}', [PageBuilderPreviewController::class, 'show'])->name('page-builder.preview');
     require __DIR__.'/web_privacy.php';
     require __DIR__.'/web_platform.php';
+    require __DIR__.'/web_commerce.php';
 });
+
+// Support stream: /help, /faq, newsletter, /account/support, /account/feedback.
+require __DIR__.'/web_support.php';
 
 // Page builder catch-all — must stay last. Never matches a path starting
 // with a reserved segment (auth, dashboard, checkout, rides, the Filament

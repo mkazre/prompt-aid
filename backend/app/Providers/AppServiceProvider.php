@@ -44,6 +44,10 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, [\App\Support\LoginRecorder::class, 'onLogin']);
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Failed::class, [\App\Support\LoginRecorder::class, 'onFailed']);
         \App\Support\Tick::register('security.login_events_retention', 86400, fn () => \App\Support\LoginRecorder::prune());
+        // Doctor morning agenda alert + document expiry reminders.
+        \App\Support\CommerceJobs::registerOnTick();
+        // Support stream: NPS survey hooks + sweep (see App\Support\SupportStream).
+        \App\Support\SupportStream::boot();
     }
 
     /**

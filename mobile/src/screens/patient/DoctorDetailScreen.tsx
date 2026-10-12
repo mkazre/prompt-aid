@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, apiErrorMessage } from '../../api/client';
@@ -11,7 +11,7 @@ import SuccessModal from '../../components/SuccessModal';
 import { Chip, Fab, PrimaryButton, R, SoftCard, s as ui } from '../../components/settings-ui';
 import { pa, paFonts } from '../../theme';
 import { PaLiveStatus } from '../../components/pa/care-extras';
-import { telUrl } from '../../services/siteContent';
+import { telUrl, websiteUrl } from '../../services/siteContent';
 
 const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 import { addDays, longDate, parseYmd, startOfToday, time12, ymd } from '../../services/dates';
@@ -91,6 +91,16 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
   const price = service ? service.price : doctor.consultation_fee;
   const firstName = (user?.name ?? '').split(' ')[0] || 'There';
 
+  // Share the doctor's public website profile (same page as /doctors/{id}).
+  const shareProfile = () => {
+    const url = websiteUrl(`/doctors/${doctor.id}`);
+    Share.share({
+      title: `${doctor.name} on PromptAid`,
+      message: Platform.OS === 'ios' ? `${doctor.name} · ${doctor.specialization} on PromptAid` : `${doctor.name} · ${doctor.specialization} on PromptAid\n${url}`,
+      url,
+    }).catch(() => undefined);
+  };
+
   const header = (
     <SoftCard style={{ flexDirection: 'row', gap: 14, alignItems: 'center', marginBottom: 18 }}>
       {doctor.avatar_url ? (
@@ -113,6 +123,9 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
           </View>
         ) : null}
       </View>
+      <Pressable onPress={shareProfile} hitSlop={10} style={styles.shareBtn} accessibilityLabel="Share this doctor's profile">
+        <Ionicons name="share-social-outline" size={20} color={pa.info} />
+      </Pressable>
     </SoftCard>
   );
 
@@ -341,6 +354,7 @@ const styles = StyleSheet.create({
   dotText: { fontFamily: paFonts.bold, fontSize: 12, color: pa.muted },
   stepLabel: { fontFamily: paFonts.bold, fontSize: 12, color: pa.muted },
   name: { fontFamily: paFonts.black, fontSize: 18, color: pa.ink },
+  shareBtn: { alignSelf: 'flex-start', width: 38, height: 38, borderRadius: 12, backgroundColor: '#EAF1F8', alignItems: 'center', justifyContent: 'center' },
   spec: { fontFamily: paFonts.regular, fontSize: 13, color: pa.muted, marginTop: 2 },
   meta: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 },

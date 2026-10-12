@@ -35,6 +35,11 @@ class InvoicesTable
                 SelectFilter::make('status')->options(['unpaid' => 'Unpaid', 'paid' => 'Paid', 'partially_paid' => 'Partially Paid', 'refunded' => 'Refunded']),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('print')
+                    ->icon('heroicon-o-printer')
+                    ->color('gray')
+                    ->url(fn (\App\Models\Invoice $record) => route('staff.invoices.print', $record))
+                    ->openUrlInNewTab(),
                 EditAction::make(),
             ])
             // Streamed CSV download (no queue): current filters/search/sort, or the ticked rows.

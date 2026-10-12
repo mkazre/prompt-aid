@@ -21,6 +21,11 @@ import ChatListScreen from '../screens/comms/ChatListScreen';
 import ChatScreen from '../screens/comms/ChatScreen';
 import VideoCallScreen from '../screens/comms/VideoCallScreen';
 import SecurityScreen from '../screens/SecurityScreen';
+import SupportScreen from '../screens/support/SupportScreen';
+import SupportNewScreen from '../screens/support/SupportNewScreen';
+import SupportThreadScreen from '../screens/support/SupportThreadScreen';
+import HelpCentreScreen from '../screens/support/HelpCentreScreen';
+import FeedbackScreen from '../screens/support/FeedbackScreen';
 import { colors, pa, paFonts } from '../theme';
 
 const Stack = createNativeStackNavigator();
@@ -46,6 +51,14 @@ function AuthStack() {
  * call. `navigation.navigate('Chat' | 'ChatList' | 'Notifications' |
  * 'VideoCall', ...)` from any nested tab screen bubbles up to here.
  */
+const supportHeader = {
+  headerShown: true,
+  headerTintColor: pa.ink,
+  headerStyle: { backgroundColor: pa.surface },
+  headerTitleStyle: { fontFamily: paFonts.bold },
+  headerShadowVisible: false,
+};
+
 function SignedInStack({ Tabs }: { Tabs: React.ComponentType<any> }) {
   return (
     <AppStack.Navigator screenOptions={{ headerShown: false }}>
@@ -58,7 +71,15 @@ function SignedInStack({ Tabs }: { Tabs: React.ComponentType<any> }) {
         component={SecurityScreen}
         options={{ headerShown: true, title: 'Login & security', headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerShadowVisible: false }}
       />
-      <AppStack.Screen name="VideoCall"component={VideoCallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
+            <AppStack.Screen name="VideoCall" component={VideoCallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
+      {/* Help & support (every role), Help centre FAQs and the NPS survey. */}
+      <AppStack.Group screenOptions={supportHeader}>
+        <AppStack.Screen name="Support" component={SupportScreen} options={{ title: 'Help & support' }} />
+        <AppStack.Screen name="SupportNew" component={SupportNewScreen} options={{ title: 'New ticket' }} />
+        <AppStack.Screen name="SupportThread" component={SupportThreadScreen} options={{ title: 'Ticket' }} />
+        <AppStack.Screen name="HelpCentre" component={HelpCentreScreen} options={{ title: 'Help centre' }} />
+        <AppStack.Screen name="Feedback" component={FeedbackScreen} options={{ title: 'Your feedback', presentation: 'modal' }} />
+      </AppStack.Group>
     </AppStack.Navigator>
   );
 }
@@ -70,6 +91,8 @@ export default function RootNavigator() {
   useAlerts(!!user, (data) => {
     if (!navRef.isReady()) return;
     if (data?.route === 'ChatList' || data?.type === 'chat_message') navRef.navigate('ChatList');
+    else if (data?.route === 'support_ticket' && data?.params?.ticket_id) navRef.navigate('SupportThread', { ticketId: data.params.ticket_id });
+    else if (data?.route === 'feedback' && data?.params?.token) navRef.navigate('Feedback', { token: data.params.token });
     else if (typeof data?.url === 'string' && /^https?:\/\//.test(data.url)) Linking.openURL(data.url);
     else navRef.navigate('Notifications');
   });

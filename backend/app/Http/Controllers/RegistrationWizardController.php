@@ -20,9 +20,12 @@ class RegistrationWizardController extends Controller
 {
     private const SESSION_KEY = 'patient_registration_wizard';
 
-    public function showAccount()
+    public function showAccount(Request $request)
     {
-        return view('auth.wizard.account');
+        $referrals = app(\App\Services\Commerce\ReferralService::class);
+        $referrals->captureFromRequest($request);
+
+        return view('auth.wizard.account', ['referralCode' => $referrals->pendingCode($request)]);
     }
 
     public function storeAccount(Request $request)
@@ -35,12 +38,14 @@ class RegistrationWizardController extends Controller
             // POPIA consent capture (recorded on the final step, see ConsentService).
             'accept_terms' => ['accepted'],
             'accept_health_data' => ['accepted'],
+            'referral_code' => ['nullable', 'string', 'max:20'],
         ], [
             'accept_terms.accepted' => 'Please accept the terms of use and privacy policy to continue.',
             'accept_health_data.accepted' => 'We need your consent to process your health information to provide care.',
         ]);
 
         $wizard = $request->session()->get(self::SESSION_KEY, []);
+        $wizard['referral_code'] = $data['referral_code'] ?? $request->session()->get(\App\Services\Commerce\ReferralService::SESSION_KEY);
         $wizard['consents'] = \App\Services\Privacy\ConsentService::purposesFromRequest($request);
         // Kept in the session (server-side, not the cookie itself) only for
         // the few minutes it takes to finish the wizard; User::create()
@@ -159,6 +164,7 @@ class RegistrationWizardController extends Controller
         );
 
         app(\App\Services\Privacy\ConsentService::class)->recordRegistration($user, $wizard['consents'] ?? [], 'web', $request);
+        app(\App\Services\Commerce\ReferralService::class)->attach($user, $wizard['referral_code'] ?? null, $request);
 
         $request->session()->forget(self::SESSION_KEY);
 

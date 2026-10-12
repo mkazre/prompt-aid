@@ -10,6 +10,8 @@ import { useAuth } from '../../context/AuthContext';
 import { META } from '../../services/triage';
 import WidgetHost from '../../widgets/WidgetHost';
 import CommsHeaderIcons from '../../components/CommsHeaderIcons';
+import AnnouncementBanner from '../../components/AnnouncementBanner';
+import FeedbackPromptCard from '../../components/FeedbackPromptCard';
 import { TriagePromptModal } from '../../components/pa/triage-extras';
 import { navigateForEmergencyAction } from '../../components/pa/care-extras';
 import { STATUS_COLOURS, featureOn, useSiteContent, websiteUrl } from '../../services/siteContent';
@@ -94,6 +96,9 @@ export default function HomeScreen({ navigation }: any) {
           </Pressable>
         </View>
       </View>
+
+      <AnnouncementBanner refreshKey={refreshKey} />
+      <FeedbackPromptCard navigation={navigation} refreshKey={refreshKey} />
 
       <TriagePromptModal
         visible={scaleOpen}

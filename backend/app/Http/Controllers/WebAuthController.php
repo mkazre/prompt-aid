@@ -52,9 +52,12 @@ class WebAuthController extends Controller
         return redirect()->intended(route('dashboard'));
     }
 
-    public function showRegister()
+    public function showRegister(Request $request)
     {
-        return view('auth.register');
+        $referrals = app(\App\Services\Commerce\ReferralService::class);
+        $referrals->captureFromRequest($request);
+
+        return view('auth.register', ['referralCode' => $referrals->pendingCode($request)]);
     }
 
     public function register(Request $request)
@@ -68,6 +71,7 @@ class WebAuthController extends Controller
             // POPIA consent capture (see ConsentService).
             'accept_terms' => ['accepted'],
             'accept_health_data' => ['accepted'],
+            'referral_code' => ['nullable', 'string', 'max:20'],
         ], [
             'accept_terms.accepted' => 'Please accept the terms of use and privacy policy to continue.',
             'accept_health_data.accepted' => 'Please consent to the processing of personal information as set out in the POPIA notice.',
@@ -94,6 +98,10 @@ class WebAuthController extends Controller
 
         app(\App\Services\Privacy\ConsentService::class)->recordRegistration(
             $user, \App\Services\Privacy\ConsentService::purposesFromRequest($request), 'web', $request
+        );
+
+        app(\App\Services\Commerce\ReferralService::class)->attach(
+            $user, $data['referral_code'] ?? $request->session()->get(\App\Services\Commerce\ReferralService::SESSION_KEY), $request
         );
 
         Auth::login($user);
