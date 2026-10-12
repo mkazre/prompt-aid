@@ -328,6 +328,8 @@ export interface Order {
   order_no: string;
   subtotal: number;
   delivery_fee: number;
+  discount_amount?: number | null;
+  promo_code?: string | null;
   total: number;
   status: string;
   payment_status: string;

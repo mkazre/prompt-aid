@@ -31,6 +31,7 @@
   <a href="{{ route('account.profile') }}" class="{{ $active === 'profile' ? 'is-on' : '' }}"><span class="d"></span>Profile &amp; scheme</a>
   <a href="{{ route('account.settings') }}" class="{{ $active === 'settings' ? 'is-on' : '' }}"><span class="d"></span>Privacy &amp; security</a>
   <a href="{{ route('account.privacy') }}" class="{{ $active === 'privacy' ? 'is-on' : '' }}"><span class="d"></span>Your data &amp; consents</a>
+  <a href="{{ route('account.referrals') }}" class="{{ $active === 'referrals' ? 'is-on' : '' }}"><span class="d"></span>Invite friends</a>
   <div style="padding:14px 16px;border-top:1px solid var(--pa-line)">
     <form method="POST" action="{{ route('logout') }}">
       @csrf
