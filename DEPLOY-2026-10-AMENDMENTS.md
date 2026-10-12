@@ -133,3 +133,45 @@ npx eas build --platform all
 npx eas submit
 ```
 It reads its text and numbers from the live `/api/site-content`, so deploy the website first.
+
+---
+
+## Added after the amendments: widgets, alerts and 30 new features
+
+Deploy exactly as above (Update from Remote → Deploy HEAD Commit). All database changes are add-only.
+
+**First, in `/staff` → Roles**, tick the new permissions for any non-super-admin role that should
+see them (super admins get them automatically): Reports, System health, Feature switches, Login
+history, Support tickets / FAQs / Announcements / Contact messages / Newsletter / Feedback, Promo
+codes, Referrals, Commerce & alerts settings, Expiring documents, Patient health settings,
+Support settings.
+
+**Then check the new settings pages** (all under `/staff`):
+
+| Page | What to set |
+|---|---|
+| System health | Everything green. Press "Send me a test alert" to hear the chime. |
+| Commerce & alerts | Practice name, address, VAT/registration, banking details (printed on invoices); doctor agenda time. |
+| Support settings | Tickets, Help centre (/faq forwards to /help), newsletter, survey wording. |
+| Patient health & reminders | Reminder lead times, vitals ranges, feature on/off. |
+| Features | Switch whole sections (shop, shuttle, video…) on or off for website and app. |
+| App Widgets | Edit icons (library or your own image), colours, banners and where each button goes. |
+
+**Cron (recommended):** Cron Jobs → every minute →
+`cd /home/<you>/promptaid-src/backend && php artisan schedule:run >/dev/null 2>&1`.
+This makes medication/appointment reminders, the doctor morning agenda and shuttle dispatch
+punctual. Without it they still run, but only when someone uses the site.
+
+**On the first deploy** patients with an appointment or ride completed in the last 7 days get one
+satisfaction-survey prompt (change the window in Support settings).
+
+### Phone alerts when the app is closed (Android) — Firebase, one-off
+
+Alerts with sound already work while the app is open. For closed-app push on Android:
+1. console.firebase.google.com → create a project → add an **Android app** with package name
+   `health.promptaid.app` → download **google-services.json**.
+2. expo.dev → project **prompt-aid** → Environment variables → add a **file** variable named
+   `GOOGLE_SERVICES_JSON` (upload that file; visibility: Sensitive).
+3. In Firebase → Project settings → Service accounts → generate a private key; in expo.dev →
+   Credentials → Android → add it as the **FCM V1 service account key**.
+4. Make a new build. On iPhone, push needs the Apple developer account instead.
