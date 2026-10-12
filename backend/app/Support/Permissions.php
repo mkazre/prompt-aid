@@ -71,6 +71,15 @@ class Permissions
 
         'triage-submissions' => 'Overview',
 
+        // Support stream: tickets, help centre, announcements, inbox, newsletter, NPS.
+        'support-tickets' => 'Support',
+        'faqs' => 'Support',
+        'faq-categories' => 'Support',
+        'announcements' => 'Support',
+        'contact-messages' => 'Support',
+        'newsletter-subscribers' => 'Support',
+        'feedback-surveys' => 'Support',
+
         // POPIA compliance pack (super_admin-only resources).
         'consents' => 'Privacy',
         'data-access-logs' => 'Privacy',
@@ -94,6 +103,7 @@ class Permissions
         'broadcast-notifications.send' => ['group' => 'System', 'label' => 'Broadcast notifications'],
         'privacy-settings.manage' => ['group' => 'Privacy', 'label' => 'Privacy settings (retention, Information Officer)'],
         'doctor-now-settings.manage' => ['group' => 'System', 'label' => 'On-demand doctors settings'],
+        'support-settings.manage' => ['group' => 'Support', 'label' => 'Support settings (tickets, help centre, newsletter, surveys)'],
     ];
 
     /**

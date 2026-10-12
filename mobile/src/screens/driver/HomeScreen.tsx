@@ -12,6 +12,7 @@ import RideMap from '../../components/RideMap';
 import { pa, paFonts, paRadius, type } from '../../theme';
 import WidgetHost from '../../widgets/WidgetHost';
 import CommsHeaderIcons from '../../components/CommsHeaderIcons';
+import AnnouncementBanner from '../../components/AnnouncementBanner';
 
 const ACTIVE_STATUSES = ['accepted', 'driver_enroute', 'arrived', 'in_progress'];
 
@@ -118,6 +119,7 @@ export default function DriverHomeScreen({ navigation }: any) {
       </View>
 
       <View style={{ padding: 16 }}>
+        <AnnouncementBanner refreshKey={refreshKey} />
         <Text style={styles.greeting}>Hi {user?.name?.split(' ')[0]}</Text>
         <Text style={styles.subtitle}>
           {available ? "You're online — visible for new trip offers" : 'Go online to start receiving trip offers'}

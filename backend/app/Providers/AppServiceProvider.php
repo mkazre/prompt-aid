@@ -39,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
 
         // POPIA retention / anonymisation sweeps (hourly, bounded per run).
         \App\Jobs\Privacy\RetentionJobs::registerOnTick();
+
+        // Support stream: NPS survey hooks + sweep (see App\Support\SupportStream).
+        \App\Support\SupportStream::boot();
     }
 
     /**

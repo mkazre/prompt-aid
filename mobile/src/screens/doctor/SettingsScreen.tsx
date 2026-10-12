@@ -49,6 +49,7 @@ export default function DoctorSettingsScreen({ navigation }: any) {
 
       <SectionTitle>App settings</SectionTitle>
       <View style={styles.grid}>
+        <SettingTile icon="help-buoy-outline" title="Help & support" subtitle="FAQs & tickets" onPress={() => navigation.navigate('Support')} />
         <SettingTile icon="lock-closed-outline" title="Change password" onPress={() => navigation.navigate('ChangePassword')} />
         <SettingTile icon="document-text-outline" title="T&C" subtitle="Terms & policies" onPress={() => navigation.navigate('AppPage', { key: 'terms' })} />
         <SettingTile icon="information-circle-outline" title="About us" subtitle="About Prompt Aid" onPress={() => navigation.navigate('AppPage', { key: 'about' })} />
