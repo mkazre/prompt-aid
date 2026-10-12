@@ -79,6 +79,7 @@ Route::get('/messages/{message}/attachment', [\App\Http\Controllers\Api\Conversa
 Route::middleware('auth:sanctum')->group(function () {
     require __DIR__.'/api_doctor_match.php';
     require __DIR__.'/api_privacy.php';
+    require __DIR__.'/api_commerce.php';
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/profile', [ProfileController::class, 'update']);

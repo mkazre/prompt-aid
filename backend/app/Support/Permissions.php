@@ -27,6 +27,7 @@ class Permissions
         'clinics' => 'Clinical',
         'doctor-profiles' => 'Clinical',
         'doctor-matches' => 'Clinical',
+        'doctor-delay-notices' => 'Clinical',
         'encounters' => 'Clinical',
         'lab-requests' => 'Clinical',
         'patient-profiles' => 'Clinical',
@@ -42,6 +43,7 @@ class Permissions
         'orders' => 'Marketplace',
         'pharmacies' => 'Marketplace',
         'products' => 'Marketplace',
+        'promo-codes' => 'Marketplace',
 
         'app-widgets' => 'Site',
         'health-articles' => 'Site',
@@ -94,6 +96,9 @@ class Permissions
         'broadcast-notifications.send' => ['group' => 'System', 'label' => 'Broadcast notifications'],
         'privacy-settings.manage' => ['group' => 'Privacy', 'label' => 'Privacy settings (retention, Information Officer)'],
         'doctor-now-settings.manage' => ['group' => 'System', 'label' => 'On-demand doctors settings'],
+        'referrals.view' => ['group' => 'Marketplace', 'label' => 'Referrals report'],
+        'commerce-settings.manage' => ['group' => 'System', 'label' => 'Commerce & alerts settings (invoices, referrals, agenda, document expiry)'],
+        'expiring-documents.view' => ['group' => 'System', 'label' => 'Expiring documents'],
     ];
 
     /**

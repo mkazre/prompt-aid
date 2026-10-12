@@ -24,6 +24,20 @@ interface DriverDoc {
   status: 'pending' | 'approved' | 'rejected';
   review_note: string | null;
   uploaded_at: string | null;
+  expiry_status?: 'expired' | 'expiring' | 'valid' | null;
+  days_until_expiry?: number | null;
+}
+
+/** Expiry line + colour for a document (server computes status in SA time). */
+function expiryInfo(d: DriverDoc): { text: string; color: string } | null {
+  if (!d.expires_at) return null;
+  const days = d.days_until_expiry;
+  if (d.expiry_status === 'expired') return { text: `Expired ${formatDate(d.expires_at)} — upload a renewed copy`, color: pa.signal };
+  if (d.expiry_status === 'expiring') {
+    const when = days === 0 ? 'today' : `in ${days} day${days === 1 ? '' : 's'}`;
+    return { text: `Expires ${when} (${formatDate(d.expires_at)})`, color: pa.sats.orange };
+  }
+  return { text: `Valid until ${formatDate(d.expires_at)}`, color: pa.go };
 }
 
 type PickedFile = { uri: string; name: string; mimeType: string };
@@ -111,8 +125,13 @@ export default function DocumentsScreen({ navigation }: any) {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.docTitle}>{d.type_label}</Text>
                   <Text style={styles.docSub} numberOfLines={1}>
-                    {d.original_name}{d.expires_at ? ` · expires ${formatDate(d.expires_at)}` : ''}
+                    {d.original_name}
                   </Text>
+                  {expiryInfo(d) ? (
+                    <Text style={[styles.docSub, { color: expiryInfo(d)!.color, fontFamily: paFonts.bold }]}>{expiryInfo(d)!.text}</Text>
+                  ) : (
+                    <Text style={styles.docSub}>No expiry date</Text>
+                  )}
                   {d.status === 'rejected' && d.review_note ? <Text style={[styles.docSub, { color: pa.signal }]}>{d.review_note}</Text> : null}
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 6 }}>

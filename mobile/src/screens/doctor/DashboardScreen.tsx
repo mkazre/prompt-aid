@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { DoctorStackParamList } from '../../navigation/DoctorTabs';
 import WidgetHost from '../../widgets/WidgetHost';
 import CommsHeaderIcons from '../../components/CommsHeaderIcons';
+import RunningLateModal from '../../components/RunningLateModal';
 
 type Nav = NativeStackNavigationProp<DoctorStackParamList>;
 
@@ -24,6 +26,7 @@ export default function DoctorDashboardScreen() {
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [lateOpen, setLateOpen] = useState(false);
   // Rendered widget keys (null while loading) — hardcoded blocks below hide when their widget replaces them.
   const [widgetKeys, setWidgetKeys] = useState<string[] | null>(null);
   const widgetOn = (key: string) => widgetKeys === null || widgetKeys.includes(key);
@@ -96,6 +99,16 @@ export default function DoctorDashboardScreen() {
 
       <WidgetHost screen="home" refreshKey={refreshKey} onLoaded={setWidgetKeys} style={{ marginBottom: 16 }} />
 
+      <Pressable onPress={() => setLateOpen(true)} style={styles.lateBtn} accessibilityRole="button" accessibilityLabel="Running late: notify today's patients">
+        <Feather name="clock" size={18} color={pa.ink} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.lateTitle}>Running late?</Text>
+          <Text style={styles.lateSub}>Let today's waiting patients know</Text>
+        </View>
+        <Feather name="chevron-right" size={18} color={pa.muted} />
+      </Pressable>
+      <RunningLateModal visible={lateOpen} onClose={() => setLateOpen(false)} />
+
       {!widgetOn('doctor_total_appointments') ? (
         <PaStatGrid>
           <PaStatCell label="Booked" value={stats?.total_appointments ?? today.length} />
@@ -142,5 +155,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   greeting: { fontFamily: paFonts.regular, fontSize: 14, color: pa.muted },
   name: { ...type.h2, color: pa.ink, marginTop: 2 },
+  lateBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pa.beaconWash, borderWidth: 1, borderColor: pa.beaconLine, borderRadius: 2, padding: 14, marginBottom: 16 },
+  lateTitle: { fontFamily: paFonts.black, fontSize: 14, color: pa.ink },
+  lateSub: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: 2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 14, paddingTop: 2 },
 });

@@ -40,6 +40,7 @@ class PharmacyPageController extends Controller
             'qty.*' => ['nullable', 'integer', 'min:0'],
             'delivery_address' => ['required', 'string'],
             'prescription' => ['nullable', 'file', 'max:10240'],
+            'promo_code' => ['nullable', 'string', 'max:40'],
         ]);
 
         $items = collect($data['qty'])
@@ -71,9 +72,10 @@ class PharmacyPageController extends Controller
                 null,
                 null,
                 $prescription,
+                $data['promo_code'] ?? null,
             );
         } catch (RuntimeException $e) {
-            return back()->withErrors(['qty' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['qty' => $e->getMessage()]);
         }
 
         return redirect()->route('dashboard')->with('success', "Order {$order->order_no} placed! Track it from your dashboard.");

@@ -18,6 +18,7 @@ export interface RegisterPayload {
   phone?: string;
   password: string;
   role: Role;
+  referral_code?: string;
   dob?: string;
   gender?: string;
   blood_group?: string;

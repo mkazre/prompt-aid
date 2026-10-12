@@ -16,6 +16,7 @@ import RecordScreen from '../screens/patient/RecordScreen';
 import LabResultsScreen from '../screens/patient/LabResultsScreen';
 import OrdersScreen from '../screens/patient/OrdersScreen';
 import InvoicesScreen from '../screens/patient/InvoicesScreen';
+import ReferralsScreen from '../screens/patient/ReferralsScreen';
 import TriageStartScreen from '../screens/patient/TriageStartScreen';
 import TriageFlagsScreen from '../screens/patient/TriageFlagsScreen';
 import TriageResultScreen from '../screens/patient/TriageResultScreen';
@@ -98,6 +99,7 @@ function RecordStackNavigator() {
       <RecordStack.Screen name="LabResults" component={LabResultsScreen} options={{ title: 'Lab Results' }} />
       <RecordStack.Screen name="Orders" component={OrdersScreen} options={{ title: 'My Orders' }} />
       <RecordStack.Screen name="Invoices" component={InvoicesScreen} options={{ title: 'Invoices' }} />
+      <RecordStack.Screen name="Referrals" component={ReferralsScreen} options={{ title: 'Invite friends' }} />
       <RecordStack.Screen name="ProfileHome" component={ProfileScreen} options={{ title: 'Profile' }} />
       <RecordStack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change password' }} />
       <RecordStack.Screen name="AppPage" component={AppPageScreen} options={{ title: '' }} />

@@ -11,11 +11,18 @@ export default function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [role, setRole] = useState<Role>('patient');
   const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
-    const account = { name, email: email.trim(), phone: phone || undefined, password };
+    const account = {
+      name,
+      email: email.trim(),
+      phone: phone || undefined,
+      password,
+      referral_code: referralCode.trim().toUpperCase() || undefined,
+    };
 
     // Drivers have no medical/scheme/document fields to collect, so their
     // signup stays a single step; patients continue into the wizard and
@@ -53,6 +60,15 @@ export default function RegisterScreen({ navigation }: any) {
         <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} placeholder="you@example.com" />
         <Input label="Phone" keyboardType="phone-pad" value={phone} onChangeText={setPhone} placeholder="+27 71 234 5678" />
         <Input label="Password" secureTextEntry value={password} onChangeText={setPassword} placeholder="At least 8 characters" />
+        <Input
+          label="Referral code (optional)"
+          autoCapitalize="characters"
+          autoCorrect={false}
+          value={referralCode}
+          onChangeText={setReferralCode}
+          placeholder="From a friend's invite"
+          maxLength={20}
+        />
 
         <PrimaryButton title="Create account" onPress={handleRegister} loading={loading} disabled={!name || !email || password.length < 8} />
 
