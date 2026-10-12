@@ -37,7 +37,11 @@ Route::get('/site-content', fn () => response()->json(['data' => \App\Support\Si
         'url' => route('topic.show'),
         'testimonial_url' => route('testimonials.create'),
     ],
+    // Feature switches (Staff → System → Features); the app hides switched-off services.
+    'features' => \App\Support\Features::all(),
 ]]));
+// Feature switches, login activity (see routes/api_platform.php for its own auth groups).
+require __DIR__.'/api_platform.php';
 Route::get('/health-articles', [HealthArticleController::class, 'index']);
 Route::get('/health-articles/{slug}', [HealthArticleController::class, 'show']);
 

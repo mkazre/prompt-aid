@@ -12,6 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import { AppLockProvider } from './src/context/AppLock';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -42,7 +43,10 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <StatusBar style="dark" />
-          <RootNavigator />
+          {/* Optional biometric / PIN lock over the whole signed-in app (Profile → Login & security). */}
+          <AppLockProvider>
+            <RootNavigator />
+          </AppLockProvider>
         </CartProvider>
       </AuthProvider>
     </SafeAreaProvider>

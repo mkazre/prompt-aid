@@ -13,6 +13,7 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Resources\Users\Tables\UsersTable::testAlertAction(),
             DeleteAction::make(),
         ];
     }

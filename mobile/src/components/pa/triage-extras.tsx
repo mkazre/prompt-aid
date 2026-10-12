@@ -2,7 +2,7 @@ import React from 'react';
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { pa, paFonts, paRadius, type } from '../../theme';
 import type { TriageLevel } from '../../services/triage';
-import { telUrl, useSiteContent, whatsappUrl } from '../../services/siteContent';
+import { featureOn, telUrl, useSiteContent, whatsappUrl } from '../../services/siteContent';
 
 /**
  * Extra components for the patient triage flow, built on top of the shared
@@ -40,7 +40,8 @@ export function TriagePromptModal({
   onDismiss: () => void;
   onAction: (action: EmergencyScaleAction) => void;
 }) {
-  const { emergency } = useSiteContent();
+  const content = useSiteContent();
+  const { emergency } = content;
 
   function choose(level: TriageLevel) {
     if (level === 'red') {
@@ -98,6 +99,7 @@ export function TriagePromptModal({
             <Pressable onPress={() => Linking.openURL(whatsappUrl(emergency.whatsapp_number))} style={[sheetStyles.bigBtn, { backgroundColor: '#1FA855' }]}>
               <Text style={sheetStyles.bigBtnText}>💬  {emergency.ask_doctor_label}</Text>
             </Pressable>
+            {featureOn(content, 'video') ? (
             <Pressable
               onPress={() => {
                 onDismiss();
@@ -107,6 +109,7 @@ export function TriagePromptModal({
             >
               <Text style={sheetStyles.bigBtnText}>{emergency.video_label}</Text>
             </Pressable>
+            ) : null}
           </ScrollView>
         </View>
       </View>

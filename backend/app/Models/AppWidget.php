@@ -54,13 +54,18 @@ class AppWidget extends Model
     {
         return static::enabledOrdered()
             ->filter(fn (self $w) => $w->role === $role && $w->screen === $screen)
+            // Feature switches (Staff → System → Features) hide widgets for switched-off services.
+            ->filter(fn (self $w) => \App\Support\Features::allowsWidget((string) $w->key, (array) ($w->settings ?? [])))
             ->values();
     }
 
     /** @return Collection<int, AppWidget> enabled widgets for one role across every screen */
     public static function forRole(string $role): Collection
     {
-        return static::enabledOrdered()->filter(fn (self $w) => $w->role === $role)->values();
+        return static::enabledOrdered()
+            ->filter(fn (self $w) => $w->role === $role)
+            ->filter(fn (self $w) => \App\Support\Features::allowsWidget((string) $w->key, (array) ($w->settings ?? [])))
+            ->values();
     }
 
     public function setting(string $key, mixed $default = null): mixed
@@ -104,6 +109,8 @@ class AppWidget extends Model
         // Shortcut tiles (search widget): defaults until an admin edits them.
         if (str_contains($this->key, 'shortcuts')) {
             $tiles = ! empty($settings['shortcuts']) && is_array($settings['shortcuts']) ? $settings['shortcuts'] : WidgetDestinations::DEFAULT_SHORTCUTS;
+            // Feature switches: drop tiles that lead to a switched-off service.
+            $tiles = array_filter($tiles, fn ($tile) => is_array($tile) && \App\Support\Features::allowsWidget('', $tile));
             $settings['shortcuts'] = array_values(array_map(function (array $tile) {
                 $to = WidgetDestinations::resolve($tile);
 

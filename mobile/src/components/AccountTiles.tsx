@@ -3,6 +3,23 @@ import { Alert, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { appVersion } from '../services/app';
 import { SectionTitle, SettingTile } from './settings-ui';
+import { useAppLock } from '../context/AppLock';
+
+/**
+ * "Login & security" tile — App lock + login activity (SecurityScreen,
+ * registered on the signed-in root stack so every role can open it).
+ */
+export function SecurityTile({ navigation }: { navigation: any }) {
+  const { enabled } = useAppLock();
+  return (
+    <SettingTile
+      icon="shield-checkmark-outline"
+      title="Login & security"
+      subtitle={`App lock ${enabled ? 'on' : 'off'} · Devices`}
+      onPress={() => navigation.navigate('Security')}
+    />
+  );
+}
 
 /**
  * "App settings" tile grid shared by every role's profile screen. The
@@ -23,6 +40,7 @@ export default function AccountTiles({ navigation, extra }: { navigation: any; e
       <SectionTitle>App settings</SectionTitle>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
         {extra}
+        <SecurityTile navigation={navigation} />
         <SettingTile icon="help-buoy-outline" title="Help & support" subtitle="FAQs & tickets" onPress={() => navigation.navigate('Support')} />
         <SettingTile icon="lock-closed-outline" title="Change password" onPress={() => navigation.navigate('ChangePassword')} />
         <SettingTile icon="document-text-outline" title="T&C" subtitle="Terms & policies" onPress={() => navigation.navigate('AppPage', { key: 'terms' })} />

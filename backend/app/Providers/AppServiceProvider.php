@@ -40,6 +40,10 @@ class AppServiceProvider extends ServiceProvider
         // POPIA retention / anonymisation sweeps (hourly, bounded per run).
         \App\Jobs\Privacy\RetentionJobs::registerOnTick();
 
+        // Login history (website, staff panels; the app login records itself in Api\AuthController).
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, [\App\Support\LoginRecorder::class, 'onLogin']);
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Failed::class, [\App\Support\LoginRecorder::class, 'onFailed']);
+        \App\Support\Tick::register('security.login_events_retention', 86400, fn () => \App\Support\LoginRecorder::prune());
         // Doctor morning agenda alert + document expiry reminders.
         \App\Support\CommerceJobs::registerOnTick();
         // Support stream: NPS survey hooks + sweep (see App\Support\SupportStream).

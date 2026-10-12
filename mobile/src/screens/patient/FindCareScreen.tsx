@@ -10,7 +10,7 @@ import { pa, paFonts, paRadius } from '../../theme';
 import WidgetHost from '../../widgets/WidgetHost';
 import { TriagePromptModal } from '../../components/pa/triage-extras';
 import { PaLiveStatus, navigateForEmergencyAction } from '../../components/pa/care-extras';
-import { CareTab, useSiteContent } from '../../services/siteContent';
+import { CareTab, featureOn, useSiteContent } from '../../services/siteContent';
 
 type Group = CareTab | 'video' | 'all';
 const DOCTOR_GROUPS: Group[] = ['all', 'gp', 'dentists', 'specialists', 'video'];
@@ -122,14 +122,16 @@ export default function FindCareScreen({ navigation, route }: any) {
         </Pressable>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-          {TABS.map((t) => (
+          {TABS.filter((t) => featureOn(content, 'labs') || (t !== 'radiology' && t !== 'laboratories')).map((t) => (
             <Pressable key={t} onPress={() => setGroup(group === t ? 'all' : t)} style={[styles.tab, group === t && styles.tabOn]}>
               <Text style={[styles.tabText, group === t && { color: '#fff' }]}>{content.care.tabs[t].label}</Text>
             </Pressable>
           ))}
-          <Pressable onPress={() => setGroup(group === 'video' ? 'all' : 'video')} style={[styles.tab, group === 'video' && styles.tabOn]}>
-            <Text style={[styles.tabText, group === 'video' && { color: '#fff' }]}>Virtual consult</Text>
-          </Pressable>
+          {featureOn(content, 'video') ? (
+            <Pressable onPress={() => setGroup(group === 'video' ? 'all' : 'video')} style={[styles.tab, group === 'video' && styles.tabOn]}>
+              <Text style={[styles.tabText, group === 'video' && { color: '#fff' }]}>Virtual consult</Text>
+            </Pressable>
+          ) : null}
         </ScrollView>
 
         <View style={styles.seeNow}>

@@ -29,8 +29,13 @@ class PatientProfilesTable
             ->recordActions([
                 EditAction::make(),
             ])
+            // Streamed CSV download (no queue): current filters/search/sort, or the ticked rows.
+            ->headerActions([
+                \App\Support\CsvExport::headerAction('patient-profiles'),
+            ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    \App\Support\CsvExport::bulkAction('patient-profiles'),
                     DeleteBulkAction::make(),
                 ]),
             ]);

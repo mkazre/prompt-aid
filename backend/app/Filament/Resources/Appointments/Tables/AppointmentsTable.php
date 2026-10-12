@@ -50,8 +50,13 @@ class AppointmentsTable
                 \App\Filament\Resources\Appointments\AppointmentVideoAction::make(),
                 EditAction::make(),
             ])
+            // Streamed CSV download (no queue): current filters/search/sort, or the ticked rows.
+            ->headerActions([
+                \App\Support\CsvExport::headerAction('appointments'),
+            ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    \App\Support\CsvExport::bulkAction('appointments'),
                     DeleteBulkAction::make(),
                 ]),
             ]);

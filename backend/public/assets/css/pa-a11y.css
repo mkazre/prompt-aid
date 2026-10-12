@@ -1,0 +1,56 @@
+/* PromptAid accessibility toolbar (public/assets/js/pa-a11y.js).
+   Classes live on <html>: pa-a11y-text-1..3, pa-a11y-contrast,
+   pa-a11y-links, pa-a11y-motion. */
+
+/* ---- toolbar button + panel (in the dark alert strip, away from the
+   Emergency button and the bottom cookie banner) ---- */
+.pa-a11y{position:relative;display:inline-flex}
+.pa-a11y-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;color:inherit;border:1px solid #4A4A4E;border-radius:999px;padding:3px 10px 3px 6px;font:inherit;font-size:12px;line-height:1.4;cursor:pointer}
+.pa-a11y-btn:hover,.pa-a11y-btn[aria-expanded="true"]{border-color:var(--pa-beacon,#F2C200);color:var(--pa-beacon,#F2C200)}
+.pa-a11y-btn:focus-visible,.pa-a11y-panel button:focus-visible{outline:3px solid var(--pa-beacon,#F2C200);outline-offset:2px}
+.pa-a11y-btn svg{width:18px;height:18px;flex:none}
+.pa-a11y-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:950;width:280px;max-width:calc(100vw - 32px);background:#fff;color:#101012;border:1px solid #D9D3C7;border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,.22);padding:14px;font-size:14px}
+.pa-a11y-panel[hidden]{display:none}
+.pa-a11y-panel h2{font-size:15px;margin:0 0 10px;letter-spacing:0;text-transform:none}
+.pa-a11y-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #EEE9DF}
+.pa-a11y-row:first-of-type{border-top:0}
+.pa-a11y-steps{display:inline-flex;gap:4px}
+.pa-a11y-panel button{font:inherit;cursor:pointer;border:1px solid #CFC8B8;background:#F5F2EC;color:#101012;border-radius:8px;padding:5px 10px;min-width:36px}
+.pa-a11y-panel button[aria-pressed="true"]{background:#101012;color:#fff;border-color:#101012}
+.pa-a11y-reset{width:100%;margin-top:10px}
+@media (max-width:640px){
+  .pa-a11y-panel{position:fixed;left:16px;right:16px;top:auto;width:auto;margin-top:8px}
+}
+@media print{.pa-a11y{display:none}}
+
+/* ---- larger text (3 steps) ----
+   The site sizes text in px, so a root font-size change would miss most of
+   it; CSS zoom on <body> scales text and spacing together like browser
+   zoom, and auto-width blocks still fit the screen. */
+html.pa-a11y-text-1 body{zoom:1.12}
+html.pa-a11y-text-2 body{zoom:1.25}
+html.pa-a11y-text-3 body{zoom:1.4}
+/* Keep the toolbar panel itself at normal size so it always fits the screen. */
+html.pa-a11y-text-1 .pa-a11y-panel{zoom:.893}
+html.pa-a11y-text-2 .pa-a11y-panel{zoom:.8}
+html.pa-a11y-text-3 .pa-a11y-panel{zoom:.715}
+.pa-a11y-steps{flex-wrap:wrap;justify-content:flex-end}
+
+/* ---- high contrast ---- */
+html.pa-a11y-contrast{--pa-paper:#FFFFFF;--pa-ink:#000000;--pa-ink-soft:#000000;--pa-muted:#1A1A1A;--pa-line:#000000;--pa-line-soft:#333333;--pa-signal:#A00000}
+html.pa-a11y-contrast body{background:#fff;color:#000}
+html.pa-a11y-contrast .pa-muted,html.pa-a11y-contrast [style*="color:var(--pa-muted)"],html.pa-a11y-contrast [style*="color:#A9A49A"],html.pa-a11y-contrast [style*="color:#8A857C"],html.pa-a11y-contrast [style*="color:#B8B3A8"]{color:inherit !important;opacity:1}
+html.pa-a11y-contrast .pa-dark,html.pa-a11y-contrast .pa-alertbar,html.pa-a11y-contrast .pa-footer{background:#000 !important;color:#fff !important}
+html.pa-a11y-contrast .pa-dark *,html.pa-a11y-contrast .pa-alertbar *{color:#fff}
+html.pa-a11y-contrast .pa-dark .pa-btn-beacon,html.pa-a11y-contrast .pa-btn-beacon{color:#000 !important}
+html.pa-a11y-contrast .pa-field,html.pa-a11y-contrast .pa-card,html.pa-a11y-contrast .pa-table td,html.pa-a11y-contrast .pa-table th{border-color:#000 !important}
+html.pa-a11y-contrast a:not(.pa-btn):not(.pa-btn-ghost):not(.pa-btn-beacon){text-decoration:underline}
+html.pa-a11y-contrast :focus-visible{outline:3px solid #000 !important;outline-offset:2px}
+html.pa-a11y-contrast img{filter:contrast(1.1)}
+
+/* ---- underline links ---- */
+html.pa-a11y-links a:not(.pa-btn):not(.pa-btn-ghost):not(.pa-btn-beacon):not(.logo){text-decoration:underline !important;text-underline-offset:3px;text-decoration-thickness:2px}
+html.pa-a11y-links .pa-nav a,html.pa-a11y-links .pa-footer a{text-decoration:underline !important}
+
+/* ---- reduce motion ---- */
+html.pa-a11y-motion *,html.pa-a11y-motion *::before,html.pa-a11y-motion *::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}

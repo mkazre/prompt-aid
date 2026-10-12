@@ -194,6 +194,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/staff/preview/pages/{page}', [PageBuilderPreviewController::class, 'show'])->name('page-builder.preview');
     require __DIR__.'/web_privacy.php';
     require __DIR__.'/web_health.php';
+    require __DIR__.'/web_platform.php';
     require __DIR__.'/web_commerce.php';
 });
 

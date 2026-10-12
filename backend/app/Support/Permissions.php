@@ -62,6 +62,7 @@ class Permissions
 
         'third-party-profiles' => 'Users & Access',
         'users' => 'Users & Access',
+        'login-events' => 'Users & Access',
 
         'audit-logs' => 'System',
         'conditions' => 'System',
@@ -106,6 +107,9 @@ class Permissions
         'privacy-settings.manage' => ['group' => 'Privacy', 'label' => 'Privacy settings (retention, Information Officer)'],
         'doctor-now-settings.manage' => ['group' => 'System', 'label' => 'On-demand doctors settings'],
         'health-settings.manage' => ['group' => 'System', 'label' => 'Patient health settings (reminders, vitals ranges, feature switches)'],
+        'reports.view' => ['group' => 'Overview', 'label' => 'Reports & analytics (platform-wide, with CSV downloads)'],
+        'system-health.view' => ['group' => 'System', 'label' => 'System health (checks, run jobs, clear caches)'],
+        'features.manage' => ['group' => 'System', 'label' => 'Feature switches & accessibility toolbar'],
         'referrals.view' => ['group' => 'Marketplace', 'label' => 'Referrals report'],
         'commerce-settings.manage' => ['group' => 'System', 'label' => 'Commerce & alerts settings (invoices, referrals, agenda, document expiry)'],
         'expiring-documents.view' => ['group' => 'System', 'label' => 'Expiring documents'],
