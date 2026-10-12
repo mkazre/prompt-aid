@@ -37,8 +37,13 @@ class InvoicesTable
             ->recordActions([
                 EditAction::make(),
             ])
+            // Streamed CSV download (no queue): current filters/search/sort, or the ticked rows.
+            ->headerActions([
+                \App\Support\CsvExport::headerAction('invoices'),
+            ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    \App\Support\CsvExport::bulkAction('invoices'),
                     DeleteBulkAction::make(),
                 ]),
             ]);

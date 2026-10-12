@@ -112,6 +112,12 @@ else
 fi
 log "Code copied into $APP_DIR"
 
+# Version stamp shown on Staff → System → System health.
+mkdir -p "$APP_DIR/storage/app" 2>/dev/null
+( cd "$REPO_DIR" && git log -1 --format='Commit %h (%ad) %s' --date=format:'%Y-%m-%d %H:%M' 2>/dev/null || echo "Commit unknown" ) > "$APP_DIR/storage/app/deployed.txt" 2>/dev/null \
+  && echo "Deployed $(date '+%Y-%m-%d %H:%M %Z')" >> "$APP_DIR/storage/app/deployed.txt" \
+  || log "(could not write storage/app/deployed.txt — continuing)"
+
 if [ -n "$PUBLIC_DIR" ]; then
   # Refresh static assets in the separate public folder; never its index.php/.htaccess.
   if command -v rsync >/dev/null 2>&1; then

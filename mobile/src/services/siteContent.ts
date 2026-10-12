@@ -45,6 +45,23 @@ export interface SiteContent {
     virtual_description: string;
   };
   topic?: { title: string | null; url: string; testimonial_url: string };
+  /** Feature switches (Staff → System → Features). Missing = on. */
+  features?: Partial<Record<FeatureKey, boolean>>;
+}
+
+export type FeatureKey = 'shop' | 'shuttle' | 'video' | 'doctor_now' | 'testimonials' | 'articles' | 'topic' | 'labs';
+
+/**
+ * Whether a service is switched on. Fails open: if the flags never loaded
+ * (offline, old backend) everything shows, exactly as before.
+ */
+export function featureOn(content: Pick<SiteContent, 'features'> | null | undefined, key: FeatureKey): boolean {
+  return content?.features?.[key] !== false;
+}
+
+/** Same as featureOn() for code outside React (navigation helpers): uses the last loaded site content. */
+export function isFeatureOn(key: FeatureKey): boolean {
+  return featureOn(cache, key);
 }
 
 export type CareTab = 'gp' | 'dentists' | 'specialists' | 'allied' | 'radiology' | 'laboratories';

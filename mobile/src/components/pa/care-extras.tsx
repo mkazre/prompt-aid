@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { paFonts, paRadius } from '../../theme';
-import { STATUS_COLOURS } from '../../services/siteContent';
+import { STATUS_COLOURS, isFeatureOn } from '../../services/siteContent';
 import type { EmergencyScaleAction } from './triage-extras';
 
 /**
@@ -27,8 +27,9 @@ export function PaLiveStatus({ status, label }: { status?: 'green' | 'orange' | 
  */
 export function navigateForEmergencyAction(navigation: any, action: EmergencyScaleAction) {
   const tabs = navigation.getParent?.() ?? navigation;
-  if (action === 'doctorNow') tabs.navigate('Home', { screen: 'InstantConsult' });
-  else if (action === 'video') tabs.navigate('Care', { screen: 'FindCare', params: { group: 'video' } });
+  // Switched-off services (Staff → System → Features) fall back to Find care.
+  if (action === 'doctorNow' && isFeatureOn('doctor_now')) tabs.navigate('Home', { screen: 'InstantConsult' });
+  else if (action === 'video' && isFeatureOn('video')) tabs.navigate('Care', { screen: 'FindCare', params: { group: 'video' } });
   else tabs.navigate('Care', { screen: 'FindCare', params: { group: 'gp' } });
 }
 

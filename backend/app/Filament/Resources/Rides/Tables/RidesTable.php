@@ -87,8 +87,13 @@ class RidesTable
                     ->url(fn (Ride $record): string => \App\Filament\Resources\Rides\RideResource::getUrl('view', ['record' => $record])),
                 EditAction::make(),
             ])
+            // Streamed CSV download (no queue): current filters/search/sort, or the ticked rows.
+            ->headerActions([
+                \App\Support\CsvExport::headerAction('rides'),
+            ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    \App\Support\CsvExport::bulkAction('rides'),
                     DeleteBulkAction::make(),
                 ]),
             ]);

@@ -20,7 +20,8 @@ import NotificationsScreen from '../screens/comms/NotificationsScreen';
 import ChatListScreen from '../screens/comms/ChatListScreen';
 import ChatScreen from '../screens/comms/ChatScreen';
 import VideoCallScreen from '../screens/comms/VideoCallScreen';
-import { colors, pa } from '../theme';
+import SecurityScreen from '../screens/SecurityScreen';
+import { colors, pa, paFonts } from '../theme';
 
 const Stack = createNativeStackNavigator();
 const navRef = createNavigationContainerRef<any>();
@@ -52,7 +53,12 @@ function SignedInStack({ Tabs }: { Tabs: React.ComponentType<any> }) {
       <AppStack.Screen name="Notifications" component={NotificationsScreen} />
       <AppStack.Screen name="ChatList" component={ChatListScreen} />
       <AppStack.Screen name="Chat" component={ChatScreen} />
-      <AppStack.Screen name="VideoCall" component={VideoCallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
+      <AppStack.Screen
+        name="Security"
+        component={SecurityScreen}
+        options={{ headerShown: true, title: 'Login & security', headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerShadowVisible: false }}
+      />
+      <AppStack.Screen name="VideoCall"component={VideoCallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
     </AppStack.Navigator>
   );
 }

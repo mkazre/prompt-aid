@@ -29,6 +29,7 @@ import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import AppPageScreen from '../screens/AppPageScreen';
 import { pa, paFonts } from '../theme';
 import { tabBarScreenOptions, tabIcon } from './tabBarTheme';
+import { featureOn, useSiteContent } from '../services/siteContent';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -106,14 +107,20 @@ function RecordStackNavigator() {
 }
 
 export default function PatientTabs() {
+  // Feature switches (Staff → System → Features): switched-off services lose their tab.
+  // Fails open — if the flags don't load, every tab shows.
+  const content = useSiteContent();
+  const shuttleOn = featureOn(content, 'shuttle');
+  const shopOn = featureOn(content, 'shop');
+
   return (
     <Tab.Navigator
       screenOptions={tabBarScreenOptions}
     >
       <Tab.Screen name="Home" component={HomeStackNavigator} options={{ tabBarIcon: tabIcon('home-outline') }} />
       <Tab.Screen name="Care" component={CareStackNavigator} options={{ tabBarIcon: tabIcon('medkit-outline') }} />
-      <Tab.Screen name="Rides" component={ShuttleStackNavigator} options={{ tabBarIcon: tabIcon('bus-outline'), title: 'Shuttle' }} />
-      <Tab.Screen name="Pharmacy" component={PharmacyStackNavigator} options={{ tabBarIcon: tabIcon('bag-handle-outline') }} />
+      {shuttleOn ? <Tab.Screen name="Rides" component={ShuttleStackNavigator} options={{ tabBarIcon: tabIcon('bus-outline'), title: 'Shuttle' }} /> : null}
+      {shopOn ? <Tab.Screen name="Pharmacy" component={PharmacyStackNavigator} options={{ tabBarIcon: tabIcon('bag-handle-outline') }} /> : null}
       <Tab.Screen name="Profile" component={RecordStackNavigator} options={{ tabBarIcon: tabIcon('document-text-outline'), title: 'Record' }} />
     </Tab.Navigator>
   );

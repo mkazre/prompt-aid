@@ -14,6 +14,11 @@
 @endphp
 <link rel="icon" href="{{ $faviconUrl }}" />
 <link rel="stylesheet" href="{{ asset('assets/css/promptaid.css') }}" />
+@php $a11yToolbar = \App\Filament\Pages\FeatureSettings::a11yToolbarOn(); @endphp
+@if ($a11yToolbar)
+<link rel="stylesheet" href="{{ asset('assets/css/pa-a11y.css') }}" />
+<script src="{{ asset('assets/js/pa-a11y.js') }}"></script>
+@endif
 @if ($themeColors || $themeShape)
 <style>
   :root{
@@ -34,6 +39,28 @@
   <span class="pa-row" style="gap:22px;color:#A9A49A">
     <span>Claims submitted to your scheme for you</span>
     <a href="{{ route('for-providers') }}">List your practice</a>
+    @if ($a11yToolbar)
+    {{-- Accessibility toolbar (public/assets/js/pa-a11y.js); admin toggle: Staff → System → Features. --}}
+    <span class="pa-a11y" data-pa-a11y>
+      <button type="button" class="pa-a11y-btn" aria-expanded="false" aria-controls="pa-a11y-panel" title="Accessibility options">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.8"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M9 21l3-6 3 6"/></svg>
+        <span>Accessibility</span>
+      </button>
+      <span class="pa-a11y-panel" id="pa-a11y-panel" role="dialog" aria-label="Accessibility options" hidden>
+        <h2>Accessibility</h2>
+        <span class="pa-a11y-row"><span>Text size</span><span class="pa-a11y-steps" role="group" aria-label="Text size">
+          <button type="button" data-pa-a11y-text="0" aria-label="Normal text size">A</button>
+          <button type="button" data-pa-a11y-text="1" aria-label="Larger text" style="font-size:15px">A+</button>
+          <button type="button" data-pa-a11y-text="2" aria-label="Even larger text" style="font-size:17px">A++</button>
+          <button type="button" data-pa-a11y-text="3" aria-label="Largest text" style="font-size:19px">A+++</button>
+        </span></span>
+        <span class="pa-a11y-row"><span>High contrast</span><button type="button" data-pa-a11y-toggle="contrast" aria-pressed="false">Off</button></span>
+        <span class="pa-a11y-row"><span>Underline links</span><button type="button" data-pa-a11y-toggle="links" aria-pressed="false">Off</button></span>
+        <span class="pa-a11y-row"><span>Reduce motion</span><button type="button" data-pa-a11y-toggle="motion" aria-pressed="false">Off</button></span>
+        <button type="button" class="pa-a11y-reset" data-pa-a11y-reset>Reset to default</button>
+      </span>
+    </span>
+    @endif
   </span>
 </div></div>
 
@@ -43,15 +70,20 @@
     <span></span><span></span><span></span>
   </button>
   <nav class="pa-nav" id="pa-nav">
-    @php $headerLinks = \App\Models\Menu::tree('header'); @endphp
+    @php
+      $headerLinks = array_values(array_filter(\App\Models\Menu::tree('header'), fn ($l) => \App\Support\Features::allowsLink($l['route'] ?? null, $l['url'] ?? null)));
+      $featOn = \App\Support\Features::all();
+    @endphp
     @forelse ($headerLinks as $link)
       <a href="{{ $link['route'] && \Illuminate\Support\Facades\Route::has($link['route']) ? route($link['route']) : ($link['url'] ?? '#') }}" target="{{ $link['target'] ?? '_self' }}">{{ $link['label'] }}</a>
     @empty
       <a href="{{ route('doctors.index') }}" class="{{ request()->routeIs('doctors.*') ? 'is-on' : '' }}">Find care</a>
-      <a href="{{ route('shop.index') }}" class="{{ request()->routeIs('shop.*', 'pharmacies.*') ? 'is-on' : '' }}">Pharmacy</a>
+      @if ($featOn['shop'])<a href="{{ route('shop.index') }}" class="{{ request()->routeIs('shop.*', 'pharmacies.*') ? 'is-on' : '' }}">Pharmacy</a>@endif
+      @if ($featOn['labs'])
       <a href="{{ route('radiology.index') }}" class="{{ request()->routeIs('radiology.*') ? 'is-on' : '' }}">Radiology</a>
       <a href="{{ route('laboratories.index') }}" class="{{ request()->routeIs('laboratories.*', 'labs.*') ? 'is-on' : '' }}">Laboratory</a>
-      <a href="{{ route('shuttle') }}" class="{{ request()->routeIs('shuttle') ? 'is-on' : '' }}">Shuttle</a>
+      @endif
+      @if ($featOn['shuttle'])<a href="{{ route('shuttle') }}" class="{{ request()->routeIs('shuttle') ? 'is-on' : '' }}">Shuttle</a>@endif
       <a href="{{ route('how-it-works') }}" class="{{ request()->routeIs('how-it-works') ? 'is-on' : '' }}">How it works</a>
       <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'is-on' : '' }}">About</a>
     @endforelse
@@ -92,7 +124,11 @@
   </div>
   <div>
     <div class="ft">Patients</div>
-    <div class="fl"><a href="{{ route('doctors.index') }}">Find a doctor</a><a href="{{ route('shop.index') }}">Pharmacy</a><a href="{{ route('radiology.index') }}">Radiology</a><a href="{{ route('laboratories.index') }}">Laboratory</a><a href="{{ route('virtual-consult') }}">Virtual consult</a><a href="{{ route('shuttle') }}">Book a shuttle</a><a href="{{ route('dashboard') }}">My record</a></div>
+    <div class="fl"><a href="{{ route('doctors.index') }}">Find a doctor</a>@if ($featOn['shop'])<a href="{{ route('shop.index') }}">Pharmacy</a>@endif
+@if ($featOn['labs'])<a href="{{ route('radiology.index') }}">Radiology</a><a href="{{ route('laboratories.index') }}">Laboratory</a>@endif
+@if ($featOn['video'])<a href="{{ route('virtual-consult') }}">Virtual consult</a>@endif
+@if ($featOn['shuttle'])<a href="{{ route('shuttle') }}">Book a shuttle</a>@endif
+<a href="{{ route('dashboard') }}">My record</a></div>
   </div>
   <div>
     <div class="ft">Providers</div>
@@ -100,7 +136,9 @@
   </div>
   <div>
     <div class="ft">Company</div>
-    <div class="fl"><a href="{{ route('about') }}">About</a><a href="{{ route('how-it-works') }}">How it works</a><a href="{{ route('topic.show') }}">Topic of the month</a><a href="{{ route('testimonials.create') }}">Submit a testimonial</a><a href="{{ route('faq') }}">FAQ</a><a href="{{ route('contact') }}">Contact</a><a href="{{ route('legal-popia') }}">POPIA notice</a></div>
+    <div class="fl"><a href="{{ route('about') }}">About</a><a href="{{ route('how-it-works') }}">How it works</a>@if ($featOn['topic'])<a href="{{ route('topic.show') }}">Topic of the month</a>@endif
+@if ($featOn['testimonials'])<a href="{{ route('testimonials.create') }}">Submit a testimonial</a>@endif
+<a href="{{ route('faq') }}">FAQ</a><a href="{{ route('contact') }}">Contact</a><a href="{{ route('legal-popia') }}">POPIA notice</a></div>
   </div>
 </div>
 <div class="legal"><div class="inner2">

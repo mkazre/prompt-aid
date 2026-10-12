@@ -112,6 +112,9 @@ class AuthController extends Controller
         ]);
 
         if (! Auth::attempt($request->only('email', 'password'))) {
+            // Login history: failed attempts are kept for known emails only.
+            \App\Support\LoginRecorder::app(User::query()->where('email', $request->input('email'))->first(), (string) $request->input('email'), false, $request);
+
             return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
@@ -122,7 +125,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'Your account is not active. Please contact support.'], 403);
         }
 
-        $token = $user->createToken('mobile')->plainTextToken;
+        $newToken = $user->createToken('mobile');
+        $token = $newToken->plainTextToken;
+        \App\Support\LoginRecorder::app($user, $user->email, true, $request, $newToken->accessToken->id);
 
         return response()->json([
             'user' => new UserResource($user->load(['patientProfile', 'driverProfile', 'doctorProfile', 'thirdPartyProfile'])),

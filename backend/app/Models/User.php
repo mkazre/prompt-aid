@@ -104,6 +104,12 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(ThirdPartyProfile::class);
     }
 
+    /** Sign-in history (App\Support\LoginRecorder). */
+    public function loginEvents(): HasMany
+    {
+        return $this->hasMany(LoginEvent::class);
+    }
+
     public function pharmacies(): HasMany
     {
         return $this->hasMany(Pharmacy::class, 'vendor_id');

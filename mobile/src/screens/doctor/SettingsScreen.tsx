@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { PaAvatar } from '../../components/pa';
 import { SectionTitle, SettingTile, SoftCard } from '../../components/settings-ui';
+import { SecurityTile } from '../../components/AccountTiles';
 import { appVersion, avatarUrl } from '../../services/app';
 import { pa, paFonts } from '../../theme';
 
@@ -49,6 +50,7 @@ export default function DoctorSettingsScreen({ navigation }: any) {
 
       <SectionTitle>App settings</SectionTitle>
       <View style={styles.grid}>
+        <SecurityTile navigation={navigation} />
         <SettingTile icon="lock-closed-outline" title="Change password" onPress={() => navigation.navigate('ChangePassword')} />
         <SettingTile icon="document-text-outline" title="T&C" subtitle="Terms & policies" onPress={() => navigation.navigate('AppPage', { key: 'terms' })} />
         <SettingTile icon="information-circle-outline" title="About us" subtitle="About Prompt Aid" onPress={() => navigation.navigate('AppPage', { key: 'about' })} />

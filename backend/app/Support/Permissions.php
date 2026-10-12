@@ -60,6 +60,7 @@ class Permissions
 
         'third-party-profiles' => 'Users & Access',
         'users' => 'Users & Access',
+        'login-events' => 'Users & Access',
 
         'audit-logs' => 'System',
         'conditions' => 'System',
@@ -94,6 +95,9 @@ class Permissions
         'broadcast-notifications.send' => ['group' => 'System', 'label' => 'Broadcast notifications'],
         'privacy-settings.manage' => ['group' => 'Privacy', 'label' => 'Privacy settings (retention, Information Officer)'],
         'doctor-now-settings.manage' => ['group' => 'System', 'label' => 'On-demand doctors settings'],
+        'reports.view' => ['group' => 'Overview', 'label' => 'Reports & analytics (platform-wide, with CSV downloads)'],
+        'system-health.view' => ['group' => 'System', 'label' => 'System health (checks, run jobs, clear caches)'],
+        'features.manage' => ['group' => 'System', 'label' => 'Feature switches & accessibility toolbar'],
     ];
 
     /**

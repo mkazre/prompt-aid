@@ -5,7 +5,7 @@
   $careRoutes = ['gp' => 'care.gp', 'dentists' => 'care.dentists', 'specialists' => 'specialists.index', 'allied' => 'allied.index', 'radiology' => 'radiology.index', 'laboratories' => 'laboratories.index'];
 @endphp
 <div class="pa-tabs" style="gap:2px">
-  @foreach ($careRoutes as $key => $routeName)
+  @foreach (array_filter($careRoutes, fn ($r) => \App\Support\Features::allowsLink($r)) as $key => $routeName)
     <a class="pa-tab {{ $active === $key ? 'is-on' : '' }}" href="{{ route($routeName) }}" style="border-bottom:0">{{ $careTabs[$key]['label'] ?? $key }}</a>
   @endforeach
 </div>

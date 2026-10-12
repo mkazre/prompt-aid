@@ -60,6 +60,12 @@
         }
       ],
       [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Prompt Aid uses Face ID to unlock the app when you turn on App lock, so nobody else can open your health information on this phone."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "color": "#D0211C",

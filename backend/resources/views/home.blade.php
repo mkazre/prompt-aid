@@ -1,4 +1,11 @@
-@php $c = \App\Support\SiteContent::get('home'); @endphp
+@php
+  $c = \App\Support\SiteContent::get('home');
+  $feat = \App\Support\Features::all();
+  // Hero tabs follow the feature switches (Book care is always on).
+  $heroTabs = array_filter(['care' => $c['tab_care'], 'virtual' => $feat['video'] ? $c['tab_virtual'] : null, 'ride' => $feat['shuttle'] ? $c['tab_shuttle'] : null]);
+  // Top services: drop pharmacy / lab / radiology cards for switched-off features.
+  $topServices = $topServices->filter(fn ($s) => $s['kind'] === 'Pharmacy' ? $feat['shop'] : $feat['labs'])->values();
+@endphp
 <x-layout :title="$c['title'].' · Prompt Aid'">
 <section class="pa-hero">
   <div class="pa-container pa-hero-grid">
@@ -30,19 +37,20 @@
     </div>
     <div class="pa-hero-widget">
       <div class="pa-pop" data-pa-tabs>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--pa-line)">
-          <button class="pa-tab is-on" data-pa-target="care" style="border:0;border-radius:0;padding:15px 8px">{{ $c['tab_care'] }}</button>
-          <button class="pa-tab" data-pa-target="virtual" style="border:0;border-left:1px solid var(--pa-line);border-radius:0;padding:15px 8px">{{ $c['tab_virtual'] }}</button>
-          <button class="pa-tab" data-pa-target="ride" style="border:0;border-left:1px solid var(--pa-line);border-radius:0;padding:15px 8px">{{ $c['tab_shuttle'] }}</button>
+        <div style="display:grid;grid-template-columns:repeat({{ count($heroTabs) }},1fr);border-bottom:1px solid var(--pa-line)">
+          @foreach ($heroTabs as $tabKey => $tabLabel)
+          <button @class(['pa-tab', 'is-on' => $loop->first]) data-pa-target="{{ $tabKey }}" style="border:0;{{ $loop->first ? '' : 'border-left:1px solid var(--pa-line);' }}border-radius:0;padding:15px 8px">{{ $tabLabel }}</button>
+          @endforeach
         </div>
         <div style="padding:26px">
-          @foreach (['care' => 'doctors.index', 'virtual' => 'virtual-consult'] as $panel => $target)
+          @foreach (array_filter(['care' => 'doctors.index', 'virtual' => $feat['video'] ? 'virtual-consult' : null]) as $panel => $target)
           <form method="GET" action="{{ route($target) }}" data-pa-panel="{{ $panel }}" @class(['pa-hide' => $panel !== 'care'])>
             <div class="pa-formrow"><label class="pa-label">{{ $c['search_label'] }}</label><input class="pa-field" name="search" placeholder="{{ $c['search_placeholder'] }}" /></div>
             <div class="pa-formrow" style="margin-bottom:22px"><label class="pa-label">Where</label><input class="pa-field" placeholder="Suburb or postal code (coming soon)" disabled /></div>
             <button type="submit" class="pa-btn pa-btn-block pa-btn-lg">{{ $panel === 'care' ? 'Search '.number_format($stats['providers']).' providers' : 'Find a virtual consult' }}</button>
           </form>
           @endforeach
+          @if ($feat['shuttle'])
           <form method="POST" action="{{ route('shuttle.quote') }}" data-pa-panel="ride" class="pa-hide">
             @csrf
             <div class="pa-formrow">
@@ -60,6 +68,7 @@
             </div>
             <button type="submit" class="pa-btn pa-btn-block pa-btn-lg">Get a fare estimate</button>
           </form>
+          @endif
           <div class="pa-row" style="margin-top:16px;font-size:12px;color:var(--pa-muted)"><span style="width:6px;height:6px;background:var(--pa-go);display:block"></span>{{ $stats['openToday'] }} doctors have openings today</div>
         </div>
       </div>
@@ -94,6 +103,7 @@
   </div>
 </section>
 
+@if ($feat['shuttle'])
 <section class="pa-section">
   <div class="pa-dark" style="padding:56px 56px 0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:end">
     <div style="padding-bottom:56px">
@@ -116,6 +126,7 @@
     </div>
   </div>
 </section>
+@endif
 
 @if ($topDoctors->count())
 <section class="pa-section">
@@ -160,14 +171,20 @@
 </section>
 @endif
 
+@if ($feat['topic'])
 <section class="pa-section pa-section-last">
   <div style="background:var(--pa-signal);color:#fff;padding:52px 48px;display:flex;align-items:center;justify-content:space-between;gap:36px;flex-wrap:wrap">
     <div><h2 style="font-size:38px;color:#fff;margin-bottom:10px">{{ $c['topic_heading'] }}</h2>
     <p style="font-size:17px;color:#FBD5D3;margin:0;max-width:620px">{{ $topic?->title ?? 'A new health topic is coming soon.' }}</p></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap">
       <a class="pa-btn-lg" style="background:#fff;color:var(--pa-ink);border:1px solid #fff;font-weight:700;padding:16px 26px;display:inline-flex;align-items:center" href="{{ route('topic.show') }}">{{ $c['topic_read_label'] }}</a>
+      @if ($feat['testimonials'])
       <a class="pa-btn-lg" style="background:transparent;color:#fff;border:1px solid #fff;font-weight:700;padding:16px 26px;display:inline-flex;align-items:center" href="{{ route('testimonials.create', $topic ? ['topic' => $topic->id] : []) }}">{{ $c['topic_testimonial_label'] }}</a>
+      @endif
     </div>
   </div>
 </section>
+@else
+<div class="pa-section-last"></div>
+@endif
 </x-layout>

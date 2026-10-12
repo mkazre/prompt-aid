@@ -7,7 +7,7 @@
     <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn-ghost" href="{{ route('account.profile') }}">Profile</a><a class="pa-btn" href="{{ route('doctors.index') }}">Book care</a></div>
   </div>
 
-  @if (\App\Support\DoctorNowSettings::bool('doctor_now_enabled'))
+  @if (\App\Support\DoctorNowSettings::bool('doctor_now_enabled') && \App\Support\Features::on('doctor_now'))
     <div class="pa-dn-cta">
       <div><h3>Need a doctor right now?</h3><p>Get matched with the next available doctor — video in minutes, or at rooms near you.</p></div>
       <a class="pa-btn-beacon" href="{{ route('account.doctor-now') }}">See a doctor now</a>
@@ -110,8 +110,8 @@
         <div class="pa-card-head"><h3>Quick actions</h3></div>
         <div style="padding:18px 22px;display:flex;flex-direction:column;gap:10px">
           <a class="pa-btn pa-btn-block" href="{{ route('doctors.index') }}">Book a doctor</a>
-          <a class="pa-btn-ghost pa-btn-block" href="{{ route('shuttle') }}">Request a shuttle</a>
-          <a class="pa-btn-ghost pa-btn-block" href="{{ route('shop.index') }}">Order medicine</a>
+          @if (\App\Support\Features::on('shuttle'))<a class="pa-btn-ghost pa-btn-block" href="{{ route('shuttle') }}">Request a shuttle</a>@endif
+          @if (\App\Support\Features::on('shop'))<a class="pa-btn-ghost pa-btn-block" href="{{ route('shop.index') }}">Order medicine</a>@endif
         </div>
       </div>
 

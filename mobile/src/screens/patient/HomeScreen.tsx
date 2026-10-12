@@ -12,7 +12,7 @@ import WidgetHost from '../../widgets/WidgetHost';
 import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 import { TriagePromptModal } from '../../components/pa/triage-extras';
 import { navigateForEmergencyAction } from '../../components/pa/care-extras';
-import { STATUS_COLOURS, useSiteContent, websiteUrl } from '../../services/siteContent';
+import { STATUS_COLOURS, featureOn, useSiteContent, websiteUrl } from '../../services/siteContent';
 
 interface TopService { kind: string; group: string; id: number; name: string; rating_avg: number; rating_count: number }
 
@@ -35,6 +35,8 @@ export default function HomeScreen({ navigation }: any) {
   const [scaleOpen, setScaleOpen] = useState(false);
   const [topServices, setTopServices] = useState<TopService[]>([]);
   const content = useSiteContent();
+  // Feature switches (Staff → System → Features); fail open if the flags didn't load.
+  const on = (key: Parameters<typeof featureOn>[1]) => featureOn(content, key);
 
   useEffect(() => {
     if (!emergencyScaleShown) {
@@ -66,6 +68,9 @@ export default function HomeScreen({ navigation }: any) {
       setLoading(false);
     }
   }, []);
+
+  // Top services: hide pharmacy / lab / radiology cards for switched-off features.
+  const visibleServices = topServices.filter((sv) => (sv.group === 'pharmacy' ? on('shop') : ['radiology', 'laboratories'].includes(sv.group) ? on('labs') : true));
 
   const triageIsRecent = latestTriage && Date.now() - new Date(latestTriage.created_at).getTime() < 24 * 60 * 60 * 1000;
 
@@ -130,9 +135,11 @@ export default function HomeScreen({ navigation }: any) {
           <Text style={styles.apptDoctor}>{nextAppt.doctor?.name ?? 'Doctor'}</Text>
           <Text style={styles.apptMeta}>{nextAppt.date} {nextAppt.start_time?.slice(0, 5)} · {nextAppt.clinic?.name ?? 'Video consult'}</Text>
           <View style={styles.apptActions}>
+            {on('shuttle') ? (
             <Pressable style={styles.beaconBtn} onPress={() => navigation.getParent()?.navigate('Rides')}>
               <Text style={styles.beaconBtnText}>Track shuttle</Text>
             </Pressable>
+            ) : null}
             <Pressable style={styles.ghostBtn} onPress={() => navigation.navigate('Chat', { appointmentId: nextAppt.id, title: `Dr. ${nextAppt.doctor?.name ?? ''}` })}>
               <Text style={styles.ghostBtnText}>Message</Text>
             </Pressable>
@@ -145,10 +152,17 @@ export default function HomeScreen({ navigation }: any) {
 
       {!widgetOn('patient_search_shortcuts') ? (
       <View style={styles.grid2}>
-        <PaQuickAction number="01" label="Find a doctor" onPress={() => navigation.getParent()?.navigate('Care')} />
-        <PaQuickAction number="02" label="Order medicine" onPress={() => navigation.getParent()?.navigate('Pharmacy')} />
-        <PaQuickAction number="03" label="Book a shuttle" onPress={() => navigation.getParent()?.navigate('Rides')} />
-        <PaQuickAction number="04" label="Upload a script" onPress={() => navigation.getParent()?.navigate('Pharmacy', { screen: 'ScriptUpload' })} />
+        {[
+          { label: 'Find a doctor', show: true, go: () => navigation.getParent()?.navigate('Care') },
+          { label: 'Order medicine', show: on('shop'), go: () => navigation.getParent()?.navigate('Pharmacy') },
+          { label: 'Book a shuttle', show: on('shuttle'), go: () => navigation.getParent()?.navigate('Rides') },
+          { label: 'Upload a script', show: on('shop'), go: () => navigation.getParent()?.navigate('Pharmacy', { screen: 'ScriptUpload' }) },
+          { label: 'See a doctor now', show: !on('shop') && on('doctor_now'), go: () => navigation.navigate('InstantConsult') },
+        ]
+          .filter((a) => a.show)
+          .map((a, i) => (
+            <PaQuickAction key={a.label} number={String(i + 1).padStart(2, '0')} label={a.label} onPress={a.go} />
+          ))}
       </View>
       ) : null}
 
@@ -182,10 +196,10 @@ export default function HomeScreen({ navigation }: any) {
         <Text style={styles.statusNoteText}>{content.home.status_note}</Text>
       </View>
 
-      {topServices.length ? (
+      {visibleServices.length ? (
         <>
           <Text style={styles.sectionLabel}>{content.home.top_services_heading}</Text>
-          {topServices.map((sv) => (
+          {visibleServices.map((sv) => (
             <Pressable
               key={sv.kind}
               style={styles.row}
@@ -213,7 +227,7 @@ export default function HomeScreen({ navigation }: any) {
         </Pressable>
       ))}
 
-      {content.topic ? (
+      {content.topic && on('topic') ? (
         <View style={styles.topicCard}>
           <Text style={styles.topicEyebrow}>{content.home.topic_heading}</Text>
           <Text style={styles.topicTitle}>{content.topic.title ?? 'A new health topic is coming soon.'}</Text>
@@ -221,9 +235,11 @@ export default function HomeScreen({ navigation }: any) {
             <Pressable style={styles.topicBtn} onPress={() => Linking.openURL(content.topic!.url)}>
               <Text style={styles.topicBtnText}>{content.home.topic_read_label}</Text>
             </Pressable>
+            {on('testimonials') ? (
             <Pressable style={[styles.ghostBtn, { borderColor: '#fff' }]} onPress={() => Linking.openURL(content.topic!.testimonial_url)}>
               <Text style={styles.ghostBtnText}>{content.home.topic_testimonial_label}</Text>
             </Pressable>
+            ) : null}
           </View>
         </View>
       ) : null}

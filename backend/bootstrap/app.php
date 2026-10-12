@@ -21,8 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', \App\Http\Middleware\RequireCurrentConsents::class);
         $middleware->appendToGroup('api', \App\Http\Middleware\LogSensitiveApiAccess::class);
 
+        // Feature switches (App\Support\Features): switched-off services answer with a "not available" page/JSON.
+        $middleware->appendToGroup('web', \App\Http\Middleware\FeatureGate::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\FeatureGate::class);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'feature' => \App\Http\Middleware\FeatureGate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

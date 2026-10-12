@@ -12,6 +12,31 @@ use Filament\Tables\Table;
 
 class UsersTable
 {
+    /**
+     * "Send test alert": in-app + push (InAppNotifier) and the panel bell
+     * with sound (StaffNotifier) to this user — to check sounds on their
+     * phone/browser. Also used on the Edit user page header.
+     */
+    public static function testAlertAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('sendTestAlert')
+            ->label('Send test alert')
+            ->icon('heroicon-o-bell-alert')
+            ->color('gray')
+            ->requiresConfirmation()
+            ->modalHeading(fn (\App\Models\User $record) => 'Send a test alert to '.$record->name.'?')
+            ->modalDescription('They get an in-app notification with a phone push (sound), and staff also get the panel bell with sound. Use this to check alerts work on their phone and browser.')
+            ->modalSubmitActionLabel('Send test alert')
+            ->action(function (\App\Models\User $record) {
+                $result = \App\Support\TestAlert::send($record, auth()->user());
+                \Filament\Notifications\Notification::make()
+                    ->title('Test alert sent')
+                    ->body(\App\Support\TestAlert::summary($record, $result))
+                    ->success()
+                    ->send();
+            });
+    }
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -48,10 +73,16 @@ class UsersTable
                 SelectFilter::make('status')->options(['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended']),
             ])
             ->recordActions([
+                self::testAlertAction(),
                 EditAction::make(),
+            ])
+            // Streamed CSV download (no queue): current filters/search/sort, or the ticked rows.
+            ->headerActions([
+                \App\Support\CsvExport::headerAction('users'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    \App\Support\CsvExport::bulkAction('users'),
                     DeleteBulkAction::make(),
                 ]),
             ]);
