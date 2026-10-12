@@ -77,4 +77,26 @@ class PatientProfile extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    // --- Patient self-care (health stream) ---
+
+    public function favouriteDoctors(): HasMany
+    {
+        return $this->hasMany(FavouriteDoctor::class);
+    }
+
+    public function familyMembers(): HasMany
+    {
+        return $this->hasMany(FamilyMember::class);
+    }
+
+    public function medications(): HasMany
+    {
+        return $this->hasMany(Medication::class);
+    }
+
+    public function vitalReadings(): HasMany
+    {
+        return $this->hasMany(VitalReading::class);
+    }
 }

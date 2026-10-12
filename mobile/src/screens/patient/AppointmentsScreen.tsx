@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Linking, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { api, apiErrorMessage } from '../../api/client';
@@ -74,6 +74,15 @@ export default function AppointmentsScreen() {
     );
   }
 
+  async function addToCalendar(a: Appointment) {
+    try {
+      const { data } = await api.get(`/appointments/${a.id}/calendar-link`);
+      await Linking.openURL(data.url);
+    } catch (e) {
+      Alert.alert('Could not add to calendar', apiErrorMessage(e));
+    }
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -132,6 +141,12 @@ export default function AppointmentsScreen() {
                   ) : null}
                   {active && !a.is_video ? (
                     <Chip icon="navigation" label="Add shuttle" onPress={() => navigation.navigate('Rides', { screen: 'ShuttleRequest', params: { to: a.clinic?.name } })} />
+                  ) : null}
+                  {active && a.status !== 'matching' && a.doctor ? (
+                    <Chip icon="calendar" label="Add to calendar" onPress={() => addToCalendar(a)} />
+                  ) : null}
+                  {['pending', 'confirmed'].includes(a.status) && a.doctor && a.clinic ? (
+                    <Chip icon="clock" label="Reschedule" onPress={() => navigation.navigate('Reschedule', { appointment: a })} />
                   ) : null}
                   {active && a.status !== 'checked_in' ? (
                     <Chip icon="x-circle" label={busyId === a.id ? 'Cancelling…' : 'Cancel'} danger onPress={() => cancel(a)} />

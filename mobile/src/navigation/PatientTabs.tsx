@@ -27,6 +27,12 @@ import HealthArticleDetailScreen from '../screens/patient/HealthArticleDetailScr
 import SearchScreen from '../screens/patient/SearchScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import AppPageScreen from '../screens/AppPageScreen';
+import MyDoctorsScreen from '../screens/patient/health/MyDoctorsScreen';
+import FamilyMembersScreen from '../screens/patient/health/FamilyMembersScreen';
+import MedicationsScreen from '../screens/patient/health/MedicationsScreen';
+import VitalsScreen from '../screens/patient/health/VitalsScreen';
+import MedicalIdScreen from '../screens/patient/health/MedicalIdScreen';
+import RescheduleScreen from '../screens/patient/health/RescheduleScreen';
 import { pa, paFonts } from '../theme';
 import { tabBarScreenOptions, tabIcon } from './tabBarTheme';
 
@@ -95,6 +101,12 @@ function RecordStackNavigator() {
     <RecordStack.Navigator screenOptions={stackHeaderOptions}>
       <RecordStack.Screen name="RecordHome" component={RecordScreen} options={{ headerShown: false }} />
       <RecordStack.Screen name="Appointments" component={AppointmentsScreen} options={{ title: 'Appointments' }} />
+      <RecordStack.Screen name="Reschedule" component={RescheduleScreen} options={{ title: 'Reschedule' }} />
+      <RecordStack.Screen name="MyDoctors" component={MyDoctorsScreen} options={{ title: 'My doctors' }} />
+      <RecordStack.Screen name="FamilyMembers" component={FamilyMembersScreen} options={{ title: 'Family members' }} />
+      <RecordStack.Screen name="Medications" component={MedicationsScreen} options={{ title: 'Medications' }} />
+      <RecordStack.Screen name="Vitals" component={VitalsScreen} options={{ title: 'Vitals' }} />
+      <RecordStack.Screen name="MedicalId" component={MedicalIdScreen} options={{ title: 'Medical ID' }} />
       <RecordStack.Screen name="LabResults" component={LabResultsScreen} options={{ title: 'Lab Results' }} />
       <RecordStack.Screen name="Orders" component={OrdersScreen} options={{ title: 'My Orders' }} />
       <RecordStack.Screen name="Invoices" component={InvoicesScreen} options={{ title: 'Invoices' }} />

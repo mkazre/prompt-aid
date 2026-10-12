@@ -149,6 +149,7 @@ export default function HomeScreen({ navigation }: any) {
         <PaQuickAction number="02" label="Order medicine" onPress={() => navigation.getParent()?.navigate('Pharmacy')} />
         <PaQuickAction number="03" label="Book a shuttle" onPress={() => navigation.getParent()?.navigate('Rides')} />
         <PaQuickAction number="04" label="Upload a script" onPress={() => navigation.getParent()?.navigate('Pharmacy', { screen: 'ScriptUpload' })} />
+        <PaQuickAction number="05" label="Medical ID" onPress={() => navigation.getParent()?.navigate('Profile', { screen: 'MedicalId' })} />
       </View>
       ) : null}
 

@@ -49,6 +49,7 @@ function resolveTarget(role: Role | undefined, n: AppNotification): [string, any
   switch (role) {
     case 'patient':
       if (route === 'appointment') return tab('Profile', { screen: 'Appointments' });
+      if (route === 'medications') return tab('Profile', { screen: 'Medications' });
       if (route === 'orders') return tab('Profile', { screen: 'Orders' });
       if (route === 'lab_results') return tab('Profile', { screen: 'LabResults' });
       if (route === 'prescriptions') return tab('Pharmacy');

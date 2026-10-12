@@ -38,6 +38,30 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
   const [booking, setBooking] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [confirmed, setConfirmed] = useState<Appointment | null>(null);
+  const [favOn, setFavOn] = useState(false);
+  const [favAllowed, setFavAllowed] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    api.get('/health/config').then(({ data }) => {
+      if (!live || !data.features?.favourites) return;
+      setFavAllowed(true);
+      return api.get('/favourites/doctors').then((r) => { if (live) setFavOn((r.data.data as { id: number }[]).some((d) => d.id === Number(doctorId))); });
+    }).catch(() => {});
+    return () => { live = false; };
+  }, [doctorId]);
+
+  async function toggleFavourite() {
+    const next = !favOn;
+    setFavOn(next);
+    try {
+      if (next) await api.post('/favourites/doctors', { doctor_profile_id: Number(doctorId) });
+      else await api.delete(`/favourites/doctors/${doctorId}`);
+    } catch (e) {
+      setFavOn(!next);
+      Alert.alert('Could not update', apiErrorMessage(e));
+    }
+  }
 
   useEffect(() => {
     api
@@ -99,7 +123,14 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
         <PaAvatar name={doctor.name} size={64} />
       )}
       <View style={{ flex: 1 }}>
-        <Text style={styles.name}>{doctor.name}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={[styles.name, { flex: 1 }]}>{doctor.name}</Text>
+          {favAllowed ? (
+            <Pressable onPress={toggleFavourite} hitSlop={12} accessibilityLabel={favOn ? 'Remove from My doctors' : 'Save to My doctors'}>
+              <Ionicons name={favOn ? 'heart' : 'heart-outline'} size={26} color={pa.signal} />
+            </Pressable>
+          ) : null}
+        </View>
         <Text style={styles.spec}>{doctor.specialization}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
           <Ionicons name="star" size={14} color={pa.beacon} />

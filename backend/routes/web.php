@@ -192,6 +192,7 @@ Route::middleware('auth')->group(function () {
     })->middleware('throttle:60,1')->name('staff.notifications.unread-count');
     Route::get('/staff/preview/pages/{page}', [PageBuilderPreviewController::class, 'show'])->name('page-builder.preview');
     require __DIR__.'/web_privacy.php';
+    require __DIR__.'/web_health.php';
 });
 
 // Page builder catch-all — must stay last. Never matches a path starting

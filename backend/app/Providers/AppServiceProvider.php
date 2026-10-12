@@ -54,6 +54,11 @@ class AppServiceProvider extends ServiceProvider
         // Recurring ride series -> real rides for the next 7 days (was never scheduled before).
         \App\Support\Tick::register('shuttle.materialize_series', 86400, fn () => app(\App\Services\Rides\RideSeriesService::class)->materializeUpcoming(7));
 
+        // Patient health: medication dose reminders + appointment reminders
+        // (idempotent; see App\Services\Health\HealthReminderService).
+        \App\Support\Tick::register('health.medication_reminders', 60, fn () => app(\App\Services\Health\HealthReminderService::class)->sendMedicationReminders());
+        \App\Support\Tick::register('health.appointment_reminders', 60, fn () => app(\App\Services\Health\HealthReminderService::class)->sendAppointmentReminders());
+
         // POPIA: purge GPS breadcrumbs older than the retention period.
         \App\Support\Tick::register('shuttle.location_retention', 21600, function () {
             $days = \App\Support\ShuttleSettings::int('shuttle_location_retention_days');

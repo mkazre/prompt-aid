@@ -23,6 +23,15 @@
   <a href="{{ route('account.prescriptions') }}" class="{{ $active === 'prescriptions' ? 'is-on' : '' }}"><span class="d"></span>Prescriptions &amp; scripts</a>
   <a href="{{ route('account.results') }}" class="{{ $active === 'results' ? 'is-on' : '' }}"><span class="d"></span>Results</a>
   <a href="{{ route('account.record') }}" class="{{ $active === 'record' ? 'is-on' : '' }}"><span class="d"></span>Medical record</a>
+  @php $hlFeatures = \App\Support\HealthSettings::features(); @endphp
+  @if (in_array(true, \Illuminate\Support\Arr::except($hlFeatures, ['reschedule', 'calendar', 'medication_reminders']), true))
+    <div class="grp">My health</div>
+    @if ($hlFeatures['medical_id'])<a href="{{ route('account.health.medical-id') }}" class="{{ $active === 'medical-id' ? 'is-on' : '' }}"><span class="d"></span>Medical ID</a>@endif
+    @if ($hlFeatures['medications'])<a href="{{ route('account.health.medications') }}" class="{{ $active === 'medications' ? 'is-on' : '' }}"><span class="d"></span>Medications</a>@endif
+    @if ($hlFeatures['vitals'])<a href="{{ route('account.health.vitals') }}" class="{{ $active === 'vitals' ? 'is-on' : '' }}"><span class="d"></span>Vitals</a>@endif
+    @if ($hlFeatures['favourites'])<a href="{{ route('account.health.favourites') }}" class="{{ $active === 'my-doctors' ? 'is-on' : '' }}"><span class="d"></span>My doctors</a>@endif
+    @if ($hlFeatures['family'])<a href="{{ route('account.health.family') }}" class="{{ $active === 'family' ? 'is-on' : '' }}"><span class="d"></span>Family members</a>@endif
+  @endif
   <div class="grp">Orders &amp; trips</div>
   <a href="{{ route('account.orders') }}" class="{{ $active === 'orders' ? 'is-on' : '' }}"><span class="d"></span>Pharmacy orders</a>
   <a href="{{ route('account.rides') }}" class="{{ $active === 'rides' ? 'is-on' : '' }}"><span class="d"></span>Shuttle trips</a>

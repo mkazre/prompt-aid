@@ -94,6 +94,7 @@ class Permissions
         'broadcast-notifications.send' => ['group' => 'System', 'label' => 'Broadcast notifications'],
         'privacy-settings.manage' => ['group' => 'Privacy', 'label' => 'Privacy settings (retention, Information Officer)'],
         'doctor-now-settings.manage' => ['group' => 'System', 'label' => 'On-demand doctors settings'],
+        'health-settings.manage' => ['group' => 'System', 'label' => 'Patient health settings (reminders, vitals ranges, feature switches)'],
     ];
 
     /**

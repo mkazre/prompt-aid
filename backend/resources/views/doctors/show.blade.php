@@ -11,7 +11,27 @@
         <span style="font-size:13px;color:var(--pa-ink-soft)">{{ $doctor->liveStatusDescription() }}</span>
         @if ($doctor->liveStatus() === 'green')<a href="{{ route('instant-consult') }}" style="font-size:13px;font-weight:700">See a doctor now →</a>@endif
       </div>
-      <h1 style="margin-bottom:8px">{{ $doctor->displayName() }}</h1>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px">
+        <h1 style="margin:0">{{ $doctor->displayName() }}</h1>
+        @if (\App\Support\HealthSettings::feature('favourites') && (! auth()->check() || auth()->user()->patientProfile))
+          @push('meta')<link rel="stylesheet" href="{{ asset('assets/css/pa-health.css') }}" />@endpush
+          @php $isFav = \App\Services\Health\PatientHealth::isFavourite(auth()->user()?->patientProfile, $doctor->id); @endphp
+          @auth
+            <form method="POST" action="{{ route('account.health.favourites.toggle', $doctor->id) }}" style="margin:0">
+              @csrf
+              <button type="submit" class="pa-heart {{ $isFav ? 'is-on' : '' }}" aria-pressed="{{ $isFav ? 'true' : 'false' }}" title="{{ $isFav ? 'Remove from My doctors' : 'Save to My doctors' }}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.6 3 5 6.6 5c2 0 3.4 1.1 4.4 2.6C12 6.1 13.4 5 15.4 5 19 5 21 8.6 19.6 11.8 17.5 16.4 12 21 12 21z"/></svg>
+                {{ $isFav ? 'Saved' : 'Save to My doctors' }}
+              </button>
+            </form>
+          @else
+            <a href="{{ route('login') }}" class="pa-heart" title="Log in to save this doctor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.6 3 5 6.6 5c2 0 3.4 1.1 4.4 2.6C12 6.1 13.4 5 15.4 5 19 5 21 8.6 19.6 11.8 17.5 16.4 12 21 12 21z"/></svg>Save</a>
+          @endauth
+        @endif
+      </div>
+      @if (session('success') && str_contains((string) session('success'), 'My doctors'))
+        <div class="pa-note" style="margin-bottom:10px">{{ session('success') }} <a href="{{ route('account.health.favourites') }}">View My doctors →</a></div>
+      @endif
       <p style="font-size:17px;color:var(--pa-ink-soft);margin-bottom:18px">{{ $doctor->specialization }}@if($doctor->qualification) · {{ $doctor->qualification }}@endif
         @if($doctor->registration_no) · HPCSA {{ $doctor->registration_no }}@endif</p>
       <div style="display:flex;gap:32px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--pa-line)">

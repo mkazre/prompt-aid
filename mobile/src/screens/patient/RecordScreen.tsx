@@ -5,6 +5,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../api/client';
 import { LabRequest, Order } from '../../api/types';
 import { PaBadge, PaRow } from '../../components/pa';
+import { getHealthConfig, HealthConfig } from '../../api/health';
+import { FeatherName, HealthLinkRow } from '../../components/HealthUI';
 import { useAuth } from '../../context/AuthContext';
 import { pa, paFonts, type } from '../../theme';
 import WidgetHost from '../../widgets/WidgetHost';
@@ -29,6 +31,7 @@ export default function RecordScreen({ navigation }: any) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [health, setHealth] = useState<HealthConfig | null>(null);
   const [widgetKeys, setWidgetKeys] = useState<string[] | null>(null);
 
   const load = useCallback(async () => {
@@ -42,7 +45,7 @@ export default function RecordScreen({ navigation }: any) {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { load(); getHealthConfig().then(setHealth).catch(() => {}); }, [load]));
 
   const newResultsCount = labRequests.filter((r) => r.status === 'completed' && (r.results?.length ?? 0) > 0).length;
   const activeOrders = orders.filter((o) => !['delivered', 'cancelled'].includes(o.status)).length;
@@ -99,6 +102,23 @@ export default function RecordScreen({ navigation }: any) {
         </View>
       )}
 
+      {health ? (
+        <>
+          <Text style={styles.sectionLabel}>My health</Text>
+          {([
+            ['medical_id', 'MedicalId', 'heart', '#D0211C', 'Medical ID', 'Blood group, allergies, emergency info'],
+            ['medications', 'Medications', 'package', '#1F7A4C', 'Medications', 'Doses, reminders and taken log'],
+            ['vitals', 'Vitals', 'activity', '#6A4C93', 'Vitals tracker', 'Blood pressure, glucose, weight and more'],
+            ['favourites', 'MyDoctors', 'star', '#B4520F', 'My doctors', 'Saved doctors, quick Book'],
+            ['family', 'FamilyMembers', 'users', '#1F4E7A', 'Family members', 'Dependants and their details'],
+          ] as [keyof HealthConfig['features'], string, FeatherName, string, string, string][])
+            .filter(([f]) => health.features[f])
+            .map(([f, screen, icon, color, title, sub]) => (
+              <HealthLinkRow key={f} icon={icon} color={color} title={title} subtitle={sub} onPress={() => navigation.navigate(screen)} />
+            ))}
+          <Text style={styles.sectionLabel}>Care</Text>
+        </>
+      ) : null}
       <PaRow
         title="Results"
         subtitle={newResultsCount ? `${newResultsCount} new` : 'No new results'}

@@ -59,6 +59,10 @@ class PatientProfileResource extends Resource
     {
         return [
             SchemeMembershipsRelationManager::class,
+            RelationManagers\VitalReadingsRelationManager::class,
+            RelationManagers\MedicationsRelationManager::class,
+            RelationManagers\FamilyMembersRelationManager::class,
+            RelationManagers\FavouriteDoctorsRelationManager::class,
         ];
     }
 

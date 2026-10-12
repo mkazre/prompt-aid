@@ -1,4 +1,8 @@
 <x-layout title="Appointments · Prompt Aid">
+@php
+  $rescheduler = app(\App\Services\Health\PatientRescheduleService::class);
+  $calendarOn = \App\Support\HealthSettings::feature('calendar');
+@endphp
 <div class="pa-account">
 <x-account-nav active="appointments" />
 <div>
@@ -33,6 +37,12 @@
                 <input type="hidden" name="appointment_id" value="{{ $appt->id }}">
                 <button class="pa-btn-ghost pa-btn-sm" type="submit">Message doctor</button>
               </form>
+            @endif
+            @if ($calendarOn && in_array($appt->status, ['pending', 'confirmed']) && $appt->doctor_profile_id && $appt->date->toDateString() >= now()->subDay()->toDateString())
+              <a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.health.calendar', $appt->id) }}">Add to calendar</a>
+            @endif
+            @if ($rescheduler->canReschedule($appt))
+              <a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.health.reschedule', $appt->id) }}">Reschedule</a>
             @endif
             @if (in_array($appt->status, ['pending', 'confirmed']))
               <form method="POST" action="{{ route('account.appointments.cancel', $appt) }}" style="display:inline" onsubmit="return confirm('Cancel this appointment?');">

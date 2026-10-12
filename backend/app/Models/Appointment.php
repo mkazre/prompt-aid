@@ -45,6 +45,8 @@ class Appointment extends Model
             'ride_requested' => 'boolean',
             'meet_created_at' => 'datetime',
             'video_ended_at' => 'datetime',
+            'reminder_24h_sent_at' => 'datetime',
+            'reminder_1h_sent_at' => 'datetime',
         ];
     }
 
@@ -61,6 +63,12 @@ class Appointment extends Model
         static::saving(function (self $appointment) {
             if ($appointment->exists && $appointment->isVideo() && ! $appointment->video_room) {
                 $appointment->video_room = self::generateVideoRoom($appointment->id);
+            }
+
+            // Moved to a new time: the automatic reminders must fire again.
+            if ($appointment->exists && $appointment->isDirty(['date', 'start_time'])) {
+                $appointment->reminder_24h_sent_at = null;
+                $appointment->reminder_1h_sent_at = null;
             }
         });
 

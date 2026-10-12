@@ -1,0 +1,69 @@
+/* ===================================================================
+   Patient self-care pages (health stream): My doctors, family,
+   medications, vitals, medical ID (printable), reschedule.
+   =================================================================== */
+.pa-hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.pa-hl-doc{display:flex;gap:14px;align-items:center;padding:18px;background:var(--pa-surface);border:1px solid var(--pa-line)}
+.pa-hl-doc .meta{font-size:13px;color:var(--pa-muted);margin-top:2px}
+.pa-hl-doc .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.pa-heart{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--pa-line);background:var(--pa-surface);color:var(--pa-ink);padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.pa-heart svg{width:18px;height:18px;fill:none;stroke:var(--pa-signal);stroke-width:2}
+.pa-heart.is-on{background:var(--pa-signal-wash);border-color:#F2C4C4;color:var(--pa-signal-ink)}
+.pa-heart.is-on svg{fill:var(--pa-signal)}
+
+.pa-hl-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:900;letter-spacing:.04em;padding:3px 8px;border-radius:999px;white-space:nowrap;background:var(--pa-paper);color:var(--pa-ink-soft)}
+.pa-hl-chip.is-orange{background:#FCEEE2;color:#B4520F}
+.pa-hl-chip.is-red{background:#FBEAEA;color:#C8102E}
+.pa-hl-chip.is-go{background:var(--pa-go-wash);color:var(--pa-go)}
+.pa-hl-chip.is-info{background:#E6EEFA;color:#1F5FBF}
+
+.pa-hl-doses{display:grid;gap:0}
+.pa-hl-dose{display:flex;align-items:center;gap:14px;padding:12px 26px;border-bottom:1px solid var(--pa-line-soft)}
+.pa-hl-dose .t{font-variant-numeric:tabular-nums;font-weight:900;font-size:17px;width:56px}
+.pa-hl-dose .n{flex:1;min-width:0}
+.pa-hl-dose .n b{display:block;font-size:14px}
+.pa-hl-dose .n span{font-size:12px;color:var(--pa-muted)}
+
+.pa-hl-spark{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.pa-hl-spark .tile{background:var(--pa-surface);border:1px solid var(--pa-line);padding:14px 16px}
+.pa-hl-spark .lbl{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--pa-muted)}
+.pa-hl-spark .val{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0 6px}
+.pa-hl-spark .val small{font-size:12px;color:var(--pa-muted);font-weight:400}
+.pa-hl-spark svg{width:100%;height:42px;display:block}
+
+.pa-hl-inline{display:inline}
+.pa-hl-details summary{cursor:pointer;list-style:none}
+.pa-hl-details summary::-webkit-details-marker{display:none}
+
+/* Medical ID card */
+.pa-mid{max-width:720px;background:var(--pa-surface);border:2px solid var(--pa-signal);position:relative}
+.pa-mid-head{background:var(--pa-signal);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pa-mid-head b{font-size:15px;letter-spacing:.14em;text-transform:uppercase;font-weight:900}
+.pa-mid-body{padding:22px;display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px}
+.pa-mid-photo{width:96px;height:96px;border-radius:50%;object-fit:cover;background:var(--pa-paper);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:var(--pa-ink)}
+.pa-mid-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px 22px;margin-top:14px}
+.pa-mid-row .k{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--pa-muted);margin-bottom:3px}
+.pa-mid-row .v{font-size:15px;font-weight:700}
+.pa-mid-blood{display:inline-block;background:var(--pa-signal-wash);color:var(--pa-signal-ink);font-weight:900;font-size:22px;padding:4px 12px}
+.pa-mid-foot{border-top:1px solid var(--pa-line);padding:12px 22px;font-size:12px;color:var(--pa-muted)}
+
+/* Reschedule picker */
+.pa-hl-slots{display:flex;flex-wrap:wrap;gap:8px}
+.pa-hl-slot{border:1px solid var(--pa-line);background:var(--pa-surface);padding:9px 14px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;font-variant-numeric:tabular-nums}
+.pa-hl-slot:hover{border-color:var(--pa-ink)}
+.pa-hl-slot.is-on{background:var(--pa-ink);border-color:var(--pa-ink);color:#fff}
+.pa-hl-slot[disabled]{color:var(--pa-muted2,#9A948A);text-decoration:line-through;cursor:not-allowed;background:var(--pa-paper)}
+
+@media (max-width:700px){
+  .pa-mid-body{grid-template-columns:1fr}
+  .pa-hl-dose{padding:12px 16px;flex-wrap:wrap}
+}
+
+@media print{
+  .pa-acctnav,.pa-footer,.pa-noprint,.pa-header,.pa-alertbar{display:none !important}
+  .pa-account{display:block;padding:0}
+  body{background:#fff}
+  .pa-mid{max-width:none;border-width:2px;break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pa-mid-head{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

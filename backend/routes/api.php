@@ -75,6 +75,10 @@ Route::get('/messages/{message}/attachment', [\App\Http\Controllers\Api\Conversa
     ->whereNumber('message')
     ->name('chat.attachment');
 
+// Patient self-care (favourites, family, medications, vitals, medical ID,
+// reschedule, calendar). Own auth groups inside; includes a signed public .ics route.
+require __DIR__.'/api_health.php';
+
 // --- Authenticated (any role) ---
 Route::middleware('auth:sanctum')->group(function () {
     require __DIR__.'/api_doctor_match.php';

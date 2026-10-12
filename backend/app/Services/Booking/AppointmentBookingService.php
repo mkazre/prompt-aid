@@ -234,7 +234,11 @@ class AppointmentBookingService
     /**
      * Move an appointment to a new free slot (same doctor and clinic).
      */
-    public function reschedule(Appointment $appointment, string $date, string $startTime): Appointment
+    /**
+     * @param  array<string, mixed>  $emailContext  extra dispatcher context for the
+     *                                              patient email (e.g. ['in_app' => false] when the caller sends its own in-app card)
+     */
+    public function reschedule(Appointment $appointment, string $date, string $startTime, array $emailContext = []): Appointment
     {
         $startTime = substr($startTime, 0, 5);
         $doctor = $appointment->doctor;
@@ -257,7 +261,8 @@ class AppointmentBookingService
         $this->notifier->email(
             $appointment->patient->user,
             'Appointment rescheduled',
-            "Your appointment with Dr. {$doctor->user->name} has been moved to {$date} at {$startTime}."
+            "Your appointment with Dr. {$doctor->user->name} has been moved to {$date} at {$startTime}.",
+            $emailContext,
         );
 
         return $appointment;
