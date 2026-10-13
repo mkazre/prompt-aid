@@ -92,13 +92,16 @@ class Appointment extends Model
         return $this->mode === self::MODE_VIDEO || $this->visit_type === 'telemed';
     }
 
+    /** Appointment dates/times are stored as local clinic time (South Africa), not UTC. */
+    public const CLINIC_TIMEZONE = 'Africa/Johannesburg';
+
     public function videoWindowStart(): ?\Carbon\Carbon
     {
         if (! $this->date || ! $this->start_time) {
             return null;
         }
 
-        return \Carbon\Carbon::parse("{$this->date->toDateString()} {$this->start_time}")->subMinutes(10);
+        return \Carbon\Carbon::parse("{$this->date->toDateString()} {$this->start_time}", self::CLINIC_TIMEZONE)->subMinutes(10);
     }
 
     public function videoWindowEnd(): ?\Carbon\Carbon
@@ -107,7 +110,7 @@ class Appointment extends Model
             return null;
         }
 
-        return \Carbon\Carbon::parse("{$this->date->toDateString()} ".($this->end_time ?: $this->start_time))->addMinutes(30);
+        return \Carbon\Carbon::parse("{$this->date->toDateString()} ".($this->end_time ?: $this->start_time), self::CLINIC_TIMEZONE)->addMinutes(30);
     }
 
     /**

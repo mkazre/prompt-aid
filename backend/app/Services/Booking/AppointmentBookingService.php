@@ -81,8 +81,9 @@ class AppointmentBookingService
             ->map(fn (DoctorTimeOff $t) => [$this->minutes($t->start_time), $this->minutes($t->end_time)])
             ->all();
 
-        $nowMinutes = $day->isToday() ? now()->hour * 60 + now()->minute : null;
-        $isPastDay = $day->lt(today());
+        $localNow = now(\App\Models\Appointment::CLINIC_TIMEZONE);
+        $nowMinutes = $day->toDateString() === $localNow->toDateString() ? $localNow->hour * 60 + $localNow->minute : null;
+        $isPastDay = $day->toDateString() < $localNow->toDateString();
 
         $result = [];
 
