@@ -31,6 +31,7 @@ Verified (local MariaDB): fresh migrate+seed, upgrade migrate, `route:cache`, `v
 - Web health pages have no rate-limit middleware (removed for testing); re-add named limiters.
 - Non-super-admin roles must be granted the new permissions in `/staff` → Roles.
 - Survey backfill: first deploy prompts patients with visits completed in the last 7 days.
+- **Doctor weekly hours / booking slots can only be set in the mobile app (Settings → Sessions, `DoctorAvailability` model). Add a "Weekly hours" repeater (weekday, start, end, slot_minutes, clinic) to the admin DoctorProfile form and to the doctor panel.**
 - Suggested extra features if wanted later: SMS/WhatsApp reminders, payment gateway for promo/invoices, driver earnings export, multi-language.
 
 ## 5. Dev setup
