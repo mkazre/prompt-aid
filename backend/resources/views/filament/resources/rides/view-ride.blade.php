@@ -169,4 +169,5 @@
             </x-filament::section>
         </div>
     </div>
+    @include('filament.resources.rides.partials.ride-recordings', ['ride' => $this->ride()])
 </x-filament-panels::page>

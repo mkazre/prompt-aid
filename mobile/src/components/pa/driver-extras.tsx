@@ -20,7 +20,7 @@ export function PaChipRow({
   onChange: (key: string) => void;
 }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, flexGrow: 0, flexShrink: 0 }}>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         {options.map((opt) => {
           const on = opt.key === value;
@@ -30,7 +30,7 @@ export function PaChipRow({
               onPress={() => onChange(opt.key)}
               style={[chipStyles.chip, on && chipStyles.chipOn]}
             >
-              <Text style={[chipStyles.text, on && chipStyles.textOn]}>{opt.label}</Text>
+              <Text numberOfLines={1} style={[chipStyles.text, on && chipStyles.textOn]}>{opt.label}</Text>
             </Pressable>
           );
         })}
@@ -40,9 +40,9 @@ export function PaChipRow({
 }
 
 const chipStyles = StyleSheet.create({
-  chip: { backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, paddingHorizontal: 13, paddingVertical: 9, borderRadius: paRadius.sm },
+  chip: { backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, paddingHorizontal: 16, paddingVertical: 9, minHeight: 40, justifyContent: 'center', borderRadius: paRadius.sm },
   chipOn: { backgroundColor: pa.ink, borderColor: pa.ink },
-  text: { fontFamily: paFonts.bold, fontSize: 12, color: pa.ink },
+  text: { fontFamily: paFonts.bold, fontSize: 13, lineHeight: 18, color: pa.ink, includeFontPadding: false },
   textOn: { color: '#fff' },
 });
 

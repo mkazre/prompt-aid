@@ -30,6 +30,9 @@
     <button type="button" class="pa-drv-switch" id="drv-online" aria-pressed="false"><span class="knob"></span><span id="drv-online-label">Offline</span></button>
   </div>
 
+  {{-- NOW is the switch above; LATER / TOMORROW windows and your max pickup distance here. --}}
+  <div style="display:flex;justify-content:flex-end;margin:-4px 0 8px">@include('dispatch.availability-toggle')</div>
+
   <div id="drv-alert" class="pa-note-stop" hidden style="margin-bottom:10px"></div>
   <div id="drv-geo" class="pa-sh-sub" style="margin:0 0 8px">Location sharing is off.</div>
   <div class="pa-sh-test" id="drv-test" hidden style="margin-bottom:8px">TEST simulation is driving this trip — your phone's GPS is ignored</div>
@@ -42,8 +45,9 @@
     <div><div class="k">Rating</div><div class="v" id="drv-rating">—</div></div>
   </div>
 
-  {{-- Incoming offer --}}
-  <div class="pa-drv-offer" id="drv-offer" hidden>
+  {{-- Incoming offer: shown by the global alert modal (dispatch/provider-alerts, swipe right to accept).
+       This legacy card is kept hidden as a fallback only. --}}
+  <div class="pa-drv-offer" id="drv-offer" hidden data-legacy="1">
     <div class="pa-spread" style="margin-bottom:8px">
       <div class="pa-label" style="margin:0">New trip request</div>
       <strong id="drv-offer-secs" style="font-size:20px">0s</strong>
@@ -74,6 +78,8 @@
       <div><div class="pa-label" style="margin:0">Patient</div><div style="font-weight:900;font-size:16px" id="drv-ride-patient"></div></div>
       <a class="pa-btn-ghost pa-btn-sm" id="drv-ride-call" href="#" hidden>Call patient</a>
     </div>
+    {{-- Rider profile (Bolt/Uber style): photo, rating, verified badges, needs, notes, booked-by, emergency contact. --}}
+    <div id="drv-rider" style="margin-bottom:10px"></div>
     <div class="pa-sh-addr" style="margin-bottom:12px">
       <span class="dot"></span><div id="drv-ride-pickup"></div>
       <span class="dot to"></span><div id="drv-ride-dropoff"></div>
@@ -88,6 +94,8 @@
       <input class="pa-field pa-drv-pin" id="drv-pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off">
     </div>
     <button type="button" class="pa-btn pa-drv-big" id="drv-ride-action" style="margin-bottom:8px"></button>
+    {{-- Trip audio recording (safety): mounted per ride by shuttle-driver.js. --}}
+    <div id="drv-recorder-slot" style="margin:10px 0"></div>
     <div class="pa-drv-grid2">
       <button type="button" class="pa-btn-ghost" id="drv-noshow" hidden>No-show</button>
       <button type="button" class="pa-btn-ghost" id="drv-cancel">Cancel trip</button>
@@ -132,5 +140,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="{{ asset('assets/js/shuttle-map.js') }}?v=2"></script>
 <script>window.PA_DRIVER = @json($drvCfg);</script>
-<script src="{{ asset('assets/js/shuttle-driver.js') }}?v=2"></script>
+<script src="{{ asset('assets/js/shuttle-driver.js') }}?v=3"></script>
+<script src="{{ asset('assets/js/trip-recorder.js') }}" defer></script>
+@include('dispatch.provider-alerts', ['context' => 'driver'])
 </x-layout>

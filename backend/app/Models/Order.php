@@ -28,7 +28,7 @@ class Order extends Model implements Payable
 
     protected $fillable = [
         'order_no', 'patient_profile_id', 'pharmacy_id', 'prescription_upload_id',
-        'subtotal', 'delivery_fee', 'discount_amount', 'promo_code', 'total', 'commission_amount',
+        'subtotal', 'delivery_fee', 'discount_amount', 'member_discount', 'promo_code', 'total', 'commission_amount',
         'delivery_address', 'delivery_lat', 'delivery_lng', 'status', 'payment_status',
     ];
 

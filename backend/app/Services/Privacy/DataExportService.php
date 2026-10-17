@@ -77,6 +77,7 @@ class DataExportService
             'shuttle_rides' => fn () => $pid ? DB::table('rides')->where('patient_profile_id', $pid)
                 ->get(['ride_ref', 'status', 'pickup_address', 'dropoff_address', 'distance_km', 'fare_final', 'requested_at', 'completed_at'])
                 ->map(fn ($r) => (array) $r)->all() : [],
+            'shuttle_trip_audio_recordings' => fn () => app(\App\Services\Safety\RideRecordingService::class)->exportFor($user),
             'pharmacy_orders' => fn () => $pid ? $patient->orders()->with('items')->get()->toArray() : [],
             'invoices' => fn () => $pid ? $patient->invoices()->with('items')->get()->toArray() : [],
             'messages' => fn () => $this->messages($user, $pid),

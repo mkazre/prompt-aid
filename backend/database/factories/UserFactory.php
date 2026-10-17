@@ -33,6 +33,8 @@ class UserFactory extends Factory
             'role' => User::ROLE_PATIENT,
             'status' => 'active',
             'remember_token' => Str::random(10),
+            // Factory users are fake: flag them so System → Demo data can remove them.
+            'is_demo' => true,
         ];
     }
 

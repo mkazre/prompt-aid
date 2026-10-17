@@ -31,6 +31,8 @@ class RidesTable
                 TextColumn::make('fare_final')->money('ZAR')->sortable()->placeholder('—'),
                 TextColumn::make('status')
                     ->badge()
+                    // Expired = closed by the system (no driver in time / stale), shown distinctly from a person's cancel.
+                    ->formatStateUsing(fn (string $state, Ride $record): string => $record->isExpired() ? 'expired' : (! $record->isTerminal() && $record->isStale() ? $state.' (stale)' : $state))
                     ->color(fn (string $state): string => match ($state) {
                         'completed' => 'success',
                         'requested', 'accepted', 'driver_enroute', 'arrived', 'in_progress' => 'warning',
@@ -45,6 +47,14 @@ class RidesTable
                     ->toggleable(),
             ])
             ->filters([
+                SelectFilter::make('lifecycle')->label('Active / History')
+                    ->options(['active' => 'Active (live now)', 'history' => 'History (closed)', 'expired' => 'Expired (closed by system)'])
+                    ->query(fn ($query, array $data) => match ($data['value'] ?? null) {
+                        'active' => $query->whereNotIn('status', Ride::TERMINAL),
+                        'history' => $query->whereIn('status', Ride::TERMINAL),
+                        'expired' => $query->where('status', Ride::STATUS_CANCELLED)->where('cancelled_by', Ride::CANCELLED_BY_SYSTEM),
+                        default => $query,
+                    }),
                 SelectFilter::make('status')->options([
                     'requested' => 'Requested', 'accepted' => 'Accepted', 'driver_enroute' => 'Driver En Route',
                     'arrived' => 'Arrived', 'in_progress' => 'In Progress', 'completed' => 'Completed', 'cancelled' => 'Cancelled',

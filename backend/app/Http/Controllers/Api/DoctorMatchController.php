@@ -48,13 +48,14 @@ class DoctorMatchController extends Controller
             'mode' => ['required', 'in:video,in_person'],
             'lat' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-90,90'],
             'lng' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-180,180'],
+            'radius_km' => ['nullable', 'numeric', 'min:1', 'max:500'],
         ]);
 
         $patient = $request->user()->patientProfile;
         abort_unless($patient, 403);
 
         try {
-            $match = $this->match->start($patient, $data['specialty'], $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null);
+            $match = $this->match->start($patient, $data['specialty'], $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : $patient->search_radius_km);
         } catch (DoctorMatchException $e) {
             $open = $this->match->openRequestFor($patient);
 

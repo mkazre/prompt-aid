@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { Linking } from 'react-native';
 import { useAlerts } from '../services/alerts';
+import ProviderDispatchHost from '../components/ProviderDispatchHost';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -90,6 +91,8 @@ export default function RootNavigator() {
   // Alerts with sound for every role; tapping one opens the right place.
   useAlerts(!!user, (data) => {
     if (!navRef.isReady()) return;
+    // Incoming request offers open the full-screen alert (ProviderDispatchHost), not the feed.
+    if (data?.type === 'dispatch_offer' || data?.offer_key) return;
     if (data?.route === 'ChatList' || data?.type === 'chat_message') navRef.navigate('ChatList');
     else if (data?.route === 'support_ticket' && data?.params?.ticket_id) navRef.navigate('SupportThread', { ticketId: data.params.ticket_id });
     else if (data?.route === 'feedback' && data?.params?.token) navRef.navigate('Feedback', { token: data.params.token });
@@ -119,6 +122,8 @@ export default function RootNavigator() {
   return (
     <NavigationContainer ref={navRef}>
       {!user ? <AuthStack /> : <SignedInStack key={user.role} Tabs={Tabs} />}
+      {/* Incoming request alert (swipe/accept/decline) over every screen for provider roles. */}
+      {user ? <ProviderDispatchHost role={user.role} navigate={(name, params) => navRef.isReady() && (navRef.navigate as (n: string, p?: object) => void).call(navRef, name, params)} /> : null}
     </NavigationContainer>
   );
 }

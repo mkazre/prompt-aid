@@ -16,14 +16,23 @@
           <td>{{ $order->pharmacy->name }}</td>
           <td>{{ $order->items->count() }} item(s)</td>
           <td><span class="pa-badge {{ in_array($order->status, ['delivered', 'confirmed']) ? 'is-go' : ($order->status === 'cancelled' ? 'is-stop' : 'is-wait') }}">{{ str($order->status)->headline() }}</span></td>
-          <td>R{{ number_format($order->total, 2) }}@if ($order->discount_amount > 0)<div class="t-sub">incl. R{{ number_format($order->discount_amount, 2) }} off{{ $order->promo_code ? ' ('.$order->promo_code.')' : '' }}</div>@endif</td>
-          <td class="t-right"><a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.orders.print', $order) }}" target="_blank" rel="noopener">Invoice</a></td>
+          <td>R{{ number_format($order->total, 2) }}@if ($order->discount_amount > 0)<div class="t-sub">incl. R{{ number_format($order->discount_amount, 2) }} off{{ $order->promo_code ? ' ('.$order->promo_code.')' : '' }}</div>@endif @if ($order->member_discount > 0)<div class="t-sub">incl. R{{ number_format($order->member_discount, 2) }} member discount</div>@endif</td>
+          <td class="t-right">
+            <a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.orders.print', $order) }}" target="_blank" rel="noopener">Invoice</a>
+            @if ($order->payment_status === 'unpaid' && $order->status === 'pending_payment')
+              <button type="button" class="pa-btn pa-btn-sm" style="margin-top:6px" data-pa-pay="order" data-id="{{ $order->id }}" data-amount="{{ $order->total }}" data-title="Order {{ $order->order_no }}">Pay now</button>
+            @elseif ($order->payment_status === 'unpaid' && $order->status === 'awaiting_prescription_review')
+              <div class="pa-muted" style="font-size:12px;margin-top:4px">Pay once the script is approved</div>
+            @endif
+          </td>
         </tr>
       @empty
         <tr><td colspan="6"><p class="pa-muted" style="padding:24px;text-align:center;font-size:14px">No orders yet. <a href="{{ route('shop.index') }}">Browse the marketplace</a>.</p></td></tr>
       @endforelse
     </tbody>
   </table></div>
+  @include('payments.plan-offer', ['scope' => 'chronic_medication', 'heading' => 'On chronic medication? Subscribe and save'])
 </div>
 </div>
+@include('payments.sheet')
 </x-layout>

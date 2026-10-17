@@ -21,7 +21,7 @@
       <h1 style="font-size:32px">See a doctor now</h1>
       <p class="pa-muted" style="margin:6px 0 0">Get matched with the next available doctor — by video, or at their rooms near you.</p>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn-ghost" href="{{ route('doctors.index') }}">Book a time slot instead</a></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn-ghost" href="{{ route('dispatch.request-doctor') }}">Any doctor later today / tomorrow</a><a class="pa-btn-ghost" href="{{ route('doctors.index') }}">Book a time slot instead</a></div>
   </div>
 
   @if (! $enabled && ! $current)
@@ -70,6 +70,18 @@
             <button type="button" class="pa-btn-ghost pa-btn-sm" id="dn-saved">Use my saved address</button>
           @endif
           <span id="dn-locstatus" class="pa-muted" style="font-size:13px">Location not set yet.</span>
+        </div>
+        @php
+          $dnRadiusOptions = \App\Support\DispatchSettings::radiusOptions();
+          $dnRadiusDefault = auth()->user()?->patientProfile?->search_radius_km !== null ? (int) auth()->user()->patientProfile->search_radius_km : (int) \App\Support\DispatchSettings::defaultRadius();
+        @endphp
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label class="pa-label" for="dn-radius" style="margin:0">Search within</label>
+          <select class="pa-field" id="dn-radius" style="max-width:140px">
+            @foreach ($dnRadiusOptions as $km)
+              <option value="{{ $km }}" @selected($km === $dnRadiusDefault)>{{ $km }} km</option>
+            @endforeach
+          </select>
         </div>
       </div>
 
@@ -133,6 +145,8 @@
 </div>
 </div>
 
+@include('payments.plan-offer', ['scope' => 'telehealth_membership', 'heading' => 'Become a member: cheaper consults, priority matching'])
+@include('payments.sheet')
 <script>window.PromptAidDoctorNow = @json($dnConfig);</script>
 @push('scripts')
 <script src="{{ asset('assets/js/doctor-now.js') }}"></script>

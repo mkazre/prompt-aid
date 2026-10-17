@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   tabs: { gap: 6, paddingBottom: 12 },
   tab: { borderWidth: 1, borderColor: pa.line, backgroundColor: pa.surface, borderRadius: paRadius.sm, paddingHorizontal: 12, paddingVertical: 9 },
   tabOn: { backgroundColor: pa.ink, borderColor: pa.ink },
-  tabText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
+  tabText: { fontFamily: paFonts.bold, fontSize: 13, lineHeight: 18, color: pa.ink, includeFontPadding: false },
   groupHeading: { fontFamily: paFonts.black, fontSize: 18, color: pa.ink, marginBottom: 4 },
   seeNow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: pa.ink, padding: 14, marginBottom: 14, borderRadius: 12 },
   seeNowTitle: { fontFamily: paFonts.black, fontSize: 14, color: '#fff' },

@@ -101,12 +101,21 @@
     var searching = d.status === 'requested' && d.dispatch && d.dispatch.state === 'searching';
     show($('sh-searching'), searching);
     if (searching) {
-      text($('sh-search-text'), 'Contacting nearby drivers' + (d.dispatch.radius_km ? ' within ' + d.dispatch.radius_km + ' km' : '') + '…');
+      var n = d.dispatch.drivers_notified || 0;
+      text($('sh-search-text'), (n > 0 ? 'Request sent to ' + n + ' driver' + (n === 1 ? '' : 's') : 'Searching for drivers') + (d.dispatch.radius_km ? ' within ' + d.dispatch.radius_km + ' km' : '') + '…');
       var since = Date.parse(d.dispatch.searching_since || d.server_time), until = Date.parse(d.dispatch.timeout_at || d.server_time);
       var pct = until > since ? Math.min(100, Math.max(3, (Date.parse(d.server_time) - since) / (until - since) * 100)) : 50;
       var bar = $('sh-search-bar'); if (bar) bar.style.width = pct + '%';
     }
     show($('sh-nodrivers'), d.status === 'requested' && d.dispatch && d.dispatch.state === 'no_drivers' && !C.readOnly);
+    var rsel = $('sh-retry-radius');
+    if (rsel && !rsel.options.length && d.dispatch && d.dispatch.radius_options) {
+      d.dispatch.radius_options.forEach(function (km) { var o = document.createElement('option'); o.value = km; o.textContent = km + ' km'; rsel.appendChild(o); });
+      var cur = d.dispatch.patient_radius_km || d.dispatch.radius_km || 10;
+      for (var i = 0; i < rsel.options.length; i++) { if (Number(rsel.options[i].value) > cur) { rsel.selectedIndex = i; break; } rsel.selectedIndex = i; }
+    }
+    var exp = $('sh-expired');
+    if (exp) { exp.hidden = !d.is_expired; if (d.is_expired) exp.textContent = (d.cancellation && d.cancellation.reason) || 'This request has closed. You were not charged.'; }
 
     // Waiting at pickup
     var w = $('sh-waiting');
@@ -237,7 +246,8 @@
   var retry = $('sh-retry');
   if (retry) retry.addEventListener('click', function () {
     retry.disabled = true;
-    S.api(C.retryUrl, { method: 'POST', body: {} }).then(function (r) { toast(r.message); stop(); poll(); })
+    var rr = $('sh-retry-radius');
+    S.api(C.retryUrl, { method: 'POST', body: rr && rr.value ? { radius_km: Number(rr.value) } : {} }).then(function (r) { toast(r.message); stop(); poll(); })
       .catch(function (e) { toast(e.message); }).then(function () { retry.disabled = false; });
   });
 

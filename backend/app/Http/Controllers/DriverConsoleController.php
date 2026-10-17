@@ -266,6 +266,7 @@ class DriverConsoleController extends Controller
             'status_label' => $base['status_label'],
             'patient_first_name' => $this->presenter->firstName($ride->patient?->user?->name),
             'patient_phone' => in_array($ride->status, [Ride::STATUS_ACCEPTED, Ride::STATUS_DRIVER_ENROUTE, Ride::STATUS_ARRIVED], true) ? $ride->patient?->user?->phone : null,
+            'rider' => \App\Services\Dispatch\RiderProfile::forRide($ride, true),
             'vehicle_type' => $ride->vehicle_type,
             'pickup' => $base['pickup'],
             'dropoff' => $base['dropoff'],
@@ -299,7 +300,9 @@ class DriverConsoleController extends Controller
             ->where('status', Ride::STATUS_REQUESTED)->whereNull('driver_profile_id')
             ->where(fn ($q) => $q->whereNull('dispatch_state')->orWhereIn('dispatch_state', [Ride::DISPATCH_QUEUE, Ride::DISPATCH_NO_DRIVERS]))
             ->whereIn('vehicle_type', $types)
-            ->latest('requested_at')->limit(20)->get()
+            ->latest('requested_at')->limit(40)->get()
+            // Never show stale / long-over requests.
+            ->filter(fn (Ride $r) => $r->isActive())->take(20)->values()
             ->map(fn (Ride $r) => [
                 'id' => $r->id,
                 'ride_ref' => $r->ride_ref,

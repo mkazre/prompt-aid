@@ -25,6 +25,7 @@ class PharmacyResource extends JsonResource
             'rating_avg' => (float) $this->rating_avg,
             'rating_count' => $this->rating_count,
             'status' => $this->status,
+            'distance_km' => $this->getAttribute('distance_km'),
             'products' => ProductResource::collection($this->whenLoaded('products')),
         ];
     }

@@ -7,6 +7,7 @@ import OffersScreen from '../screens/driver/OffersScreen';
 import TripOfferScreen from '../screens/driver/TripOfferScreen';
 import TripsScreen from '../screens/driver/TripsScreen';
 import TripDetailScreen from '../screens/driver/TripDetailScreen';
+import RideRecordingsScreen from '../screens/safety/RideRecordingsScreen';
 import EarningsScreen from '../screens/driver/EarningsScreen';
 import DocumentsScreen from '../screens/driver/DocumentsScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
@@ -27,6 +28,7 @@ function DriveStackNavigator() {
     <DriveStack.Navigator screenOptions={stackHeaderOptions}>
       <DriveStack.Screen name="DriveHome" component={DriverHomeScreen} options={{ headerShown: false }} />
       <DriveStack.Screen name="Trip" component={ActiveRideScreen} options={{ title: 'Active trip' }} />
+      <DriveStack.Screen name="RideRecordings" component={RideRecordingsScreen} options={{ title: 'Trip recordings' }} />
     </DriveStack.Navigator>
   );
 }
@@ -45,6 +47,7 @@ function TripsStackNavigator() {
     <TripsStack.Navigator screenOptions={stackHeaderOptions}>
       <TripsStack.Screen name="TripsList" component={TripsScreen} options={{ headerShown: false }} />
       <TripsStack.Screen name="TripDetail" component={TripDetailScreen} options={{ title: 'Trip' }} />
+      <TripsStack.Screen name="RideRecordings" component={RideRecordingsScreen} options={{ title: 'Trip recordings' }} />
     </TripsStack.Navigator>
   );
 }

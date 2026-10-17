@@ -39,6 +39,11 @@ class Permissions
         'invoices' => 'Billing',
         'medical-schemes' => 'Billing',
         'payments' => 'Billing',
+        // Online payments (super_admin-only resources).
+        'payment-intents' => 'Billing',
+        'payment-events' => 'Billing',
+        'subscription-plans' => 'Billing',
+        'subscriptions' => 'Billing',
 
         'orders' => 'Marketplace',
         'pharmacies' => 'Marketplace',
@@ -99,6 +104,8 @@ class Permissions
         'live-dispatch.view' => ['group' => 'Ride Service', 'label' => 'Live Dispatch'],
         'shuttle-settings.manage' => ['group' => 'Ride Service', 'label' => 'Shuttle settings (pricing, cancellation, dispatch)'],
         'ride-simulator.run' => ['group' => 'Ride Service', 'label' => 'TEST trip simulator'],
+        'ride-recordings.view' => ['group' => 'Ride Service', 'label' => 'Trip audio recordings (list, play, download — every access is logged)'],
+        'ride-recordings.manage' => ['group' => 'Ride Service', 'label' => 'Trip audio recordings (legal hold, delete, recording settings)'],
         'media-library.view' => ['group' => 'Site', 'label' => 'Media Library'],
         'site-content.view' => ['group' => 'Site', 'label' => 'Site content (home page, emergency popup, labels)'],
         'roles-permissions.view' => ['group' => 'System', 'label' => 'Roles & Permissions (view)'],
@@ -109,11 +116,15 @@ class Permissions
         'health-settings.manage' => ['group' => 'System', 'label' => 'Patient health settings (reminders, vitals ranges, feature switches)'],
         'reports.view' => ['group' => 'Overview', 'label' => 'Reports & analytics (platform-wide, with CSV downloads)'],
         'system-health.view' => ['group' => 'System', 'label' => 'System health (checks, run jobs, clear caches)'],
+        'demo-data.purge' => ['group' => 'System', 'label' => 'Demo data (preview and clear all seeded demo data)'],
         'features.manage' => ['group' => 'System', 'label' => 'Feature switches & accessibility toolbar'],
         'referrals.view' => ['group' => 'Marketplace', 'label' => 'Referrals report'],
         'commerce-settings.manage' => ['group' => 'System', 'label' => 'Commerce & alerts settings (invoices, referrals, agenda, document expiry)'],
         'expiring-documents.view' => ['group' => 'System', 'label' => 'Expiring documents'],
         'support-settings.manage' => ['group' => 'Support', 'label' => 'Support settings (tickets, help centre, newsletter, surveys)'],
+        'dispatch-settings.manage' => ['group' => 'System', 'label' => 'Dispatch settings (broadcast / sequential / manual per service, timeouts, radius, auto-close)'],
+        'live-requests.view' => ['group' => 'Overview', 'label' => 'Live requests (all services: assign, reassign, cancel)'],
+        'payment-settings.manage' => ['group' => 'System', 'label' => 'Payment settings (PayFast / Paystack / Ozow credentials, routing) — super admin only'],
     ];
 
     /**

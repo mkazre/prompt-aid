@@ -14,7 +14,7 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Prompt Aid uses your location to find nearby clinics and, for drivers, to share your live position with patients during an active ride.",
         "NSCameraUsageDescription": "Prompt Aid uses your camera for video consultations with your doctor and to photograph documents you choose to send.",
-        "NSMicrophoneUsageDescription": "Prompt Aid uses your microphone so you can talk to your doctor during video and audio consultations.",
+        "NSMicrophoneUsageDescription": "Prompt Aid uses your microphone so you can talk to your doctor during video and audio consultations, and to record trip audio for safety when you choose to.",
         "NSPhotoLibraryUsageDescription": "Prompt Aid lets you choose photos to send to your doctor in chat."
       }
     },
@@ -66,10 +66,20 @@
         }
       ],
       [
+        "expo-audio",
+        {
+          "microphonePermission": "Prompt Aid uses your microphone so you can talk to your doctor during video and audio consultations, and to record trip audio for safety when you choose to.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": true,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      [
         "expo-notifications",
         {
           "color": "#D0211C",
-          "defaultChannel": "alerts"
+          "defaultChannel": "alerts",
+          "sounds": ["./assets/sounds/request_alert.wav", "./assets/sounds/notify.wav"]
         }
       ]
     ],

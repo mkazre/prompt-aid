@@ -34,8 +34,8 @@
           <td>R{{ number_format($invoice->total, 2) }}</td>
           <td class="t-right">
             <a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.invoices.print', $invoice) }}" target="_blank" rel="noopener">View / print</a>
-            @if ($invoice->status !== 'paid')
-              <div class="pa-muted" style="font-size:12px;margin-top:4px">Pay via reception</div>
+            @if (! in_array($invoice->status, ['paid', 'refunded'], true) && (float) $invoice->total > 0)
+              <button type="button" class="pa-btn pa-btn-sm" style="margin-top:6px" data-pa-pay="invoice" data-id="{{ $invoice->id }}" data-amount="{{ $invoice->total }}" data-title="Invoice {{ $invoice->invoice_no }}">Pay now</button>
             @endif
           </td>
         </tr>
@@ -44,6 +44,24 @@
       @endforelse
     </tbody>
   </table></div>
+
+  @if (isset($rideCharges) && $rideCharges->isNotEmpty())
+    <h2 style="font-size:22px;margin:32px 0 14px">Shuttle fees due</h2>
+    <div class="pa-tablewrap"><table class="pa-table">
+      <thead><tr><th>Trip</th><th>Type</th><th>Amount</th><th></th></tr></thead>
+      <tbody>
+        @foreach ($rideCharges as $charge)
+          <tr>
+            <td><div class="t-main">{{ $charge->ride->ride_ref ?? 'Trip' }}</div><div class="t-sub">{{ $charge->created_at->format('d M Y') }}</div></td>
+            <td>{{ $charge->typeLabel() }}</td>
+            <td>R{{ number_format($charge->amount, 2) }}</td>
+            <td class="t-right"><button type="button" class="pa-btn pa-btn-sm" data-pa-pay="ride_charge" data-id="{{ $charge->id }}" data-amount="{{ $charge->amount }}" data-title="{{ $charge->typeLabel() }}">Pay now</button></td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table></div>
+  @endif
 </div>
 </div>
+@include('payments.sheet')
 </x-layout>

@@ -33,7 +33,8 @@ class AppointmentsController extends Controller
             return redirect()->route('account.appointments')->with('error', 'The video room opens 10 minutes before your appointment and closes 30 minutes after it ends.');
         }
 
-        return redirect()->away($video->joinPayload($appointment, $request->user())['join_url']);
+        // In-page call (signed JWT, no Jitsi login): patient → website call page, doctor → staff consult page.
+        return redirect()->to($video->callUrlFor($appointment, $request->user()));
     }
 
     public function cancel(Request $request, Appointment $appointment, AppointmentBookingService $booking)

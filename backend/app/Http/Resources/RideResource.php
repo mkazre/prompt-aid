@@ -26,6 +26,21 @@ class RideResource extends JsonResource
             'dropoff_lat' => (float) $this->dropoff_lat,
             'dropoff_lng' => (float) $this->dropoff_lng,
             'status' => $this->status,
+            // Lifecycle contract (additive): is_terminal = completed/cancelled
+            // (incl. expired); is_active = not terminal AND not stale. Apps use
+            // is_active to decide whether to open tracking.
+            'is_active' => $this->resource->isActive(),
+            'is_terminal' => $this->resource->isTerminal(),
+            'is_expired' => $this->resource->isExpired(),
+            'status_label' => app(\App\Services\Rides\RideStatusPresenter::class)->statusLabel($this->resource),
+            'dispatch_state' => $this->dispatch_state,
+            'radius_km' => $this->radius_km !== null ? (float) $this->radius_km : null,
+            'pickup_notes' => $this->pickup_notes,
+            // Trip PIN: only to the patient who owns the ride, only while it is live.
+            'trip_pin' => $this->when($this->viewerIsPatient($request) && $this->resource->isActive(), $this->trip_pin),
+            // Drivers: rider card (limited while only offered) + whether the app must collect the PIN.
+            'rider' => $this->when($this->viewerDriverId($request) !== null, fn () => \App\Services\Dispatch\RiderProfile::forRide($this->resource, (int) $this->driver_profile_id === $this->viewerDriverId($request))),
+            'pin_required' => $this->when($this->viewerDriverId($request) !== null, fn () => \App\Support\ShuttleSettings::pinRequired(true)),
             'priority' => $this->priority,
             'distance_km' => $this->distance_km ? (float) $this->distance_km : null,
             'fare_estimate' => $this->fare_estimate ? (float) $this->fare_estimate : null,
@@ -40,7 +55,11 @@ class RideResource extends JsonResource
             'accepted_at' => $this->accepted_at?->toIso8601String(),
             'started_at' => $this->started_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
-            'patient' => new PatientProfileResource($this->whenLoaded('patient')),
+            // Drivers only get what they need (rider card rules) — never DOB,
+            // allergies, chronic conditions or home address.
+            'patient' => $this->viewerDriverId($request) !== null
+                ? $this->whenLoaded('patient', fn () => $this->driverSafePatient($request))
+                : new PatientProfileResource($this->whenLoaded('patient')),
             'driver' => new DriverProfileResource($this->whenLoaded('driver')),
             'status_events' => $this->whenLoaded('statusEvents', fn () => $this->statusEvents->map(fn ($e) => [
                 'status' => $e->status,
@@ -49,5 +68,33 @@ class RideResource extends JsonResource
                 'at' => $e->created_at?->toIso8601String(),
             ])),
         ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function driverSafePatient(Request $request): array
+    {
+        $card = \App\Services\Dispatch\RiderProfile::forRide($this->resource, (int) $this->driver_profile_id === $this->viewerDriverId($request));
+        $name = $card['full_name'] ?? $card['first_name'];
+
+        return [
+            'id' => $this->patient_profile_id,
+            'name' => $name,
+            'phone' => $card['phone'],
+            'user' => ['name' => $name, 'phone' => $card['phone']],
+        ];
+    }
+
+    protected function viewerIsPatient(Request $request): bool
+    {
+        $pid = $request->user()?->patientProfile?->id;
+
+        return $pid !== null && (int) $this->patient_profile_id === (int) $pid;
+    }
+
+    protected function viewerDriverId(Request $request): ?int
+    {
+        $user = $request->user();
+
+        return $user && $user->role === \App\Models\User::ROLE_DRIVER ? $user->driverProfile?->id : null;
     }
 }

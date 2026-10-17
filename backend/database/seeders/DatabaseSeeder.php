@@ -335,6 +335,9 @@ class DatabaseSeeder extends Seeder
         $pharmacies = $this->seedPharmacies();
         $this->seedOrders($patients, $pharmacies);
 
+        // Flag everything above as demo so System → Demo data can clear it in one click.
+        \App\Services\Admin\DemoDataPurger::markSeededDemoData();
+
         $this->command?->info('Prompt Aid demo data seeded. Login as admin@promptaid.health / password');
     }
 

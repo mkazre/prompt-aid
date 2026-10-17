@@ -306,16 +306,23 @@ class WidgetDataService
             ->orderByRaw('CASE WHEN scheduled_for IS NULL THEN 0 ELSE 1 END')
             ->orderBy('scheduled_for')
             ->latest('requested_at')
-            ->first();
+            ->limit(20)
+            ->get()
+            // Same rule as /api/rides/active: stale / long-over rides never show as live.
+            ->first(fn (Ride $r) => $r->isActive());
 
         return ['ride' => $ride ? [
             'id' => $ride->id,
             'ride_ref' => $ride->ride_ref,
             'status' => $ride->status,
+            'status_label' => app(\App\Services\Rides\RideStatusPresenter::class)->statusLabel($ride),
+            'is_active' => true,
             'pickup_address' => $ride->pickup_address,
             'dropoff_address' => $ride->dropoff_address,
             'scheduled_for' => $this->iso($ride->scheduled_for),
-            'eta_minutes' => $ride->eta_minutes,
+            // ETA only once a driver is heading to the patient (a requested ride's
+            // eta_minutes is the trip duration, which read as "ETA 6 min" before).
+            'eta_minutes' => $ride->hasDriverEnRoute() ? $ride->eta_minutes : null,
             'vehicle_type' => $ride->vehicle_type,
             'driver_name' => $ride->driver?->user?->name,
             'vehicle' => $ride->driver ? trim($ride->driver->vehicle_color.' '.$ride->driver->vehicle_make.' '.$ride->driver->vehicle_model.' · '.$ride->driver->vehicle_plate_no, ' ·') : null,
@@ -831,7 +838,7 @@ class WidgetDataService
 
         $active = $q->clone()
             ->whereIn('status', [Ride::STATUS_ACCEPTED, Ride::STATUS_DRIVER_ENROUTE, Ride::STATUS_ARRIVED, Ride::STATUS_IN_PROGRESS])
-            ->with('patient.user')->latest('accepted_at')->first();
+            ->with('patient.user')->latest('accepted_at')->limit(5)->get()->first(fn (Ride $r) => $r->isActive());
 
         $ride = $active ?? $q->clone()
             ->where('status', Ride::STATUS_REQUESTED)

@@ -37,7 +37,22 @@
     osc.start(ctx.currentTime + start);
     osc.stop(ctx.currentTime + start + dur + 0.05);
   }
+  // Soft one-shot alert sound: /assets/sounds/notify.mp3 (replace the file with the
+  // client's clip); falls back to the synthesised two-tone chime if it can't play.
+  var notifyAudio = null;
+  try { notifyAudio = new Audio('/assets/sounds/notify.mp3'); notifyAudio.preload = 'auto'; } catch (e) { notifyAudio = null; }
   function chime() {
+    if (notifyAudio) {
+      try {
+        notifyAudio.currentTime = 0;
+        var p = notifyAudio.play();
+        if (p && p.catch) { p.catch(function () { synthChime(); }); }
+        return;
+      } catch (e) {}
+    }
+    synthChime();
+  }
+  function synthChime() {
     try {
       unlock();
       if (!ctx || ctx.state !== 'running') return;

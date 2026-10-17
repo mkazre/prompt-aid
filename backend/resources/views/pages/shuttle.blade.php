@@ -93,6 +93,20 @@
             <input type="hidden" name="dropoff_lng" value="{{ $dropoff_lng }}">
             <input type="hidden" name="vehicle_type" id="confirm-vehicle-type" value="{{ $firstQuote['vehicle_type'] }}">
             <input type="hidden" name="quote_token" id="confirm-quote-token" value="{{ $firstQuote['quote_token'] }}">
+            @php
+              $shRadiusOptions = \App\Support\DispatchSettings::radiusOptions();
+              $shRadius = auth()->user()?->patientProfile?->search_radius_km !== null ? (int) auth()->user()->patientProfile->search_radius_km : (int) \App\Support\DispatchSettings::defaultRadius();
+            @endphp
+            <div style="display:flex;gap:10px;align-items:center;margin:0 0 10px">
+              <label class="pa-label" for="confirm-radius" style="margin:0">Find drivers within</label>
+              <select class="pa-field" name="radius_km" id="confirm-radius" style="max-width:120px">
+                @foreach ($shRadiusOptions as $km)
+                  <option value="{{ $km }}" @selected($km === $shRadius)>{{ $km }} km</option>
+                @endforeach
+              </select>
+            </div>
+            <label class="pa-label" for="confirm-notes">Note for the driver (optional)</label>
+            <input class="pa-field" type="text" name="pickup_notes" id="confirm-notes" maxlength="500" placeholder="e.g. Gate 2, I use a walker" style="margin-bottom:10px">
             <button type="submit" class="pa-btn pa-btn-block pa-btn-lg" id="confirm-ride-btn">Confirm · R {{ number_format($firstQuote['fare'], 0) }}</button>
             @if ($quoteExpires)
               <div class="pa-sh-sub" style="text-align:center;margin-top:6px" id="quote-expiry" data-expires="{{ $quoteExpires }}">Price held for {{ \App\Support\ShuttleSettings::int('shuttle_quote_ttl_minutes') }} min</div>

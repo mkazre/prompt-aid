@@ -35,6 +35,20 @@ class Ride extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    /**
+     * Terminal statuses: a ride in one of these is CLOSED everywhere (patient
+     * app/web, driver, admin) and never resurfaces. "Expired" rides (no
+     * driver found in time, stale scheduled/abandoned trips) are stored as
+     * status=cancelled + cancelled_by=system + dispatch_state=expired so that
+     * already-installed app builds (which only know completed/cancelled)
+     * treat them as closed too.
+     */
+    public const TERMINAL = [self::STATUS_COMPLETED, self::STATUS_CANCELLED];
+
+    public const DISPATCH_EXPIRED = 'expired';
+
+    public const CANCELLED_BY_SYSTEM = 'system';
+
     protected $fillable = [
         'ride_ref', 'patient_profile_id', 'driver_profile_id', 'appointment_id', 'vehicle_type',
         'pickup_address', 'pickup_lat', 'pickup_lng', 'dropoff_address', 'dropoff_lat', 'dropoff_lng',
@@ -47,6 +61,8 @@ class Ride extends Model
         'route_distance_km', 'route_duration_min', 'route_geometry', 'eta_updated_at', 'driver_arrived_at',
         'cancelled_at', 'cancelled_by', 'cancellation_fee', 'cancellation_fee_status',
         'patient_rating', 'patient_rating_comment', 'simulation',
+        // Unified dispatch
+        'radius_km', 'dispatch_mode', 'pickup_notes', 'booked_by_user_id', 'pin_attempts', 'pin_locked_until', 'closed_reason',
     ];
 
     /** Dispatch states (rides.dispatch_state) while status = requested. */
@@ -79,6 +95,7 @@ class Ride extends Model
             'fare_breakdown' => 'array',
             'route_geometry' => 'array',
             'simulation' => 'array',
+            'pin_locked_until' => 'datetime',
         ];
     }
 
@@ -87,7 +104,9 @@ class Ride extends Model
         static::creating(function (self $ride) {
             $ride->ride_ref ??= 'RIDE-'.strtoupper(uniqid());
             $ride->requested_at ??= now();
-            $ride->trip_pin ??= str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            if (! self::isUsablePin($ride->trip_pin)) {
+                $ride->trip_pin = self::generatePin();
+            }
             $ride->share_token ??= \Illuminate\Support\Str::random(40);
         });
     }
@@ -157,8 +176,92 @@ class Ride extends Model
         return is_array($this->simulation) && ! empty($this->simulation['active']);
     }
 
+    public function isTerminal(): bool
+    {
+        return in_array($this->status, self::TERMINAL, true);
+    }
+
+    /**
+     * Truly active = not terminal AND not stale. Stale rides (abandoned
+     * searches, scheduled pickups long past, trips with no driver activity
+     * for hours) are closed by App\Services\Dispatch\CloseOutService, but
+     * until that runs they must never be shown as live to anyone.
+     */
     public function isActive(): bool
     {
-        return ! in_array($this->status, [self::STATUS_COMPLETED, self::STATUS_CANCELLED], true);
+        return ! $this->isTerminal() && ! $this->isStale();
+    }
+
+    /** Effective search radius for this ride (patient choice clamped to admin limits). */
+    public function searchRadiusKm(): float
+    {
+        return \App\Support\DispatchSettings::clampRadius($this->radius_km);
+    }
+
+    public function isStale(): bool
+    {
+        if ($this->isTerminal()) {
+            return false;
+        }
+        $settings = \App\Support\DispatchSettings::class;
+        $now = now();
+
+        if ($this->status === self::STATUS_REQUESTED) {
+            if ($this->scheduled_for) {
+                $grace = max(15, $settings::int('dispatch_ride_scheduled_grace_minutes'));
+
+                return $this->scheduled_for->lt($now->copy()->subMinutes($grace));
+            }
+            $mins = $settings::int('dispatch_ride_searching_expiry_minutes');
+            if ($mins > 0 && $this->dispatch_state === self::DISPATCH_QUEUE) {
+                $mins = max(60, $mins * 4); // waiting for a manual (admin) assignment / open-queue claim
+            }
+            $since = $this->dispatch_started_at ?? $this->requested_at ?? $this->created_at;
+
+            return $mins > 0 && $since && $since->lt($now->copy()->subMinutes(max(5, $mins)));
+        }
+
+        $hours = $settings::int('dispatch_ride_active_stale_hours');
+        if ($hours <= 0) {
+            return false;
+        }
+        $last = collect([$this->updated_at, $this->accepted_at, $this->started_at, $this->driver_arrived_at, $this->relationLoaded('driver') ? $this->driver?->location_updated_at : null])
+            ->filter()->max();
+
+        return $last !== null && $last->lt($now->copy()->subHours($hours));
+    }
+
+    /** Admin/patient-facing: expired (closed by the system) vs cancelled by a person. */
+    public function isExpired(): bool
+    {
+        return $this->status === self::STATUS_CANCELLED && $this->cancelled_by === self::CANCELLED_BY_SYSTEM;
+    }
+
+    /** Scope: rides that are not terminal (stale ones are closed by the tick; callers wanting "live" also filter isActive()). */
+    public function scopeOpen($query)
+    {
+        return $query->whereNotIn('status', self::TERMINAL);
+    }
+
+    /** Random 4-digit PIN, never trivial (0000, 1111, 1234...). */
+    public static function generatePin(): string
+    {
+        do {
+            $pin = str_pad((string) random_int(1000, 9999), 4, '0', STR_PAD_LEFT);
+        } while (! self::isUsablePin($pin));
+
+        return $pin;
+    }
+
+    public static function isUsablePin(?string $pin): bool
+    {
+        if ($pin === null || ! preg_match('/^\d{4}$/', $pin)) {
+            return false;
+        }
+        if (count(array_unique(str_split($pin))) === 1) {
+            return false; // 0000, 1111 ...
+        }
+
+        return ! in_array($pin, ['1234', '4321', '0123', '1212', '6969', '1004', '2580'], true);
     }
 }

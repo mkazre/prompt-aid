@@ -36,6 +36,7 @@
   <a href="{{ route('account.orders') }}" class="{{ $active === 'orders' ? 'is-on' : '' }}"><span class="d"></span>Pharmacy orders</a>
   <a href="{{ route('account.rides') }}" class="{{ $active === 'rides' ? 'is-on' : '' }}"><span class="d"></span>Shuttle trips</a>
   <a href="{{ route('account.invoices') }}" class="{{ $active === 'invoices' ? 'is-on' : '' }}"><span class="d"></span>Invoices &amp; claims</a>
+  <a href="{{ route('account.subscriptions') }}" class="{{ $active === 'subscriptions' ? 'is-on' : '' }}"><span class="d"></span>Subscriptions</a>
   <div class="grp">Account</div>
   <a href="{{ route('account.profile') }}" class="{{ $active === 'profile' ? 'is-on' : '' }}"><span class="d"></span>Profile &amp; scheme</a>
   <a href="{{ route('account.settings') }}" class="{{ $active === 'settings' ? 'is-on' : '' }}"><span class="d"></span>Privacy &amp; security</a>

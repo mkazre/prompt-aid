@@ -5,6 +5,7 @@
   <x-care-tabs />
 </div></div>
 <div class="pa-container" style="padding-top:32px;padding-bottom:80px">
+  @include('dispatch.radius-filter')
   <div class="pa-spread" style="margin-bottom:16px">
     <div style="font-size:14px;color:var(--pa-muted)"><strong style="color:var(--pa-ink)">{{ $pharmacies->total() }}</strong> results</div>
     <a class="pa-btn-ghost" href="{{ route('shop.index') }}">Browse all products</a>

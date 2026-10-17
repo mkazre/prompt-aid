@@ -101,9 +101,22 @@ class RideController extends Controller
             'appointment_id' => ['nullable', 'integer', 'exists:appointments,id'],
             'wait_and_return' => ['nullable', 'boolean'],
             'quote_token' => ['nullable', 'string', 'max:4000'],
+            'radius_km' => ['nullable', 'numeric', 'min:1', 'max:500'],
+            'pickup_notes' => ['nullable', 'string', 'max:500'],
+            'scheduled_for' => ['nullable', 'date', 'after:now'],
         ]);
 
         $appointmentId = $data['appointment_id'] ?? null;
+        $patient = $request->user()->patientProfile;
+
+        // One live on-demand trip at a time. Stale / closed rides never block (Ride::isActive()).
+        if (empty($data['scheduled_for'])) {
+            $active = $patient->rides()->whereNull('scheduled_for')->whereNotIn('status', Ride::TERMINAL)
+                ->latest('requested_at')->get()->first(fn (Ride $r) => $r->isActive());
+            if ($active) {
+                return response()->json(['message' => 'You already have a trip in progress. Cancel it first to book another.', 'ride_id' => $active->id, 'active_ride' => new RideResource($active)], 409);
+            }
+        }
         $vehicle = $data['vehicle_type'] ?? 'sedan';
 
         // Quote lock (additive): a valid token honours the quoted price; an
@@ -127,13 +140,17 @@ class RideController extends Controller
             : (bool) Setting::get('ride_auto_assign_shuttle', true);
 
         $ride = $this->dispatch->requestRide(
-            $request->user()->patientProfile,
+            $patient,
             $data['pickup_address'], $data['pickup_lat'], $data['pickup_lng'],
             $data['dropoff_address'], $data['dropoff_lat'], $data['dropoff_lng'],
             $appointmentId,
             $vehicle,
             $autoAssign,
             $locked,
+            $data['scheduled_for'] ?? null,
+            isset($data['radius_km']) ? (float) $data['radius_km'] : ($patient->search_radius_km !== null ? (float) $patient->search_radius_km : null),
+            $data['pickup_notes'] ?? null,
+            $request->user()->id,
         );
 
         if (! empty($data['wait_and_return'])) {
@@ -354,7 +371,11 @@ class RideController extends Controller
                     ->whereIn('vehicle_type', $this->servableTypes($driver->vehicle_type))))
             ->with(['patient.user'])
             ->latest('requested_at')
-            ->get();
+            ->limit(50)
+            ->get()
+            // Never offer stale / long-over requests (closed by the dispatch close-out).
+            ->filter(fn (Ride $r) => $r->isActive())
+            ->values();
 
         return RideResource::collection($rides);
     }

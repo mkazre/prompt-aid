@@ -5,6 +5,7 @@ import * as Location from 'expo-location';
 import { api, apiErrorMessage } from '../../api/client';
 import { PaAvatar, PaButton } from '../../components/pa';
 import RideMap from '../../components/RideMap';
+import TripRecorder from '../../components/safety/TripRecorder';
 import { pa, paFonts } from '../../theme';
 
 type Point = [number, number];
@@ -16,6 +17,8 @@ interface LiveRide {
   status: string;
   status_label: string;
   is_active: boolean;
+  is_expired?: boolean;
+  dispatch?: { state: string | null; radius_km: number | null; drivers_notified?: number; scheduled_for?: string | null } | null;
   vehicle_type: string;
   pickup: { lat: number; lng: number; address: string | null };
   dropoff: { lat: number; lng: number; address: string | null };
@@ -191,8 +194,18 @@ export default function RideTrackScreen({ route: navRoute, navigation }: any) {
           <Text style={styles.statusSub}>
             {ride.eta.minutes} min to {ride.eta.target === 'pickup' ? 'your pickup' : 'drop-off'} · {ride.eta.distance_km.toFixed(1)} km
           </Text>
-        ) : ride.status === 'requested' ? (
-          <Text style={styles.statusSub}>Finding the nearest available driver…</Text>
+        ) : ride.status === 'requested' && ride.is_active ? (
+          <Text style={styles.statusSub}>
+            {ride.dispatch?.drivers_notified
+              ? `Request sent to ${ride.dispatch.drivers_notified} driver${ride.dispatch.drivers_notified === 1 ? '' : 's'}${ride.dispatch.radius_km ? ` within ${ride.dispatch.radius_km} km` : ''}…`
+              : ride.dispatch?.state === 'no_drivers'
+                ? 'No driver accepted yet — try again or cancel at no charge.'
+                : ride.dispatch?.state === 'queue' && ride.dispatch?.scheduled_for
+                  ? 'Scheduled — we will match a driver before your pickup time.'
+                  : 'Finding the nearest available driver…'}
+          </Text>
+        ) : ride.is_expired ? (
+          <Text style={styles.statusSub}>This request has closed. You were not charged.</Text>
         ) : null}
         {d && d.lat == null && ride.is_active ? <Text style={styles.statusSub}>Waiting for the driver's location…</Text> : null}
       </View>
@@ -219,6 +232,9 @@ export default function RideTrackScreen({ route: navRoute, navigation }: any) {
           {ride.share_url ? <Pressable style={styles.action} onPress={() => Share.share({ message: `Follow my Prompt Aid trip: ${ride.share_url}` })}><Text style={styles.actionText}>🔗 Share trip</Text></Pressable> : null}
           {ride.is_active ? <Pressable style={[styles.action, styles.sos]} onPress={sos}><Text style={[styles.actionText, { color: '#fff' }]}>SOS</Text></Pressable> : null}
         </View>
+
+        {/* Trip audio recording (safety) — record button, other-party notice, link to both sides' recordings. */}
+        <TripRecorder rideId={rideId} role="patient" onOpenRecordings={() => navigation.navigate('RideRecordings', { rideId })} />
 
         <View style={styles.tripBox}>
           <Text style={styles.tripLine}>From: {ride.pickup.address ?? '—'}</Text>

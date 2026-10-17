@@ -24,7 +24,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(PaymentGatewayInterface::class, MockPaymentGateway::class);
+        // Online payments (PayFast / Paystack / Ozow). With no gateway enabled + configured in
+        // Staff → System → Payment settings this behaves exactly like MockPaymentGateway.
+        $this->app->singleton(\App\Services\Payments\GatewayManager::class);
+        $this->app->bind(PaymentGatewayInterface::class, \App\Services\Payments\OnlinePaymentGateway::class);
         $this->app->bind(NotificationDispatcherInterface::class, MockNotificationDispatcher::class);
         // Real geocoding via OpenStreetMap Nominatim (free, no key) + haversine maths.
         $this->app->bind(GeocodingInterface::class, NominatimGeocoder::class);
@@ -48,6 +51,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Support\CommerceJobs::registerOnTick();
         // Support stream: NPS survey hooks + sweep (see App\Support\SupportStream).
         \App\Support\SupportStream::boot();
+        // Payments: re-check stale pending intents server-to-server (webhook safety net).
+        \App\Support\Tick::register('payments.reconcile', 300, fn () => app(\App\Services\Payments\PaymentService::class)->reconcileStale());
     }
 
     /**
@@ -62,6 +67,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Recurring ride series -> real rides for the next 7 days (was never scheduled before).
         \App\Support\Tick::register('shuttle.materialize_series', 86400, fn () => app(\App\Services\Rides\RideSeriesService::class)->materializeUpcoming(7));
+
+        // Trip audio recordings: finalise stale uploads, auto legal-hold (SOS / open complaint), purge past retention.
+        \App\Support\Tick::register('safety.ride_recordings', 600, fn () => app(\App\Services\Safety\RideRecordingService::class)->runMaintenance());
 
         // Patient health: medication dose reminders + appointment reminders
         // (idempotent; see App\Services\Health\HealthReminderService).

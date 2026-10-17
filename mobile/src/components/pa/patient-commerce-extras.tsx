@@ -20,25 +20,48 @@ export function PaChips({
   onChange: (v: string) => void;
 }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-      <View style={{ flexDirection: 'row', gap: 6 }}>
-        {options.map((opt) => {
-          const on = opt === value;
-          return (
-            <Pressable key={opt} onPress={() => onChange(opt)} style={[chipStyles.chip, on && chipStyles.chipOn]}>
-              <Text style={[chipStyles.text, on && chipStyles.textOn]}>{opt}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+    // flexGrow/flexShrink 0: a ScrollView defaults to flexShrink 1, so next to a
+    // flex:1 FlatList (Shop) Android squeezed the row and clipped the labels.
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={chipStyles.scroller}
+      contentContainerStyle={chipStyles.row}
+    >
+      {options.map((opt) => {
+        const on = opt === value;
+        return (
+          <Pressable
+            key={opt}
+            onPress={() => onChange(opt)}
+            style={[chipStyles.chip, on && chipStyles.chipOn]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+          >
+            <Text style={[chipStyles.text, on && chipStyles.textOn]} numberOfLines={1}>{opt}</Text>
+          </Pressable>
+        );
+      })}
     </ScrollView>
   );
 }
 
 const chipStyles = StyleSheet.create({
-  chip: { backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, borderRadius: paRadius.sm, paddingHorizontal: 13, paddingVertical: 9 },
+  scroller: { flexGrow: 0, flexShrink: 0, marginBottom: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2, paddingRight: 8 },
+  chip: {
+    backgroundColor: pa.surface,
+    borderWidth: 1,
+    borderColor: pa.line,
+    borderRadius: paRadius.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   chipOn: { backgroundColor: pa.ink, borderColor: pa.ink },
-  text: { fontFamily: paFonts.bold, fontSize: 12, color: pa.ink },
+  text: { fontFamily: paFonts.bold, fontSize: 13, lineHeight: 18, color: pa.ink, includeFontPadding: false, textAlignVertical: 'center' },
   textOn: { color: '#fff' },
 });
 

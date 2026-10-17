@@ -10,6 +10,7 @@ import { FeatherName, HealthLinkRow } from '../../components/HealthUI';
 import { useAuth } from '../../context/AuthContext';
 import { pa, paFonts, type } from '../../theme';
 import WidgetHost from '../../widgets/WidgetHost';
+import { LogoutButton } from '../../components/AccountTiles';
 
 interface TimelineEntry {
   key: string;
@@ -147,6 +148,9 @@ export default function RecordScreen({ navigation }: any) {
       ) : (
         timeline.map((entry) => <PaRow key={entry.key} title={entry.title} subtitle={entry.date} />)
       )}
+
+      {/* Profile tab landing: Log out always ends the screen. */}
+      <LogoutButton style={{ marginTop: 28 }} />
     </ScrollView>
   );
 }

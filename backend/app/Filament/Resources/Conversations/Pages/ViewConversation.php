@@ -118,8 +118,7 @@ class ViewConversation extends Page
                 ->color('success')
                 ->visible(fn () => $appointment && Auth::user()?->isDoctor() && $appointment->canJoinVideoNow()
                     && app(VideoRoomService::class)->isParticipant($appointment, Auth::user()))
-                ->url(fn () => $appointment ? app(VideoRoomService::class)->joinPayload($appointment, Auth::user())['join_url'] : null)
-                ->openUrlInNewTab(),
+                ->url(fn () => $appointment ? app(VideoRoomService::class)->callUrlFor($appointment, Auth::user()) : null),
             Action::make('back')
                 ->label('All messages')
                 ->color('gray')

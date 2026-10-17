@@ -18,10 +18,17 @@ class PharmacyController extends Controller
 
     public function index(Request $request)
     {
+        // Optional ?lat=&lng=[&radius_km=] : distance_km on each pharmacy; with radius_km only those within it.
+        $geo = \App\Support\GeoRadius::fromRequest($request);
         $pharmacies = Pharmacy::query()
             ->where('status', 'active')
             ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
+            ->when($geo && $request->filled('radius_km'), fn ($q) => \App\Support\GeoRadius::box($q, 'lat', 'lng', $geo))
             ->paginate(15);
+        if ($geo) {
+            $pharmacies->getCollection()->each(fn (Pharmacy $p) => $p->setAttribute('distance_km', $p->lat !== null && $p->lng !== null
+                ? \App\Support\GeoRadius::km($geo['lat'], $geo['lng'], (float) $p->lat, (float) $p->lng) : null));
+        }
 
         return PharmacyResource::collection($pharmacies);
     }

@@ -25,7 +25,8 @@ export default function OffersScreen({ navigation }: any) {
     setLoading(true);
     try {
       const { data } = await api.get('/driver/rides/available');
-      setRides(data.data as Ride[]);
+      // Server already drops stale requests; is_active guards older API versions too.
+      setRides((data.data as Ride[]).filter((r) => r.is_active !== false));
     } finally {
       setLoading(false);
     }

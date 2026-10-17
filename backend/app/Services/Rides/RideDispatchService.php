@@ -18,6 +18,8 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\Geo\RoutingService;
 use App\Services\Notifications\InAppNotifier;
+use App\Services\Dispatch\ProviderAlerts;
+use App\Support\DispatchSettings;
 use App\Support\ShuttleSettings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -124,6 +126,9 @@ class RideDispatchService
         bool $autoAssign = true,
         ?array $lockedQuote = null,
         \DateTimeInterface|string|null $scheduledFor = null,
+        ?float $radiusKm = null,
+        ?string $pickupNotes = null,
+        ?int $bookedByUserId = null,
     ): Ride {
         $route = $this->routing->route($pickupLat, $pickupLng, $dropoffLat, $dropoffLng);
 
@@ -141,6 +146,10 @@ class RideDispatchService
         }
 
         $scheduled = $scheduledFor ? \Illuminate\Support\Carbon::parse($scheduledFor) : null;
+        $mode = DispatchSettings::mode('shuttle');
+        if ($mode === 'manual') {
+            $autoAssign = false; // admin assigns from Live requests / Live Dispatch
+        }
         $searchNow = $autoAssign && (! $scheduled || $scheduled->lte(now()->addMinutes(max(0, ShuttleSettings::int('shuttle_scheduled_dispatch_lead_minutes')))));
 
         $ride = Ride::query()->create([
@@ -169,9 +178,16 @@ class RideDispatchService
             'dispatch_state' => $searchNow ? Ride::DISPATCH_SEARCHING : Ride::DISPATCH_QUEUE,
             'dispatch_started_at' => $searchNow ? now() : null,
             'dispatch_attempts' => 0,
+            'dispatch_mode' => $mode,
+            'radius_km' => $radiusKm !== null ? DispatchSettings::clampRadius($radiusKm) : null,
+            'pickup_notes' => $pickupNotes ? mb_substr($pickupNotes, 0, 500) : null,
+            'booked_by_user_id' => $bookedByUserId,
         ]);
 
         $this->logEvent($ride, Ride::STATUS_REQUESTED, $pickupLat, $pickupLng);
+        if ($mode === 'manual') {
+            $this->alertAdmins('Shuttle request waiting for assignment', "{$ride->ride_ref}: {$pickupAddress} to {$dropoffAddress}. Dispatch mode is manual - assign a driver in Live requests.", $ride);
+        }
         $this->fireStatus($ride, null, Ride::STATUS_REQUESTED, 'patient');
 
         if ($searchNow) {
@@ -207,6 +223,10 @@ class RideDispatchService
             }
 
             $this->expireOffers($ride);
+
+            if ($this->isBroadcast($ride)) {
+                return $this->broadcastStep($ride);
+            }
 
             if ($ride->offers()->where('status', RideOffer::PENDING)->exists()) {
                 return $ride;
@@ -244,10 +264,51 @@ class RideDispatchService
         }
     }
 
+    public function isBroadcast(Ride $ride): bool
+    {
+        return ($ride->dispatch_mode ?? DispatchSettings::mode('shuttle')) === 'broadcast';
+    }
+
+    /**
+     * Broadcast step (Uber-style): offer the ride to EVERY eligible driver
+     * inside the current radius at once. Drivers who already had an offer
+     * in this search are not re-offered; the radius still grows over the
+     * search window so new drivers get it. First accept wins (atomic, see
+     * assignDriver); everyone else's offer flips to "taken".
+     */
+    protected function broadcastStep(Ride $ride): Ride
+    {
+        $timeoutSec = max(30, ShuttleSettings::int('shuttle_dispatch_timeout_minutes') * 60);
+        $started = $ride->dispatch_started_at ?? $ride->requested_at ?? now();
+        $elapsed = $started->diffInSeconds(now(), true);
+        $pending = $ride->offers()->where('status', RideOffer::PENDING)->where('expires_at', '>', now())->exists();
+
+        if ($elapsed >= $timeoutSec && ! $pending) {
+            $this->markNoDrivers($ride);
+
+            return $ride->fresh();
+        }
+
+        $radius = $this->currentRadius($ride);
+        $exclude = $ride->offers()->where('offered_at', '>=', $started)->pluck('driver_profile_id')
+            ->merge($ride->offers()->where('status', RideOffer::CANCELLED)->pluck('driver_profile_id'))->unique()->values()->all();
+        $drivers = $this->eligibleDrivers((string) $ride->vehicle_type, (float) $ride->pickup_lat, (float) $ride->pickup_lng, $radius, $exclude, false, true);
+        foreach ($drivers->take(40) as $c) {
+            $this->offerTo($ride, $c['driver'], $c['eta_min'], $c['km'], RideOffer::MODE_BROADCAST);
+        }
+
+        return $ride->fresh();
+    }
+
     public function currentRadius(Ride $ride): float
     {
         $base = max(0.5, ShuttleSettings::float('shuttle_dispatch_radius_km'));
         $max = max($base, ShuttleSettings::float('shuttle_dispatch_max_radius_km'));
+        if ($ride->radius_km !== null) {
+            // The patient's chosen search radius caps the search.
+            $max = $ride->searchRadiusKm();
+            $base = min($base, $max);
+        }
         $timeoutSec = max(30, ShuttleSettings::int('shuttle_dispatch_timeout_minutes') * 60);
         $elapsed = ($ride->dispatch_started_at ?? $ride->requested_at ?? now())->diffInSeconds(now(), true);
 
@@ -260,7 +321,7 @@ class RideDispatchService
      * @param  array<int, int>  $excludeIds
      * @return \Illuminate\Support\Collection<int, array{driver: DriverProfile, km: float, eta_min: int, score: float}>
      */
-    public function eligibleDrivers(string $vehicleType, float $lat, float $lng, float $radiusKm, array $excludeIds = [], bool $roadEta = false): \Illuminate\Support\Collection
+    public function eligibleDrivers(string $vehicleType, float $lat, float $lng, float $radiusKm, array $excludeIds = [], bool $roadEta = false, bool $allowConcurrentOffers = false): \Illuminate\Support\Collection
     {
         $stale = max(1, ShuttleSettings::int('shuttle_driver_stale_minutes'));
         $dLat = $radiusKm / 111.0;
@@ -277,11 +338,17 @@ class RideDispatchService
             ->whereBetween('current_lng', [$lng - $dLng, $lng + $dLng])
             ->when($excludeIds, fn ($q) => $q->whereNotIn('id', $excludeIds))
             ->whereDoesntHave('rides', fn ($q) => $q->whereIn('status', Ride::DRIVER_ACTIVE_STATUSES))
-            ->whereDoesntHave('offers', fn ($q) => $q->where('status', RideOffer::PENDING)->where('expires_at', '>', now()))
+            ->when(! $allowConcurrentOffers, fn ($q) => $q->whereDoesntHave('offers', fn ($q2) => $q2->where('status', RideOffer::PENDING)->where('expires_at', '>', now())))
             ->get()
             ->filter(fn (DriverProfile $d) => $d->complianceBlocker() === null)
             ->map(fn (DriverProfile $d) => ['driver' => $d, 'km' => RoutingService::haversineKm($lat, $lng, (float) $d->current_lat, (float) $d->current_lng)])
             ->filter(fn ($c) => $c['km'] <= $radiusKm)
+            ->filter(function ($c) {
+                // The driver's own max service radius (availability settings).
+                $max = $this->providerMaxRadius((int) $c['driver']->user_id);
+
+                return $max === null || $c['km'] <= $max;
+            })
             ->sortBy('km')
             ->values();
 
@@ -298,7 +365,18 @@ class RideDispatchService
         })->sortBy('score')->values();
     }
 
-    protected function offerTo(Ride $ride, DriverProfile $driver, int $etaMin, float $km): RideOffer
+    protected function providerMaxRadius(int $userId): ?float
+    {
+        try {
+            $v = \App\Models\ProviderAvailability::query()->where('user_id', $userId)->value('max_radius_km');
+
+            return $v !== null ? (float) $v : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function offerTo(Ride $ride, DriverProfile $driver, int $etaMin, float $km, string $mode = RideOffer::MODE_SEQUENTIAL): RideOffer
     {
         $timeout = max(5, ShuttleSettings::int('shuttle_offer_timeout_seconds'));
         $offer = RideOffer::query()->create([
@@ -310,11 +388,16 @@ class RideDispatchService
             'eta_minutes' => $etaMin,
             'offered_at' => now(),
             'expires_at' => now()->addSeconds($timeout),
+            'mode' => $mode,
         ]);
         $ride->forceFill(['dispatch_attempts' => $ride->dispatch_attempts + 1])->save();
 
         if ($driver->user) {
-            $this->notifier->push($driver->user, 'New ride offer', "Pickup {$etaMin} min away at {$ride->pickup_address}. Accept within {$timeout}s.", ['type' => 'ride', 'data' => ['route' => 'driver_offer', 'params' => ['ride_id' => $ride->id], 'url' => '/driver']]);
+            $fare = (float) ($ride->quoted_fare ?? $ride->fare_estimate ?? 0);
+            ProviderAlerts::offer($driver->user, 'New trip request - R '.number_format($fare, 0), "Pickup {$etaMin} min away at {$ride->pickup_address}. Accept within {$timeout}s.", [
+                'service' => 'shuttle', 'request_id' => $ride->id, 'offer_id' => $offer->id, 'offer_key' => 'ride:'.$offer->id,
+                'route' => 'driver_offer', 'params' => ['ride_id' => $ride->id, 'offer_id' => $offer->id], 'url' => '/driver',
+            ]);
         }
 
         return $offer;
@@ -331,6 +414,7 @@ class RideDispatchService
 
     protected function markNoDrivers(Ride $ride): void
     {
+        $this->bumpOfferedDrivers($ride);
         $ride->offers()->where('status', RideOffer::PENDING)->update(['status' => RideOffer::CANCELLED, 'responded_at' => now()]);
         $ride->forceFill(['dispatch_state' => Ride::DISPATCH_NO_DRIVERS])->save();
         $this->logEvent($ride, 'no_drivers', null, null);
@@ -341,12 +425,17 @@ class RideDispatchService
         $this->alertAdmins('No driver found for '.$ride->ride_ref, "No eligible {$ride->vehicle_type} driver accepted within the search window. Pickup: {$ride->pickup_address}.", $ride);
     }
 
-    public function retryDispatch(Ride $ride): Ride
+    public function retryDispatch(Ride $ride, ?float $radiusKm = null): Ride
     {
         if ($ride->status !== Ride::STATUS_REQUESTED || $ride->driver_profile_id) {
             throw new RideActionException('This ride is no longer waiting for a driver.', 409);
         }
-        $ride->forceFill(['dispatch_state' => Ride::DISPATCH_SEARCHING, 'dispatch_started_at' => now(), 'dispatch_attempts' => 0])->save();
+        $mode = DispatchSettings::mode('shuttle');
+        $ride->forceFill(array_filter([
+            'dispatch_state' => Ride::DISPATCH_SEARCHING, 'dispatch_started_at' => now(), 'dispatch_attempts' => 0,
+            'dispatch_mode' => $mode === 'manual' ? 'broadcast' : $mode,
+            'radius_km' => $radiusKm !== null ? DispatchSettings::clampRadius($radiusKm) : null,
+        ], fn ($v) => $v !== null))->save();
         $this->logEvent($ride, 'dispatch_retry', null, null);
 
         return $this->advance($ride);
@@ -408,6 +497,12 @@ class RideDispatchService
             $offer->refresh();
             $ride = $offer->ride()->firstOrFail();
 
+            if ($offer->status === RideOffer::TAKEN || ($ride->driver_profile_id && (int) $ride->driver_profile_id !== (int) $driver->id)) {
+                if ($offer->status === RideOffer::PENDING) {
+                    $offer->update(['status' => RideOffer::TAKEN, 'responded_at' => now()]);
+                }
+                throw new RideActionException('Accepted by another driver - no longer available.', 409);
+            }
             if ($offer->status !== RideOffer::PENDING || ! $offer->expires_at || $offer->expires_at->isPast()) {
                 if ($offer->status === RideOffer::PENDING) {
                     $offer->update(['status' => RideOffer::EXPIRED, 'responded_at' => now()]);
@@ -416,15 +511,22 @@ class RideDispatchService
                 throw new RideActionException('This offer has expired.', 409);
             }
             if ($ride->status !== Ride::STATUS_REQUESTED || $ride->driver_profile_id) {
+                $taken = $ride->driver_profile_id && (int) $ride->driver_profile_id !== (int) $driver->id;
+                $offer->update(['status' => $taken ? RideOffer::TAKEN : RideOffer::CANCELLED, 'responded_at' => now()]);
+                throw new RideActionException($taken ? 'Accepted by another driver - no longer available.' : 'This ride is no longer available.', 409);
+            }
+            if (! $ride->isActive()) {
                 $offer->update(['status' => RideOffer::CANCELLED, 'responded_at' => now()]);
-                throw new RideActionException('This ride is no longer available.', 409);
+                throw new RideActionException('This request has expired.', 409);
             }
             $this->assertDriverCanTake($driver, $ride);
 
+            // assignDriver() is the atomic first-accept guard (conditional UPDATE).
+            $ride = $this->assignDriver($ride, $driver, 'driver');
             $offer->update(['status' => RideOffer::ACCEPTED, 'responded_at' => now()]);
             $driver->increment('offers_accepted_count');
 
-            return $this->assignDriver($ride, $driver, 'driver');
+            return $ride;
         } finally {
             $lock->release();
         }
@@ -463,18 +565,22 @@ class RideDispatchService
                 return $this->acceptOffer($mine, $driver);
             }
 
-            if ($ride->offers()->where('status', RideOffer::PENDING)->where('expires_at', '>', now())->exists()) {
+            if (! $this->isBroadcast($ride) && $ride->offers()->where('status', RideOffer::PENDING)->where('expires_at', '>', now())->exists()) {
                 throw new RideActionException('This ride is currently offered to another driver.', 409);
+            }
+            if (! $ride->isActive()) {
+                throw new RideActionException('This request has expired.', 409);
             }
             $this->assertDriverCanTake($driver, $ride);
 
+            $ride = $this->assignDriver($ride, $driver, 'driver');
             RideOffer::query()->create([
                 'ride_id' => $ride->id, 'driver_profile_id' => $driver->id, 'status' => RideOffer::ACCEPTED,
                 'attempt_no' => $ride->dispatch_attempts + 1, 'offered_at' => now(), 'expires_at' => now(), 'responded_at' => now(),
             ]);
             $driver->increment('offers_accepted_count');
 
-            return $this->assignDriver($ride, $driver, 'driver');
+            return $ride;
         } finally {
             optional($lock)->release();
         }
@@ -501,16 +607,24 @@ class RideDispatchService
         $from = $ride->status;
 
         DB::transaction(function () use ($ride, $driver) {
-            $ride->update([
-                'driver_profile_id' => $driver->id,
-                'status' => Ride::STATUS_ACCEPTED,
-                'accepted_at' => now(),
-                'dispatch_state' => Ride::DISPATCH_ASSIGNED,
-            ]);
+            // First accept wins: only a still-unassigned, still-requested ride can be taken.
+            $won = Ride::query()->whereKey($ride->id)->where('status', Ride::STATUS_REQUESTED)->whereNull('driver_profile_id')
+                ->update([
+                    'driver_profile_id' => $driver->id,
+                    'status' => Ride::STATUS_ACCEPTED,
+                    'accepted_at' => now(),
+                    'dispatch_state' => Ride::DISPATCH_ASSIGNED,
+                    'updated_at' => now(),
+                ]);
+            if (! $won) {
+                throw new RideActionException('Accepted by another driver - no longer available.', 409);
+            }
+            $ride->refresh();
             $ride->offers()->where('status', RideOffer::PENDING)->where('driver_profile_id', '!=', $driver->id)
-                ->update(['status' => RideOffer::CANCELLED, 'responded_at' => now()]);
+                ->update(['status' => RideOffer::TAKEN, 'responded_at' => now()]);
             $driver->update(['availability' => DriverProfile::BUSY]);
         });
+        $this->bumpOfferedDrivers($ride);
 
         $this->logEvent($ride, Ride::STATUS_ACCEPTED, $driver->current_lat, $driver->current_lng);
         $this->fireStatus($ride, $from, Ride::STATUS_ACCEPTED, $actor);
@@ -560,7 +674,14 @@ class RideDispatchService
             'attempt_no' => $ride->dispatch_attempts + 1, 'offered_at' => now(), 'expires_at' => now(), 'responded_at' => now(),
         ]);
 
-        return $this->assignDriver($ride->fresh(), $driver, 'admin');
+        $ride = $this->assignDriver($ride->fresh(), $driver, 'admin');
+        if ($driver->user) {
+            ProviderAlerts::assigned($driver->user, 'Trip assigned to you', "Prompt Aid operations assigned {$ride->ride_ref}: pickup at {$ride->pickup_address}.", [
+                'service' => 'shuttle', 'request_id' => $ride->id, 'route' => 'driver_ride', 'params' => ['ride_id' => $ride->id], 'url' => '/driver',
+            ]);
+        }
+
+        return $ride;
     }
 
     // ------------------------------------------------------------------
@@ -590,10 +711,7 @@ class RideDispatchService
             throw new RideActionException('You can\'t change this trip from '.str_replace('_', ' ', $ride->status).' to '.str_replace('_', ' ', $status).'.', 409);
         }
         if ($status === Ride::STATUS_IN_PROGRESS && ShuttleSettings::pinRequired($fromApi)) {
-            if (! $pin || ! hash_equals((string) $ride->trip_pin, trim($pin))) {
-                $this->logEvent($ride, 'pin_failed', $lat, $lng);
-                throw new RideActionException('That trip PIN is incorrect. Ask the patient for the 4-digit PIN shown in their app.', 422);
-            }
+            $this->verifyPin($ride, $pin, $lat, $lng);
         }
 
         return $this->updateStatus($ride, $status, $lat, $lng, 'driver');
@@ -792,6 +910,7 @@ class RideDispatchService
             'eta_minutes' => null,
             'simulation' => $ride->isSimulated() ? array_merge((array) $ride->simulation, ['active' => false]) : $ride->simulation,
         ]);
+        $this->bumpOfferedDrivers($ride);
         $ride->offers()->where('status', RideOffer::PENDING)->update(['status' => RideOffer::CANCELLED, 'responded_at' => now()]);
 
         if ($driver && $driver->availability === DriverProfile::BUSY) {
@@ -873,6 +992,85 @@ class RideDispatchService
         } catch (\Throwable $e) {
             Log::warning('[RideDispatch] event log failed: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Trip PIN check with rate limiting: after N wrong attempts (admin
+     * setting, default 5) PIN entry locks for M minutes and admins are told.
+     */
+    public function verifyPin(Ride $ride, ?string $pin, $lat = null, $lng = null): void
+    {
+        if ($ride->pin_locked_until && $ride->pin_locked_until->isFuture()) {
+            $mins = (int) ceil(now()->diffInSeconds($ride->pin_locked_until, true) / 60);
+            throw new RideActionException("Too many wrong PIN attempts. Try again in {$mins} min or call Prompt Aid support.", 429);
+        }
+        $pin = $pin !== null ? preg_replace('/\D/', '', $pin) : null;
+        if ($pin && $ride->trip_pin && hash_equals((string) $ride->trip_pin, $pin)) {
+            if ((int) $ride->pin_attempts > 0 || $ride->pin_locked_until) {
+                $ride->forceFill(['pin_attempts' => 0, 'pin_locked_until' => null])->save();
+            }
+
+            return;
+        }
+        if (! $pin) {
+            throw new RideActionException('Enter the 4-digit trip PIN shown in the patient\'s app.', 422);
+        }
+        $attempts = (int) $ride->pin_attempts + 1;
+        $max = max(3, DispatchSettings::int('dispatch_pin_max_attempts'));
+        $updates = ['pin_attempts' => $attempts];
+        if ($attempts >= $max) {
+            $updates = ['pin_attempts' => 0, 'pin_locked_until' => now()->addMinutes(max(1, DispatchSettings::int('dispatch_pin_lock_minutes')))];
+            $this->alertAdmins('Trip PIN locked on '.$ride->ride_ref, 'The driver entered a wrong trip PIN '.$max.' times. Check in with the patient and the driver.', $ride);
+        }
+        $ride->forceFill($updates)->save();
+        $this->logEvent($ride, 'pin_failed', $lat, $lng);
+        $left = $max - $attempts;
+        throw new RideActionException('That trip PIN is incorrect.'.($left > 0 ? " {$left} attempt".($left === 1 ? '' : 's').' left.' : ' PIN entry is locked for a few minutes.').' Ask the patient for the 4-digit PIN shown in their app.', 422);
+    }
+
+    /** Refresh every offered driver's inbox so "taken" / "cancelled" shows immediately. */
+    protected function bumpOfferedDrivers(Ride $ride): void
+    {
+        try {
+            DriverProfile::query()->whereIn('id', $ride->offers()->pluck('driver_profile_id'))->pluck('user_id')
+                ->each(fn ($id) => ProviderAlerts::bump((int) $id));
+        } catch (\Throwable) {
+        }
+    }
+
+    /**
+     * Close a stale / abandoned ride as EXPIRED (terminal). Stored as
+     * cancelled + cancelled_by=system + dispatch_state=expired so already
+     * installed app builds also treat it as closed. No fee; driver freed;
+     * timeline event recorded.
+     */
+    public function expireRide(Ride $ride, string $reason, string $note): Ride
+    {
+        if ($ride->isTerminal()) {
+            return $ride;
+        }
+        $from = $ride->status;
+        $driver = $ride->driver;
+        $ride->forceFill([
+            'status' => Ride::STATUS_CANCELLED,
+            'cancelled_at' => now(),
+            'cancelled_by' => Ride::CANCELLED_BY_SYSTEM,
+            'cancel_reason' => mb_substr($note, 0, 1000),
+            'dispatch_state' => Ride::DISPATCH_EXPIRED,
+            'closed_reason' => $reason,
+            'eta_minutes' => null,
+            'simulation' => $ride->isSimulated() ? array_merge((array) $ride->simulation, ['active' => false]) : $ride->simulation,
+        ])->save();
+        $this->bumpOfferedDrivers($ride);
+        $ride->offers()->where('status', RideOffer::PENDING)->update(['status' => RideOffer::EXPIRED, 'responded_at' => now()]);
+        if ($driver && $driver->availability === DriverProfile::BUSY
+            && ! Ride::query()->where('driver_profile_id', $driver->id)->whereIn('status', Ride::DRIVER_ACTIVE_STATUSES)->exists()) {
+            $driver->update(['availability' => DriverProfile::AVAILABLE]);
+        }
+        $this->logEvent($ride, 'expired', null, null, $reason);
+        $this->fireStatus($ride, $from, Ride::STATUS_CANCELLED, 'system');
+
+        return $ride->fresh();
     }
 
     protected function fireStatus(Ride $ride, ?string $from, string $to, string $actor): void

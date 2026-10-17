@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DoctorProfiles\Schemas;
 
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -53,6 +54,22 @@ class DoctorProfileForm
                     ])
                     ->required()
                     ->default('offline'),
+                // Weekly hours = bookable slots (same data the app's Settings → Sessions edits).
+                Repeater::make('availabilities')
+                    ->label('Weekly hours (booking slots)')
+                    ->relationship()
+                    ->schema([
+                        Select::make('weekday')->options(['1' => 'Monday', '2' => 'Tuesday', '3' => 'Wednesday', '4' => 'Thursday', '5' => 'Friday', '6' => 'Saturday', '0' => 'Sunday'])->required(),
+                        Select::make('clinic_id')->label('Clinic')->relationship('clinic', 'name')->searchable()->preload()->required(),
+                        TextInput::make('start_time')->label('From (HH:MM)')->regex('/^([01]\d|2[0-3]):[0-5]\d(:00)?$/')->required(),
+                        TextInput::make('end_time')->label('To (HH:MM)')->regex('/^([01]\d|2[0-3]):[0-5]\d(:00)?$/')->required(),
+                        TextInput::make('slot_minutes')->label('Slot (minutes)')->numeric()->minValue(5)->maxValue(240)->default(30)->required(),
+                        Toggle::make('is_active')->label('Active')->default(true),
+                    ])
+                    ->columns(3)
+                    ->defaultItems(0)
+                    ->collapsible()
+                    ->columnSpanFull(),
             ]);
     }
 }

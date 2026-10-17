@@ -85,13 +85,13 @@ export default function HomeScreen({ navigation }: any) {
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { load(); setRefreshKey((k) => k + 1); }} />}
     >
       <View style={styles.greetRow}>
-        <View>
+        <View style={{ flex: 1, marginRight: 10 }}>
           <Text style={styles.greetSmall}>Good {timeOfDay()}</Text>
-          <Text style={styles.greetName}>{user?.name?.split(' ')[0]}</Text>
+          <Text style={styles.greetName} numberOfLines={1}>{user?.name?.split(' ')[0]}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <CommsHeaderIcons showMessages />
-          <Pressable onPress={() => navigation.getParent()?.navigate('Profile')}>
+          <Pressable onPress={() => navigation.getParent()?.navigate('Profile', { screen: 'ProfileHome', initial: false })} accessibilityLabel="Profile" hitSlop={8}>
             <PaAvatar name={user?.name} size={44} />
           </Pressable>
         </View>

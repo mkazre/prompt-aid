@@ -18,6 +18,15 @@ import { api } from '../api/client';
  */
 
 export const ALERT_CHANNEL = 'alerts';
+/**
+ * Incoming provider requests (trip / consult / order / lab offers): max
+ * importance with the bundled request_alert.wav (registered in app.json's
+ * expo-notifications "sounds"). The server pushes offers on this channel
+ * (App\Services\Dispatch\ProviderAlerts). Replace the placeholder clip at
+ * mobile/assets/sounds/request_alert.wav with the client's sound — Android
+ * keeps a channel's sound once created, so bump REQUEST_CHANNEL if it changes.
+ */
+export const REQUEST_CHANNEL = 'requests';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -41,6 +50,16 @@ async function ensureChannel() {
     lightColor: '#D0211C',
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     enableVibrate: true,
+  });
+  await Notifications.setNotificationChannelAsync(REQUEST_CHANNEL, {
+    name: 'Incoming requests (trips, consults, orders)',
+    importance: Notifications.AndroidImportance.MAX,
+    sound: 'request_alert.wav',
+    vibrationPattern: [0, 600, 400, 600, 400, 600],
+    lightColor: '#D0211C',
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    enableVibrate: true,
+    bypassDnd: true,
   });
 }
 
@@ -120,9 +139,10 @@ export function useAlerts(enabled: boolean, onOpen: (data: Record<string, any>) 
             body = item?.body ?? undefined;
             payload = item?.data ?? {};
           }
+          const isRequest = payload?.type === 'dispatch_offer' || !!payload?.offer_key;
           await Notifications.scheduleNotificationAsync({
-            content: { title, body, sound: 'default', data: payload },
-            trigger: Platform.OS === 'android' ? ({ channelId: ALERT_CHANNEL } as any) : null,
+            content: { title, body, sound: isRequest ? 'request_alert.wav' : 'default', data: payload },
+            trigger: Platform.OS === 'android' ? ({ channelId: isRequest ? REQUEST_CHANNEL : ALERT_CHANNEL } as any) : null,
           });
         }
         lastNotes.current = notes;

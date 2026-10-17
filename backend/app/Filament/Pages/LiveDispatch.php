@@ -48,7 +48,11 @@ class LiveDispatch extends Page
             ->with(['patient.user', 'driver.user'])
             ->orderByRaw("CASE status WHEN 'requested' THEN 0 WHEN 'accepted' THEN 1 WHEN 'driver_enroute' THEN 2 WHEN 'arrived' THEN 3 WHEN 'in_progress' THEN 4 ELSE 5 END")
             ->latest('requested_at')
-            ->get();
+            ->limit(300)
+            ->get()
+            // Stale / long-over rides are not "in flight" (closed by the dispatch close-out job).
+            ->filter(fn (Ride $r) => $r->isActive())
+            ->values();
     }
 
     /** Polled by the map every 5 s. */
@@ -58,6 +62,7 @@ class LiveDispatch extends Page
 
         if (Cache::add('admin-dispatch:tick', 1, 5)) {
             app(RideDispatchService::class)->tickAll();
+            app(\App\Services\Dispatch\CloseOutService::class)->run();
         }
 
         $locations = app(RideLocationService::class);

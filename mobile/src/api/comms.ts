@@ -71,13 +71,21 @@ export interface VideoJoin {
   appointment_id: number;
   join_url: string;
   room: string;
-  provider: 'jitsi' | 'jaas' | 'external';
+  provider: 'jitsi' | 'jaas' | 'self_hosted_jwt' | 'public' | 'external';
   external: boolean;
   display_name: string;
   audio_only: boolean;
   counterpart_name: string | null;
   window_opens_at: string | null;
   window_closes_at: string | null;
+  /** Newer servers: our own call page (single-use, 5-minute link) with the signed Jitsi token inside. */
+  embed_url?: string | null;
+  embed_expires_at?: string | null;
+  domain?: string | null;
+  /** Short-lived Jitsi JWT (null for the public fallback provider). */
+  jwt?: string | null;
+  expires_at?: string | null;
+  role?: 'moderator' | 'participant';
 }
 
 export async function fetchConversations() {

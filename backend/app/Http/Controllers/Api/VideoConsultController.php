@@ -41,7 +41,17 @@ class VideoConsultController extends Controller
             ]), 423);
         }
 
-        return response()->json(array_merge($base, $this->video->joinPayload($appt, $user, $request->boolean('audio'))));
+        // {provider, domain, room, jwt, embed_url (single-use, 5 min), expires_at, role}
+        // plus the legacy join_url/external/display_name for older app builds.
+        try {
+            $payload = $this->video->joinPayload($appt, $user, $request->boolean('audio'));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Video join config error: '.$e->getMessage(), ['appointment_id' => $appt->id]);
+
+            return response()->json(array_merge($base, ['message' => 'Video calls are temporarily unavailable. Please try again shortly.']), 503);
+        }
+
+        return response()->json(array_merge($base, $payload))->header('Cache-Control', 'no-store, private');
     }
 
     /** Hang-up: records that the call ended (doesn't change the appointment status). */

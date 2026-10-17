@@ -8,6 +8,7 @@ import AppointmentsScreen from '../screens/patient/AppointmentsScreen';
 import ShuttleRequestScreen from '../screens/patient/ShuttleRequestScreen';
 import RideTrackScreen from '../screens/patient/RideTrackScreen';
 import RideSeriesScreen from '../screens/patient/RideSeriesScreen';
+import RideRecordingsScreen from '../screens/safety/RideRecordingsScreen';
 import ShopScreen from '../screens/patient/ShopScreen';
 import ProductDetailScreen from '../screens/patient/ProductDetailScreen';
 import CheckoutScreen from '../screens/patient/CheckoutScreen';
@@ -83,6 +84,7 @@ function ShuttleStackNavigator() {
       <ShuttleStack.Screen name="ShuttleRequest" component={ShuttleRequestScreen} options={{ headerShown: false }} />
       <ShuttleStack.Screen name="RideTrack" component={RideTrackScreen} options={{ title: 'Tracking your shuttle' }} />
       <ShuttleStack.Screen name="RideSeries" component={RideSeriesScreen} options={{ title: 'Recurring trips' }} />
+      <ShuttleStack.Screen name="RideRecordings" component={RideRecordingsScreen} options={{ title: 'Trip recordings' }} />
     </ShuttleStack.Navigator>
   );
 }

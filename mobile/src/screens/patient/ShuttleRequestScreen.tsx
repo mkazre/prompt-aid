@@ -1,8 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { api, apiErrorMessage } from '../../api/client';
-import { Ride, RideQuote, VehicleType } from '../../api/types';
+import { RideQuote, VehicleType } from '../../api/types';
+import { fetchActiveRide, RideLike } from '../../services/activeRide';
 import { PaButton } from '../../components/pa';
 import AddressAutocomplete, { GeoPoint } from '../../components/AddressAutocomplete';
 import RideMap from '../../components/RideMap';
@@ -19,7 +22,12 @@ const VEHICLE_LABELS: Record<VehicleType, { label: string; sub: string }> = {
 };
 
 export default function ShuttleRequestScreen({ navigation, route }: any) {
-  const [activeRide, setActiveRide] = useState<Ride | null>(null);
+  const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
+  const sheetY = useRef(0);
+  const fieldY = useRef<{ pickup: number; dropoff: number }>({ pickup: 0, dropoff: 0 });
+  const redirectedFor = useRef<number | null>(null);
+  const [activeRide, setActiveRide] = useState<RideLike | null>(null);
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState<string>(route?.params?.to ?? '');
   const [pickupCoords, setPickupCoords] = useState<GeoPoint | null>(null);
@@ -31,17 +39,47 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState<{ id: number; fare: number | null } | null>(null);
 
+  function resetForm() {
+    setPickup('');
+    setPickupCoords(null);
+    setDropoff('');
+    setDropoffCoords(null);
+    setQuotes([]);
+    setVehicleType('sedan');
+    setWaitAndReturn(true);
+  }
+
+  // Only a TRULY active ride (server is_active / non-terminal and not stale)
+  // counts: a long-finished or cancelled ride must never hijack this screen.
+  const hadActive = useRef(false);
   const checkActive = useCallback(async () => {
-    const { data } = await api.get('/rides');
-    const rides: Ride[] = data.data;
-    setActiveRide(rides.find((r) => !['completed', 'cancelled'].includes(r.status)) ?? null);
+    let ride: RideLike | null = null;
+    try {
+      ride = await fetchActiveRide();
+    } catch {
+      return; // offline: keep showing the form
+    }
+    // The ride we were tracking has ended / been cancelled: start from a clean form.
+    if (hadActive.current && !ride) resetForm();
+    hadActive.current = !!ride;
+    setActiveRide(ride);
   }, []);
 
   useFocusEffect(useCallback(() => { checkActive(); }, [checkActive]));
 
+  // Auto-open tracking once per active ride; going back shows the form plus a "Track" card.
   useEffect(() => {
-    if (activeRide && !requested) navigation.navigate('RideTrack', { rideId: activeRide.id });
+    if (activeRide && !requested && redirectedFor.current !== activeRide.id) {
+      redirectedFor.current = activeRide.id;
+      navigation.navigate('RideTrack', { rideId: activeRide.id });
+    }
   }, [activeRide?.id]);
+
+  // Keep the focused address field near the top so its suggestions sit above the keyboard.
+  function scrollToField(which: 'pickup' | 'dropoff') {
+    const y = sheetY.current + fieldY.current[which] - 12;
+    setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: true }), 150);
+  }
 
   // Arriving from "Add a shuttle" on a doctor/clinic: pre-fill that drop-off.
   useEffect(() => {
@@ -114,7 +152,7 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
         vehicle_type: vehicleType,
         wait_and_return: waitAndReturn,
       });
-      const ride = (data?.data ?? data) as Partial<Ride> | undefined;
+      const ride = (data?.data ?? data) as Partial<RideLike> | undefined;
       if (ride?.id) {
         // Confirm first; tracking opens from the modal's button.
         setRequested({ id: ride.id, fare: selectedQuote?.fare ?? null });
@@ -131,7 +169,12 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
   const selectedQuote = quotes.find((q) => q.vehicle_type === vehicleType);
 
   return (
-    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      ref={scrollRef}
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 280 }}
+      keyboardShouldPersistTaps="handled"
+    >
       <SuccessModal
         visible={!!requested}
         title="Ride requested"
@@ -145,25 +188,43 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
         onPrimary={() => {
           const id = requested?.id;
           setRequested(null);
-          if (id) navigation.navigate('RideTrack', { rideId: id });
+          if (id) {
+            redirectedFor.current = id;
+            hadActive.current = true; // so a cancel/finish later resets the form
+            navigation.navigate('RideTrack', { rideId: id });
+          }
         }}
       />
-      {/* Admin-managed banners for this screen (Site → App Widgets, screen "Shuttle"). */}
-      <WidgetHost screen="shuttle" style={{ marginHorizontal: 16, marginTop: 12 }} />
+      <Text style={styles.title}>Book a shuttle</Text>
       <View style={styles.mapWrap}>
-        {pickupCoords && dropoffCoords ? (
-          <RideMap pickup={pickupCoords} dropoff={dropoffCoords} height={220} />
-        ) : (
-          <View style={[styles.mapPlaceholder, { height: 220 }]} />
-        )}
+        {/* Always a real map: device location / Johannesburg until addresses are picked, then pins. */}
+        <RideMap pickup={pickupCoords} dropoff={dropoffCoords} showUserLocation={!pickupCoords && !dropoffCoords} height={220} />
       </View>
 
-      <View style={styles.sheet}>
-        <Text style={styles.label}>Pick up</Text>
-        <AddressAutocomplete value={pickup} onChange={changePickup} placeholder="Start typing your address" allowCurrentLocation />
+      {/* Admin-managed banners for this screen (Site → App Widgets, screen "Shuttle"). */}
+      <WidgetHost screen="shuttle" style={{ marginHorizontal: 16, marginTop: 12 }} />
 
-        <Text style={styles.label}>Drop off</Text>
-        <AddressAutocomplete value={dropoff} onChange={changeDropoff} placeholder="Clinic, pharmacy or lab address" />
+      <View style={styles.sheet} onLayout={(e) => { sheetY.current = e.nativeEvent.layout.y; }}>
+        {activeRide ? (
+          <Pressable style={styles.activeCard} onPress={() => navigation.navigate('RideTrack', { rideId: activeRide.id })}>
+            <Ionicons name="navigate-circle-outline" size={26} color={pa.info} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.activeTitle}>You have a shuttle booked</Text>
+              <Text style={styles.activeSub} numberOfLines={1}>{activeRide.dropoff_address ?? 'Tap to track your ride'}</Text>
+            </View>
+            <Text style={styles.activeLink}>Track</Text>
+          </Pressable>
+        ) : null}
+
+        <View onLayout={(e) => { fieldY.current.pickup = e.nativeEvent.layout.y; }}>
+          <Text style={styles.label}>Pick up</Text>
+          <AddressAutocomplete value={pickup} onChange={changePickup} placeholder="Start typing your address" allowCurrentLocation onFocus={() => scrollToField('pickup')} />
+        </View>
+
+        <View onLayout={(e) => { fieldY.current.dropoff = e.nativeEvent.layout.y; }}>
+          <Text style={styles.label}>Drop off</Text>
+          <AddressAutocomplete value={dropoff} onChange={changeDropoff} placeholder="Clinic, pharmacy or lab address" onFocus={() => scrollToField('dropoff')} />
+        </View>
 
         <Pressable onPress={() => setWaitAndReturn((v) => !v)} style={[styles.checkRow, waitAndReturn && styles.checkRowOn]}>
           <Text style={styles.checkText}>Return leg</Text>
@@ -227,9 +288,13 @@ function validationMessage(e: unknown) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: pa.paper },
-  mapWrap: {},
-  mapPlaceholder: { backgroundColor: pa.ink },
-  sheet: { padding: 16, marginTop: -26, backgroundColor: pa.paper },
+  title: { fontFamily: paFonts.black, fontSize: 22, lineHeight: 28, color: pa.ink, marginHorizontal: 16, marginBottom: 10 },
+  mapWrap: { marginHorizontal: 16 },
+  sheet: { padding: 16, backgroundColor: pa.paper },
+  activeCard: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: pa.info, backgroundColor: '#EAF1F8', padding: 12, marginBottom: 14 },
+  activeTitle: { fontFamily: paFonts.bold, fontSize: 14, lineHeight: 18, color: pa.ink },
+  activeSub: { fontFamily: paFonts.regular, fontSize: 12, lineHeight: 16, color: pa.muted, marginTop: 2 },
+  activeLink: { fontFamily: paFonts.black, fontSize: 13, color: pa.info },
   label: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: pa.muted, marginBottom: 6 },
   checkRow: { borderWidth: 1, borderColor: pa.line, backgroundColor: pa.surface, padding: 13, marginBottom: 6 },
   checkRowOn: { borderColor: pa.ink, backgroundColor: pa.beaconWash },

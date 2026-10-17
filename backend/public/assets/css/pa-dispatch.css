@@ -1,0 +1,86 @@
+/* Prompt Aid — incoming request alert (staff / vendor / partner panels + web driver console).
+   Own stylesheet: Filament's CSS is prebuilt/purged, so nothing here relies on Tailwind. */
+.pa-dx-overlay{position:fixed;inset:0;z-index:2147483000;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;animation:pa-dx-fade .18s ease-out}
+.pa-dx-overlay[hidden]{display:none}
+@keyframes pa-dx-fade{from{opacity:0}to{opacity:1}}
+@keyframes pa-dx-pop{from{transform:translateY(16px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+@keyframes pa-dx-pulse{0%,100%{box-shadow:0 0 0 0 rgba(208,33,28,.55)}50%{box-shadow:0 0 0 14px rgba(208,33,28,0)}}
+.pa-dx-card{width:100%;max-width:460px;max-height:calc(100vh - 32px);overflow:auto;background:#fff;color:#101012;border-radius:18px;box-shadow:0 30px 80px -20px rgba(0,0,0,.6);animation:pa-dx-pop .22s ease-out}
+.pa-dx-head{background:#101012;color:#fff;padding:16px 18px;display:flex;align-items:center;gap:14px;border-radius:18px 18px 0 0}
+.pa-dx-icon{width:48px;height:48px;border-radius:14px;background:#D0211C;display:flex;align-items:center;justify-content:center;flex:0 0 48px;animation:pa-dx-pulse 1.6s infinite}
+.pa-dx-icon svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pa-dx-kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#F2C200;font-weight:800}
+.pa-dx-title{font-size:19px;font-weight:900;line-height:1.2;margin-top:2px}
+.pa-dx-ring{margin-left:auto;position:relative;width:56px;height:56px;flex:0 0 56px}
+.pa-dx-ring svg{width:56px;height:56px;transform:rotate(-90deg)}
+.pa-dx-ring circle{fill:none;stroke-width:5}
+.pa-dx-ring .bg{stroke:rgba(255,255,255,.18)}
+.pa-dx-ring .fg{stroke:#F2C200;stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.pa-dx-ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff}
+.pa-dx-body{padding:16px 18px 6px}
+.pa-dx-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pa-dx-badge{font-size:12px;font-weight:800;padding:4px 9px;border-radius:999px;background:#F2EFE8;color:#101012;border:1px solid #E2DDD2}
+.pa-dx-badge.hot{background:#FEF6DA;border-color:#EBD98A}
+.pa-dx-badge.red{background:#FDECEC;border-color:#F5C2C0;color:#9B1712}
+.pa-dx-money{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}
+.pa-dx-earn{font-size:34px;font-weight:900;line-height:1;letter-spacing:-.02em}
+.pa-dx-earn small{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6B675F;margin-bottom:4px}
+.pa-dx-meta{font-size:13px;color:#4A4740;text-align:right;line-height:1.5}
+.pa-dx-route{display:grid;grid-template-columns:14px 1fr;gap:4px 10px;margin:10px 0 12px;font-size:14px;font-weight:700}
+.pa-dx-route .dot{width:10px;height:10px;border-radius:50%;background:#1E8E3E;margin-top:5px}
+.pa-dx-route .dot.to{background:#D0211C;border-radius:2px}
+.pa-dx-route .sub{grid-column:2;font-size:12px;font-weight:600;color:#6B675F;margin:-2px 0 4px}
+.pa-dx-rider{display:flex;gap:12px;align-items:center;background:#F7F5F0;border:1px solid #ECE7DC;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.pa-dx-avatar{width:42px;height:42px;border-radius:50%;background:#101012;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;flex:0 0 42px;overflow:hidden}
+.pa-dx-avatar img{width:100%;height:100%;object-fit:cover}
+.pa-dx-rider b{font-size:15px}
+.pa-dx-rider .r-sub{font-size:12px;color:#4A4740;margin-top:2px}
+.pa-dx-chip{display:inline-block;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;margin:3px 4px 0 0}
+.pa-dx-chip.ok{background:#E6F4EA;color:#1E6B34}
+.pa-dx-chip.no{background:#F2EFE8;color:#6B675F}
+.pa-dx-need{background:#FEF6DA;border:1px solid #EBD98A;border-radius:10px;padding:8px 10px;font-size:13px;font-weight:700;margin-bottom:10px}
+.pa-dx-lines{font-size:13px;color:#4A4740;margin:0 0 10px;padding:0;list-style:none}
+.pa-dx-lines li{margin:3px 0}
+.pa-dx-map{height:150px;border-radius:12px;overflow:hidden;margin-bottom:12px;background:#E9E6DF}
+.pa-dx-actions{padding:6px 18px 18px;display:grid;gap:10px}
+.pa-dx-btn{appearance:none;border:0;border-radius:12px;font-weight:900;font-size:17px;padding:16px;cursor:pointer;width:100%}
+.pa-dx-btn:disabled{opacity:.55;cursor:default}
+.pa-dx-accept{background:#1E8E3E;color:#fff}
+.pa-dx-accept:hover{background:#18772F}
+.pa-dx-decline{background:#fff;color:#101012;border:2px solid #101012;font-size:15px;padding:12px}
+.pa-dx-swipe{position:relative;height:64px;border-radius:999px;background:#1E8E3E;overflow:hidden;user-select:none;touch-action:none}
+.pa-dx-swipe .label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:17px;letter-spacing:.02em;pointer-events:none}
+.pa-dx-swipe .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(0,0,0,.18)}
+.pa-dx-swipe .thumb{position:absolute;left:4px;top:4px;width:56px;height:56px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:grab;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.pa-dx-swipe .thumb svg{width:28px;height:28px;stroke:#1E8E3E;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pa-dx-swipe.done{background:#14652B}
+.pa-dx-state{padding:28px 20px;text-align:center}
+.pa-dx-state h3{font-size:20px;font-weight:900;margin:8px 0 4px}
+.pa-dx-state p{font-size:14px;color:#4A4740;margin:0}
+.pa-dx-queue{font-size:12px;font-weight:800;color:#F2C200;margin-top:4px}
+.pa-dx-reasons{display:none;gap:6px;flex-wrap:wrap}
+.pa-dx-reasons.on{display:flex}
+.pa-dx-reasons button{border:1px solid #CFC9BC;background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer}
+.pa-dx-sound{position:fixed;left:16px;bottom:16px;z-index:2147483001;background:#101012;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.pa-dx-sound[hidden]{display:none}
+/* Availability pill (panel top bar) */
+.pa-av{position:relative;margin-right:8px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.pa-av-btn{display:flex;align-items:center;gap:8px;border:1px solid #D9D4C8;background:#fff;color:#101012;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+.pa-av-dot{width:10px;height:10px;border-radius:50%;background:#9A958B}
+.pa-av-dot.on{background:#1E8E3E;box-shadow:0 0 0 3px rgba(30,142,62,.18)}
+.pa-av-dot.busy{background:#E4701E}
+.pa-av-panel{position:absolute;right:0;top:calc(100% + 8px);width:300px;background:#fff;color:#101012;border:1px solid #E2DDD2;border-radius:14px;box-shadow:0 20px 50px -20px rgba(0,0,0,.4);padding:14px;z-index:60}
+.pa-av-panel[hidden]{display:none}
+.pa-av-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.pa-av-row label{font-size:13px;font-weight:800}
+.pa-av-panel input[type=time],.pa-av-panel input[type=number]{border:1px solid #D9D4C8;border-radius:8px;padding:5px 6px;font-size:13px;width:92px;color:#101012;background:#fff}
+.pa-av-sw{width:46px;height:26px;border-radius:999px;background:#CFC9BC;position:relative;border:0;cursor:pointer;flex:0 0 46px}
+.pa-av-sw::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.pa-av-sw.on{background:#1E8E3E}
+.pa-av-sw.on::after{left:23px}
+.pa-av-help{font-size:12px;color:#6B675F;margin:-4px 0 10px}
+.pa-av-save{width:100%;border:0;border-radius:10px;background:#101012;color:#fff;font-weight:800;padding:9px;cursor:pointer}
+.pa-av-msg{font-size:12px;margin-top:6px;color:#1E6B34}
+.pa-av-msg.err{color:#9B1712}
+@media (max-width:640px){.pa-av-btn .txt{display:none}.pa-dx-earn{font-size:30px}}
+@media (prefers-reduced-motion:reduce){.pa-dx-icon{animation:none}.pa-dx-card,.pa-dx-overlay{animation:none}}

@@ -15,6 +15,8 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\PatientProfile;
 use App\Models\Payment;
+use App\Services\Dispatch\ProviderAlerts;
+use App\Support\DispatchSettings;
 use App\Support\DoctorNowSettings;
 use App\Support\StaffNotifier;
 use Illuminate\Database\Eloquent\Builder;
@@ -173,7 +175,7 @@ class DoctorMatchService
         return $this->start($patient, $specialty, $mode, $lat, $lng)->appointment()->first();
     }
 
-    public function start(PatientProfile $patient, string $specialty, string $mode, ?float $lat = null, ?float $lng = null): DoctorMatchRequest
+    public function start(PatientProfile $patient, string $specialty, string $mode, ?float $lat = null, ?float $lng = null, ?float $radiusKm = null): DoctorMatchRequest
     {
         if (! DoctorNowSettings::bool('doctor_now_enabled')) {
             throw new DoctorMatchException('On-demand consultations are switched off right now. Please book a time slot instead.', 409);
@@ -198,7 +200,7 @@ class DoctorMatchService
         $quote = $this->pricing->quote($specialty, $mode);
         $now = now();
 
-        $request = DB::transaction(function () use ($patient, $specialty, $mode, $lat, $lng, $quote, $now) {
+        $request = DB::transaction(function () use ($patient, $specialty, $mode, $lat, $lng, $quote, $now, $radiusKm) {
             $appointment = Appointment::query()->create([
                 'patient_profile_id' => $patient->id,
                 'doctor_profile_id' => null,
@@ -228,6 +230,7 @@ class DoctorMatchService
                 'price_breakdown' => $quote,
                 'attempts' => 0,
                 'expires_at' => $now->clone()->addMinutes(max(1, DoctorNowSettings::int('doctor_now_request_timeout_minutes'))),
+                'radius_km' => $radiusKm !== null && $mode === Appointment::MODE_IN_PERSON ? DispatchSettings::clampRadius($radiusKm) : null,
             ]);
         });
 
@@ -510,6 +513,44 @@ class DoctorMatchService
                 return $events;
             }
 
+            if (DispatchSettings::mode('doctor_now') === 'manual') {
+                if ($req->expires_at && $req->expires_at->isPast()) {
+                    $this->expireLocked($req, 'timed_out');
+                    $events[] = ['expired', $req];
+                }
+
+                return $events; // an admin assigns from Live requests
+            }
+
+            if (DispatchSettings::mode('doctor_now') === 'broadcast') {
+                // Uber-style: every qualifying online doctor gets the offer at once.
+                DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->where('status', DoctorMatchOffer::OFFERED)
+                    ->where('expires_at', '<=', now())->update(['status' => DoctorMatchOffer::EXPIRED, 'responded_at' => now(), 'updated_at' => now()]);
+                if ($req->expires_at && $req->expires_at->isPast()) {
+                    $this->expireLocked($req, 'timed_out');
+                    $events[] = ['expired', $req];
+
+                    return $events;
+                }
+                $timeout = max(10, DoctorNowSettings::int('doctor_now_offer_timeout_seconds'));
+                foreach ($this->pickCandidates($req, true)->take(60) as $candidate) {
+                    $offer = DoctorMatchOffer::query()->create([
+                        'doctor_match_request_id' => $req->id,
+                        'appointment_id' => $req->appointment_id,
+                        'doctor_profile_id' => $candidate['doctor']->id,
+                        'status' => DoctorMatchOffer::OFFERED,
+                        'distance_km' => $candidate['distance_km'],
+                        'offered_at' => now(),
+                        'expires_at' => now()->addSeconds($timeout),
+                    ]);
+                    $req->increment('attempts');
+                    $candidate['doctor']->forceFill(['last_offered_at' => now()])->saveQuietly();
+                    $events[] = ['offered', $offer];
+                }
+
+                return $events;
+            }
+
             $live = DoctorMatchOffer::query()
                 ->where('doctor_match_request_id', $req->id)
                 ->where('status', DoctorMatchOffer::OFFERED)
@@ -584,8 +625,47 @@ class DoctorMatchService
         ]);
     }
 
+    /** Refresh every offered doctor's inbox (taken / expired state). */
+    public function bumpOffered(int $requestId): void
+    {
+        try {
+            DoctorProfile::query()->whereIn('id', DoctorMatchOffer::query()->where('doctor_match_request_id', $requestId)->pluck('doctor_profile_id'))
+                ->pluck('user_id')->each(fn ($id) => ProviderAlerts::bump((int) $id));
+        } catch (\Throwable) {
+        }
+    }
+
+    /** Admin manual assignment (Live requests): the doctor gets an "assigned" alert. */
+    public function assignByAdmin(DoctorMatchRequest $request, DoctorProfile $doctor): DoctorMatchRequest
+    {
+        $offer = DB::transaction(function () use ($request, $doctor) {
+            $req = DoctorMatchRequest::query()->whereKey($request->id)->lockForUpdate()->first();
+            if (! $req || $req->status !== DoctorMatchRequest::SEARCHING) {
+                throw new DoctorMatchException('This request is no longer open.', 409);
+            }
+
+            return DoctorMatchOffer::query()->create([
+                'doctor_match_request_id' => $req->id,
+                'appointment_id' => $req->appointment_id,
+                'doctor_profile_id' => $doctor->id,
+                'status' => DoctorMatchOffer::OFFERED,
+                'offered_at' => now(),
+                'expires_at' => now()->addMinutes(5),
+            ]);
+        });
+        $result = $this->accept($offer, $doctor);
+        if ($doctor->user) {
+            ProviderAlerts::assigned($doctor->user, 'Consult assigned to you', 'Prompt Aid operations assigned an on-demand '.$result->mode.' '.$result->specialty.' consult to you.', [
+                'service' => 'doctor_now', 'request_id' => $result->id, 'url' => '/staff/live-consults',
+            ]);
+        }
+
+        return $result;
+    }
+
     protected function closeLiveOffers(DoctorMatchRequest $req): void
     {
+        $this->bumpOffered($req->id);
         DoctorMatchOffer::query()
             ->where('doctor_match_request_id', $req->id)
             ->where('status', DoctorMatchOffer::OFFERED)
@@ -602,8 +682,19 @@ class DoctorMatchService
      */
     protected function pickCandidate(DoctorMatchRequest $req): ?array
     {
+        return $this->pickCandidates($req, false)->first();
+    }
+
+    /**
+     * Every qualifying doctor, best first. Broadcast mode allows a doctor to
+     * hold several live offers (their alert queues them).
+     *
+     * @return Collection<int, array{doctor: DoctorProfile, distance_km: ?float, clinic: ?Clinic}>
+     */
+    public function pickCandidates(DoctorMatchRequest $req, bool $broadcast): Collection
+    {
         $alreadyOffered = DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->pluck('doctor_profile_id');
-        $holdingOffer = DoctorMatchOffer::query()
+        $holdingOffer = $broadcast ? collect() : DoctorMatchOffer::query()
             ->where('status', DoctorMatchOffer::OFFERED)
             ->where('expires_at', '>', now())
             ->pluck('doctor_profile_id');
@@ -617,6 +708,10 @@ class DoctorMatchService
             ->get();
 
         $radius = DoctorNowSettings::float('doctor_now_inperson_radius_km');
+        if ($req->radius_km !== null) {
+            // The patient chose a search radius: use it (capped by the admin maximum).
+            $radius = min((float) $req->radius_km, DispatchSettings::maxRadius());
+        }
         $rows = new Collection;
 
         foreach ($doctors as $doctor) {
@@ -624,7 +719,8 @@ class DoctorMatchService
             $clinic = null;
             if ($req->mode === Appointment::MODE_IN_PERSON) {
                 $loc = $this->doctorRooms($doctor, (float) $req->lat, (float) $req->lng);
-                if (! $loc || $loc['distance_km'] > $radius) {
+                $own = \App\Models\ProviderAvailability::query()->where('user_id', $doctor->user_id)->value('max_radius_km');
+                if (! $loc || $loc['distance_km'] > $radius || ($own !== null && $loc['distance_km'] > (float) $own)) {
                     continue;
                 }
                 $distance = round($loc['distance_km'], 2);
@@ -639,17 +735,13 @@ class DoctorMatchService
             ]);
         }
 
-        $best = $rows->sort(function ($a, $b) {
+        return $rows->sort(function ($a, $b) {
             return $a['sort'] <=> $b['sort'];
-        })->first();
+        })->values()->map(function ($r) {
+            unset($r['sort']);
 
-        if (! $best) {
-            return null;
-        }
-
-        unset($best['sort']);
-
-        return $best;
+            return $r;
+        });
     }
 
     /**
@@ -770,8 +862,14 @@ class DoctorMatchService
             $doctor->update(['availability' => DoctorProfile::BUSY]);
             $doctor->forceFill(['last_assigned_at' => $now, 'last_seen_at' => $now])->saveQuietly();
 
+            // Broadcast: everyone else's popup flips to "accepted by another doctor".
+            DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->where('id', '!=', $offer->id)
+                ->where('status', DoctorMatchOffer::OFFERED)
+                ->update(['status' => DoctorMatchOffer::EXPIRED, 'responded_at' => $now, 'updated_at' => $now]);
+
             return $req;
         });
+        $this->bumpOffered((int) $offer->doctor_match_request_id);
 
         if ($result === 'gone') {
             throw new DoctorMatchException('This request has already been taken or cancelled.', 409);
@@ -880,6 +978,10 @@ class DoctorMatchService
         }
 
         $result = $this->gateway->charge($invoice, $method);
+        if (! empty($result['pending'])) {
+            // Online gateways: the patient pays in the payment sheet; the webhook settles the invoice.
+            return ['success' => false, 'pending' => true, 'reference' => null, 'message' => 'Please pay online using the payment sheet.'];
+        }
         Payment::query()->create([
             'invoice_id' => $invoice->id,
             'method' => $method,
@@ -1133,9 +1235,9 @@ class DoctorMatchService
         $modeLabel = $req->mode === Appointment::MODE_VIDEO ? 'video' : 'in-person';
         $secs = max(10, DoctorNowSettings::int('doctor_now_offer_timeout_seconds'));
 
-        $this->notifier->push($user, 'New on-demand request', "A patient needs a {$modeLabel} {$req->specialty} consult now. Accept within {$secs}s in Live consults.", [
-            'type' => 'appointment',
-            'data' => ['route' => 'doctor_offer', 'params' => ['offer_id' => $offer->id], 'url' => '/staff/live-consults'],
+        ProviderAlerts::offer($user, 'See a patient now - '.$req->specialty, "A patient needs a {$modeLabel} {$req->specialty} consult now. Accept within {$secs}s.", [
+            'service' => 'doctor_now', 'request_id' => $req->id, 'offer_id' => $offer->id, 'offer_key' => 'dm:'.$offer->id,
+            'route' => 'doctor_offer', 'params' => ['offer_id' => $offer->id], 'url' => '/staff/live-consults',
         ]);
     }
 

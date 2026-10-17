@@ -89,6 +89,9 @@
 
   function renderOffer(o) {
     var box = $('drv-offer');
+    // The global alert modal (pa-dispatch.js: looping sound, swipe right to accept,
+    // "taken by another driver") handles offers; the legacy card stays hidden.
+    if (window.PA_DISPATCH) { box.hidden = true; return; }
     if (!o) { box.hidden = true; clearInterval(offerTimer); lastOfferId = null; return; }
     if (o.id !== lastOfferId) {
       lastOfferId = o.id;
@@ -116,7 +119,7 @@
 
   function renderRide(r) {
     var box = $('drv-ride');
-    if (!r) { box.hidden = true; currentRideId = null; activeLine.clear(); tripLine.clear(); rk = ''; tk = ''; return; }
+    if (!r) { box.hidden = true; currentRideId = null; activeLine.clear(); tripLine.clear(); rk = ''; tk = ''; mountRecorder(null); return; }
     if (r.id !== currentRideId) { currentRideId = r.id; setPins(r.pickup, r.dropoff); rk = ''; tk = ''; }
     box.hidden = false;
     text($('drv-ride-status'), {
@@ -130,6 +133,8 @@
     text($('drv-ride-dropoff'), r.dropoff.address);
     text($('drv-ride-eta'), r.eta ? r.eta.minutes + ' min · ' + r.eta.distance_km.toFixed(1) + ' km to ' + (r.eta.target === 'pickup' ? 'pickup' : 'drop-off') + ' · fare ' + S.money(r.fare) : 'Fare ' + S.money(r.fare));
     show($('drv-test'), !!r.simulated);
+    renderRider(r.rider);
+    mountRecorder(r.id);
 
     var target = r.status === 'in_progress' ? r.dropoff : r.pickup;
     navLinks(target.lat, target.lng);
@@ -156,6 +161,34 @@
 
     act.dataset.next = r.status === 'in_progress' ? 'completed' : r.status === 'arrived' ? 'in_progress' : 'arrived';
     act.textContent = r.status === 'in_progress' ? 'Complete trip' : r.status === 'arrived' ? 'Start trip' : 'Arrived at pickup';
+  }
+
+  function renderRider(rd) {
+    var el = $('drv-rider');
+    if (!el) return;
+    if (!rd) { el.innerHTML = ''; return; }
+    var v = rd.verified || {};
+    var chip = function (ok, label) { return '<span class="pa-badge' + (ok ? ' is-go' : '') + '" style="margin:4px 4px 0 0">' + (ok ? '✓ ' + label + ' verified' : label + ' not verified') + '</span>'; };
+    var avatar = rd.photo_url ? '<img src="' + S.esc(rd.photo_url) + '" alt="" style="width:100%;height:100%;object-fit:cover">' : S.esc(rd.initials || '?');
+    var html = '<div style="display:flex;gap:12px;align-items:center;background:#F7F5F0;border:1px solid #ECE7DC;border-radius:12px;padding:10px 12px">' +
+      '<div style="width:46px;height:46px;border-radius:50%;background:#101012;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;overflow:hidden;flex:0 0 46px">' + avatar + '</div>' +
+      '<div style="min-width:0"><div style="font-weight:900;font-size:16px">' + S.esc(rd.full_name || rd.first_name) + ' · ' + S.esc(rd.rating_label) + '</div>' +
+      '<div class="pa-sh-sub" style="margin:2px 0 0">' + (rd.trips_completed || 0) + ' trips' + (rd.member_since ? ' · member since ' + S.esc(rd.member_since) : '') + '</div>' +
+      '<div>' + chip(v.phone, 'Phone') + chip(v.id, 'ID') + chip(v.medical_aid, 'Medical aid') + '</div></div></div>';
+    if (rd.needs && rd.needs.length) html += '<div class="pa-note" style="margin-top:8px">♿ ' + rd.needs.map(S.esc).join(' · ') + '</div>';
+    if (rd.pickup_notes) html += '<div class="pa-note" style="margin-top:8px">📝 ' + S.esc(rd.pickup_notes) + '</div>';
+    if (rd.booked_by) html += '<div class="pa-sh-sub" style="margin-top:8px">Booked by ' + S.esc(rd.booked_by.name) + (rd.booked_by.phone ? ' · <a href="tel:' + S.esc(rd.booked_by.phone.replace(/[^0-9+]/g, '')) + '">' + S.esc(rd.booked_by.phone) + '</a>' : '') + '</div>';
+    if (rd.emergency_contact) html += '<div class="pa-sh-sub" style="margin-top:4px">Emergency contact: ' + S.esc(rd.emergency_contact.name || '') + ' · <a href="tel:' + S.esc(String(rd.emergency_contact.phone).replace(/[^0-9+]/g, '')) + '">' + S.esc(rd.emergency_contact.phone) + '</a></div>';
+    el.innerHTML = html;
+  }
+
+  var recorderRide = null;
+  function mountRecorder(id) {
+    var slot = $('drv-recorder-slot');
+    if (!slot || recorderRide === id) return;
+    recorderRide = id;
+    slot.innerHTML = id ? '<div data-pa-trip-recorder data-ride-id="' + Number(id) + '" data-role="driver"></div>' : '';
+    try { if (id && window.PaTripRecorder && window.PaTripRecorder.mount) window.PaTripRecorder.mount(slot.firstChild); } catch (e) {}
   }
 
   function renderQueue(q) {
@@ -243,6 +276,7 @@
     if (next === 'in_progress' && state.ride.pin_required) {
       body.pin = ($('drv-pin').value || '').trim();
       if (!/^\d{4}$/.test(body.pin)) { toast('Enter the 4-digit PIN from the patient.'); $('drv-pin').focus(); return; }
+      body.pin = body.pin.replace(/\D/g, '');
     }
     if (next === 'completed' && !window.confirm('Complete this trip at the drop-off?')) return;
     var b = this; b.disabled = true;
@@ -300,6 +334,9 @@
     } catch (e) {}
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+
+  // Accepted from the alert modal: show the trip straight away.
+  window.PA_DISPATCH_HOOKS = { onAccepted: function () { maybeSend(true); refresh(); } };
 
   refresh();
 })();

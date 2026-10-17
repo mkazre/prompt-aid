@@ -6,6 +6,7 @@
 </div></div>
 <div class="pa-container" style="padding-top:32px;padding-bottom:80px">
   <form method="GET" style="margin-bottom:16px"><input class="pa-field" name="search" value="{{ request('search') }}" placeholder="Search clinics…" style="max-width:360px" /></form>
+  @include('dispatch.radius-filter')
   <div class="pa-spread" style="margin-bottom:16px">
     <div style="font-size:14px;color:var(--pa-muted)"><strong style="color:var(--pa-ink)">{{ $clinics->total() }}</strong> results</div>
   </div>

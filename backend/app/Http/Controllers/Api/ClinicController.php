@@ -13,8 +13,11 @@ class ClinicController extends Controller
 {
     public function index(Request $request)
     {
+        // Optional ?lat=&lng=&radius_km= : only clinics within the patient's radius.
+        $geo = $request->filled('radius_km') ? \App\Support\GeoRadius::fromRequest($request) : null;
         $clinics = Clinic::query()
             ->where('status', 'active')
+            ->when($geo, fn ($q) => \App\Support\GeoRadius::box($q, 'lat', 'lng', $geo))
             ->when($request->string('search')->isNotEmpty(), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
             ->when($request->string('city')->isNotEmpty(), fn ($q) => $q->where('city', $request->string('city')))
             ->withCount('doctors')
@@ -33,8 +36,11 @@ class ClinicController extends Controller
         $search = trim((string) $request->string('search'));
         $group = (string) $request->string('group');
 
+        // Optional ?lat=&lng=&radius_km= : only doctors with a practice within the radius.
+        $geo = $request->filled('radius_km') ? \App\Support\GeoRadius::fromRequest($request) : null;
         $doctors = DoctorProfile::query()
             ->where('status', 'active')
+            ->when($geo, fn ($q) => $q->whereHas('clinics', fn ($cq) => \App\Support\GeoRadius::box($cq, 'clinics.lat', 'clinics.lng', $geo)))
             ->with(['user', 'clinics', 'availabilities' => fn ($q) => $q->where('is_active', true)])
             ->when($group === 'gp', fn ($q) => $q->generalPractitioners())
             ->when($group === 'dentists', fn ($q) => $q->dentists())

@@ -1,11 +1,11 @@
 import React from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { PaAvatar } from '../../components/pa';
 import { SectionTitle, SettingTile, SoftCard } from '../../components/settings-ui';
-import { SecurityTile } from '../../components/AccountTiles';
+import { LogoutButton, SecurityTile } from '../../components/AccountTiles';
 import { appVersion, avatarUrl } from '../../services/app';
 import { pa, paFonts } from '../../theme';
 
@@ -15,15 +15,8 @@ import { pa, paFonts } from '../../theme';
  */
 export default function DoctorSettingsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const photo = avatarUrl(user?.avatar);
-
-  function confirmLogout() {
-    Alert.alert('Log out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log out', style: 'destructive', onPress: logout },
-    ]);
-  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: 48 }}>
@@ -55,9 +48,10 @@ export default function DoctorSettingsScreen({ navigation }: any) {
         <SettingTile icon="lock-closed-outline" title="Change password" onPress={() => navigation.navigate('ChangePassword')} />
         <SettingTile icon="document-text-outline" title="T&C" subtitle="Terms & policies" onPress={() => navigation.navigate('AppPage', { key: 'terms' })} />
         <SettingTile icon="information-circle-outline" title="About us" subtitle="About Prompt Aid" onPress={() => navigation.navigate('AppPage', { key: 'about' })} />
-        <SettingTile icon="log-out-outline" title="Logout" onPress={confirmLogout} danger />
         <SettingTile icon="phone-portrait-outline" title="App version" subtitle={`v${appVersion()}`} />
       </View>
+
+      <LogoutButton />
     </ScrollView>
   );
 }

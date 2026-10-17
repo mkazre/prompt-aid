@@ -7,6 +7,7 @@
     <input class="pa-field" name="search" value="{{ request('search') }}" placeholder="Search by doctor name or speciality, e.g. Dr Smith or cardiologist" style="flex:1 1 260px" />
     <button class="pa-btn" type="submit">Search</button>
   </form>
+  @include('dispatch.radius-filter')
   <x-care-tabs :active="in_array($group, ['gp', 'dentists', 'specialists'], true) ? $group : null" />
 </div></div>
 

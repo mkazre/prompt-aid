@@ -38,9 +38,12 @@ class RideChargeService
 
         try {
             $result = $this->gateway->charge($charge, $method);
+            // Online gateways never settle synchronously: the charge stays pending until a
+            // verified webhook marks it paid (card on file) or the patient pays from the payment sheet.
             $charge->update([
-                'status' => ! empty($result['success']) ? RideCharge::STATUS_PAID : RideCharge::STATUS_FAILED,
+                'status' => ! empty($result['success']) ? RideCharge::STATUS_PAID : (! empty($result['pending']) ? RideCharge::STATUS_PENDING : RideCharge::STATUS_FAILED),
                 'gateway_ref' => $result['reference'] ?? null,
+                'gateway' => $result['gateway'] ?? $charge->gateway,
             ]);
         } catch (\Throwable $e) {
             Log::warning('[RideChargeService] charge failed: '.$e->getMessage());

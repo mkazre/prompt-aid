@@ -823,3 +823,43 @@ a.paw-row:hover{text-decoration:none;background:var(--pa-surface-2)}
 .pa-cookie-text a{color:#fff;text-decoration:underline}
 @media (max-width:560px){.pa-cookie{flex-direction:column;align-items:stretch}.pa-privacy-row{align-items:flex-start}}
 /* ============================ END PRIVACY ============================ */
+
+/* ============================ PAYMENTS ============================ */
+.pa-pay-box{max-width:520px;display:flex;flex-direction:column}
+.pa-pay.is-frame .pa-pay-box{max-width:560px}
+.pa-pay-amount{font-size:22px;font-weight:900;letter-spacing:-.02em;white-space:nowrap}
+.pa-pay-test{background:var(--pa-beacon-wash);border:1px solid var(--pa-beacon-line);padding:10px 12px;font-size:13px;margin-bottom:14px}
+.pa-pay-methods{display:flex;flex-direction:column;gap:10px}
+.pa-pay-method{display:flex;align-items:center;gap:14px;border:1px solid var(--pa-line);padding:14px;cursor:pointer;background:var(--pa-surface)}
+.pa-pay-method:hover{border-color:var(--pa-ink)}
+.pa-pay-method input{position:absolute;opacity:0;pointer-events:none}
+.pa-pay-mark{flex:none;width:42px;height:42px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:13px;letter-spacing:.04em}
+.pa-pay-mtext{flex:1;display:flex;flex-direction:column;gap:2px}
+.pa-pay-mtext strong{font-size:15px}
+.pa-pay-mtext small{font-size:12px;color:var(--pa-muted)}
+.pa-pay-tick{flex:none;width:20px;height:20px;border:2px solid var(--pa-line);border-radius:50%}
+.pa-pay-method:has(input:checked){border-color:var(--pa-ink);box-shadow:inset 0 0 0 1px var(--pa-ink)}
+.pa-pay-method input:checked ~ .pa-pay-tick{border-color:var(--pa-ink);background:radial-gradient(circle,var(--pa-ink) 45%,transparent 50%)}
+.pa-pay-save{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:14px}
+.pa-pay-error{background:var(--pa-signal-wash);color:var(--pa-signal-ink);padding:10px 12px;font-size:13px;margin-top:14px}
+.pa-pay-go{width:100%;margin-top:18px;justify-content:center}
+.pa-pay-fine{font-size:12px;color:var(--pa-muted);margin:12px 0 0;text-align:center}
+.pa-pay-framewrap{display:flex;flex-direction:column}
+.pa-pay-frame{display:block;width:100%;height:min(640px,70vh);border:0;background:#fff}
+.pa-pay-framebar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--pa-line)}
+.pa-pay-result{text-align:center;padding:36px 26px}
+.pa-pay-ic{width:60px;height:60px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;background:var(--pa-line-soft)}
+.pa-pay-ic.is-go{background:var(--pa-go)}
+.pa-pay-ic.is-stop{background:var(--pa-signal)}
+.pa-pay-ic.is-wait{background:var(--pa-beacon);color:var(--pa-ink)}
+.pa-pay-result .pa-btn{margin-top:18px}
+.pa-pay-spin{width:28px;height:28px;border:3px solid var(--pa-line);border-top-color:var(--pa-ink);border-radius:50%;animation:pa-pay-spin .8s linear infinite}
+@keyframes pa-pay-spin{to{transform:rotate(360deg)}}
+.pa-plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.pa-plan{border:1px solid var(--pa-line);background:var(--pa-surface);padding:20px;display:flex;flex-direction:column;gap:8px}
+.pa-plan-price{font-size:26px;font-weight:900;letter-spacing:-.02em}
+.pa-plan-price small{font-size:13px;font-weight:400;color:var(--pa-muted)}
+.pa-plan ul{margin:4px 0 8px;padding-left:18px;font-size:13px;color:var(--pa-ink-soft)}
+.pa-plan .pa-btn{margin-top:auto;justify-content:center}
+@media (max-width:560px){.pa-pay{padding:0;align-items:flex-end}.pa-pay-box{max-width:none;max-height:96vh}.pa-pay-frame{height:72vh}}
+/* ============================ END PAYMENTS ============================ */

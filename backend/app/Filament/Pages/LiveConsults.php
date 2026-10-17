@@ -160,7 +160,7 @@ class LiveConsults extends Page
         $joinUrl = null;
         if ($consult?->appointment && $consult->appointment->canJoinVideoNow()) {
             try {
-                $joinUrl = app(VideoRoomService::class)->joinPayload($consult->appointment, Auth::user())['join_url'] ?? null;
+                $joinUrl = app(VideoRoomService::class)->callUrlFor($consult->appointment, Auth::user());
             } catch (\Throwable $e) {
                 $joinUrl = null;
             }

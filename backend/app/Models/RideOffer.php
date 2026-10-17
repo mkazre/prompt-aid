@@ -19,9 +19,16 @@ class RideOffer extends Model
     /** Withdrawn because the ride was cancelled / assigned elsewhere, or the driver cancelled after accepting. */
     public const CANCELLED = 'cancelled';
 
+    /** Broadcast: another driver accepted first. */
+    public const TAKEN = 'taken';
+
+    public const MODE_BROADCAST = 'broadcast';
+
+    public const MODE_SEQUENTIAL = 'sequential';
+
     protected $fillable = [
         'ride_id', 'driver_profile_id', 'status', 'attempt_no', 'distance_km', 'eta_minutes',
-        'offered_at', 'expires_at', 'responded_at',
+        'offered_at', 'expires_at', 'responded_at', 'mode',
     ];
 
     protected function casts(): array

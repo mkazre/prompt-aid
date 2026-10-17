@@ -84,12 +84,16 @@ Route::get('/messages/{message}/attachment', [\App\Http\Controllers\Api\Conversa
 require __DIR__.'/api_health.php';
 // Support stream: help FAQs, announcements, support tickets, feedback surveys.
 require __DIR__.'/api_support.php';
+// Online payments: webhooks (public), plans (public), intents + subscriptions (auth inside).
+require __DIR__.'/api_payments.php';
 
 // --- Authenticated (any role) ---
 Route::middleware('auth:sanctum')->group(function () {
     require __DIR__.'/api_doctor_match.php';
     require __DIR__.'/api_privacy.php';
     require __DIR__.'/api_commerce.php';
+    require __DIR__.'/api_safety.php';
+    require __DIR__.'/api_dispatch.php';
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/profile', [ProfileController::class, 'update']);

@@ -10,6 +10,8 @@
   @php
     $completedRides = $rides->where('status', \App\Models\Ride::STATUS_COMPLETED);
     $activeRidesCount = $rides->filter->isActive()->count();
+    // Trip audio recordings per ride (safety): ride_id => count.
+    $recordingCounts = \Illuminate\Support\Facades\Schema::hasTable('ride_recordings') ? \App\Models\RideRecording::query()->whereIn('ride_id', $rides->pluck('id'))->selectRaw('ride_id, count(*) as n')->groupBy('ride_id')->pluck('n', 'ride_id') : collect();
   @endphp
   <div class="pa-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:24px">
     <div class="pa-stat"><div class="k">Trips this year</div><div class="v">{{ $rides->count() }}</div><div class="d flat">R{{ number_format($completedRides->sum('fare_final'), 0) }} spent</div></div>
@@ -28,6 +30,9 @@
           <td><span class="pa-badge {{ $ride->status === 'completed' ? 'is-go' : ($ride->status === 'cancelled' ? 'is-stop' : 'is-wait') }}">{{ str($ride->status)->headline() }}</span></td>
           <td>{{ $ride->fare_final ? 'R'.number_format($ride->fare_final, 2) : ($ride->fare_estimate ? 'est. R'.number_format($ride->fare_estimate, 2) : '—') }}</td>
           <td class="t-right">
+            @if ($recordingCounts->get($ride->id))
+              <a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.rides.recordings', $ride) }}">Recordings ({{ $recordingCounts->get($ride->id) }})</a>
+            @endif
             @if ($ride->isActive())
               <a class="pa-btn-ghost pa-btn-sm" href="{{ route('rides.track', $ride) }}">Track</a>
             @endif
@@ -38,6 +43,7 @@
       @endforelse
     </tbody>
   </table></div>
+  @include('payments.plan-offer', ['scope' => 'shuttle_pass', 'heading' => 'Regular trips (e.g. dialysis)? Get a shuttle pass'])
 </div>
 </div>
 </x-layout>

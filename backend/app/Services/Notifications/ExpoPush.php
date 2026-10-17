@@ -33,7 +33,7 @@ class ExpoPush
      * @param  iterable<int>|int  $userIds
      * @param  array<string, mixed>  $data  deep-link payload delivered to the app
      */
-    public static function toUsers(iterable|int $userIds, string $title, ?string $body = null, array $data = [], string $channel = 'alerts'): void
+    public static function toUsers(iterable|int $userIds, string $title, ?string $body = null, array $data = [], string $channel = 'alerts', ?string $sound = null): void
     {
         if (! self::enabled()) {
             return;
@@ -44,10 +44,10 @@ class ExpoPush
             return;
         }
 
-        $send = function () use ($ids, $title, $body, $data, $channel) {
+        $send = function () use ($ids, $title, $body, $data, $channel, $sound) {
             try {
-                PushToken::query()->whereIn('user_id', $ids)->select('token')->orderBy('id')->chunk(100, function ($tokens) use ($title, $body, $data, $channel) {
-                    self::post($tokens->pluck('token')->all(), $title, $body, $data, $channel);
+                PushToken::query()->whereIn('user_id', $ids)->select('token')->orderBy('id')->chunk(100, function ($tokens) use ($title, $body, $data, $channel, $sound) {
+                    self::post($tokens->pluck('token')->all(), $title, $body, $data, $channel, $sound);
                 });
             } catch (\Throwable $e) {
                 Log::warning('[ExpoPush] '.$e->getMessage());
@@ -62,7 +62,12 @@ class ExpoPush
     }
 
     /** @param  array<int, string>  $tokens */
-    protected static function post(array $tokens, string $title, ?string $body, array $data, string $channel): void
+    /**
+     * $sound: iOS sound file bundled with the app (e.g. request_alert.wav);
+     * Android plays the channel's sound (the app creates a "requests" channel
+     * with request_alert.wav).
+     */
+    protected static function post(array $tokens, string $title, ?string $body, array $data, string $channel, ?string $sound = null): void
     {
         if ($tokens === []) {
             return;
@@ -73,7 +78,7 @@ class ExpoPush
             'title' => mb_substr($title, 0, 180),
             'body' => $body ? mb_substr($body, 0, 400) : null,
             'data' => (object) $data,
-            'sound' => 'default',
+            'sound' => $sound ?: 'default',
             'priority' => 'high',
             'channelId' => $channel,
         ], $tokens);

@@ -10,10 +10,15 @@ use RuntimeException;
 
 class PharmacyPageController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
+        // Optional "near me": ?lat=&lng=&radius_km= (see dispatch/radius-filter partial).
+        $geo = $request->filled('radius_km') ? \App\Support\GeoRadius::fromRequest($request) : null;
+
         return view('pharmacies.index', [
-            'pharmacies' => Pharmacy::where('status', 'active')->withCount('products')->paginate(9),
+            'pharmacies' => Pharmacy::where('status', 'active')
+                ->when($geo, fn ($q) => \App\Support\GeoRadius::box($q, 'lat', 'lng', $geo))
+                ->withCount('products')->paginate(9)->withQueryString(),
         ]);
     }
 
@@ -76,6 +81,12 @@ class PharmacyPageController extends Controller
             );
         } catch (RuntimeException $e) {
             return back()->withInput()->withErrors(['qty' => $e->getMessage()]);
+        }
+
+        // Payable now → straight to My orders with the payment sheet open.
+        if ($order->status === \App\Models\Order::STATUS_PENDING_PAYMENT && $order->payment_status === 'unpaid' && (float) $order->total > 0) {
+            return redirect()->to(route('account.orders').'?pay=order:'.$order->id)
+                ->with('success', "Order {$order->order_no} placed — complete your payment below.");
         }
 
         return redirect()->route('dashboard')->with('success', "Order {$order->order_no} placed! Track it from your dashboard.");

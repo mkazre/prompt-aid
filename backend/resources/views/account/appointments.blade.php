@@ -29,7 +29,7 @@
           <td><span class="pa-badge {{ in_array($appt->status, ['completed', 'confirmed', 'checked_in']) ? 'is-go' : (in_array($appt->status, ['cancelled', 'no_show']) ? 'is-stop' : 'is-wait') }}">{{ str($appt->status)->headline() }}</span></td>
           <td class="t-right">
             @if ($appt->isVideo() && $appt->canJoinVideoNow())
-              <a class="pa-btn pa-btn-sm" href="{{ route('account.appointments.video', $appt) }}" target="_blank" rel="noopener">Join video</a>
+              <a class="pa-btn pa-btn-sm" href="{{ route('account.appointments.call', $appt) }}">Join video</a>
             @endif
             @if ($appt->doctor_profile_id && $appt->status !== 'matching')
               <form method="POST" action="{{ route('account.messages.start') }}" style="display:inline">

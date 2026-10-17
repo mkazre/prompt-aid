@@ -85,7 +85,11 @@ class OrderService
                 $discount = $result['discount'];
             }
 
-            $total = round($subtotal - $discount + $deliveryFee, 2);
+            // Subscription benefit hook: active "chronic medication" members get their plan's % off the basket.
+            $memberPct = app(\App\Services\Payments\SubscriptionService::class)->discountPercentFor($patient->user, 'chronic_medication');
+            $memberDiscount = $memberPct > 0 ? round(max(0, $subtotal - $discount) * min($memberPct, 100) / 100, 2) : 0.0;
+
+            $total = round($subtotal - $discount - $memberDiscount + $deliveryFee, 2);
             $commission = round($subtotal * ((float) $pharmacy->commission_rate / 100), 2);
 
             $order = Order::query()->create([
@@ -96,6 +100,7 @@ class OrderService
                 'delivery_fee' => $deliveryFee,
                 'discount_amount' => $promo ? $discount : null,
                 'promo_code' => $promo?->code,
+                'member_discount' => $memberDiscount > 0 ? $memberDiscount : null,
                 'total' => $total,
                 'commission_amount' => $commission,
                 'delivery_address' => $deliveryAddress,
@@ -153,6 +158,10 @@ class OrderService
         }
 
         $result = $this->gateway->charge($order, $method);
+
+        if (! empty($result['pending'])) {
+            throw new RuntimeException('Please complete this payment online — choose a payment method in the payment sheet.');
+        }
 
         if ($result['success']) {
             $order->update(['payment_status' => 'paid', 'status' => Order::STATUS_CONFIRMED]);

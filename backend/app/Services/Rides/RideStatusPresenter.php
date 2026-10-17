@@ -79,6 +79,8 @@ class RideStatusPresenter
         ] : null;
         $data['can_cancel'] = in_array($ride->status, [Ride::STATUS_REQUESTED, Ride::STATUS_ACCEPTED, Ride::STATUS_DRIVER_ENROUTE, Ride::STATUS_ARRIVED], true);
         $data['rating'] = $ride->status === Ride::STATUS_COMPLETED ? ($ride->review ? ['rating' => (int) $ride->review->rating, 'comment' => $ride->review->comment] : false) : null;
+        // Trip audio recording notice: recording_active (bool) + recorded_by (['patient'|'driver', ...]).
+        $data += app(\App\Services\Safety\RideRecordingService::class)->liveStatus($ride);
 
         return $data;
     }
@@ -133,6 +135,8 @@ class RideStatusPresenter
             'status' => $ride->status,
             'status_label' => $this->statusLabel($ride),
             'is_active' => $ride->isActive(),
+            'is_terminal' => $ride->isTerminal(),
+            'is_expired' => $ride->isExpired(),
             'vehicle_type' => $ride->vehicle_type,
             'pickup' => ['lat' => (float) $ride->pickup_lat, 'lng' => (float) $ride->pickup_lng, 'address' => $ride->pickup_address],
             'dropoff' => ['lat' => (float) $ride->dropoff_lat, 'lng' => (float) $ride->dropoff_lng, 'address' => $ride->dropoff_address],
@@ -143,6 +147,12 @@ class RideStatusPresenter
                 'searching_since' => $ride->dispatch_started_at?->toIso8601String(),
                 'timeout_at' => $timeoutAt?->toIso8601String(),
                 'scheduled_for' => $ride->scheduled_for?->toIso8601String(),
+                'mode' => $ride->dispatch_mode,
+                // "Searching N drivers within X km" (live offers right now / everyone offered in this search).
+                'drivers_notified' => $ride->status === Ride::STATUS_REQUESTED ? $ride->offers()->where('status', \App\Models\RideOffer::PENDING)->where('expires_at', '>', now())->count() : 0,
+                'drivers_offered' => $ride->status === Ride::STATUS_REQUESTED && $ride->dispatch_started_at ? $ride->offers()->where('offered_at', '>=', $ride->dispatch_started_at)->count() : 0,
+                'patient_radius_km' => $ride->radius_km !== null ? (float) $ride->radius_km : null,
+                'radius_options' => \App\Support\DispatchSettings::radiusOptions(),
             ],
             'driver' => $driver,
             'eta' => $eta ? [
@@ -211,6 +221,12 @@ class RideStatusPresenter
         if ($ride->status === Ride::STATUS_CANCELLED && $ride->cancelled_by === 'no_show') {
             return 'No-show';
         }
+        if ($ride->isExpired()) {
+            return $ride->closed_reason === 'no_driver_in_time' ? 'Expired — no driver found' : 'Closed (expired)';
+        }
+        if (! $ride->isTerminal() && $ride->isStale()) {
+            return 'Expired';
+        }
 
         return self::STATUS_LABELS[$ride->status] ?? ucfirst(str_replace('_', ' ', $ride->status));
     }
@@ -237,7 +253,7 @@ class RideStatusPresenter
             $out[] = ['key' => $key, 'label' => $label, 'at' => $at?->toIso8601String(), 'state' => $state];
         }
         if ($ride->status === Ride::STATUS_CANCELLED) {
-            $out[] = ['key' => 'cancelled', 'label' => $ride->cancelled_by === 'no_show' ? 'Marked no-show' : 'Cancelled', 'at' => $ride->cancelled_at?->toIso8601String(), 'state' => 'stop'];
+            $out[] = ['key' => 'cancelled', 'label' => $ride->cancelled_by === 'no_show' ? 'Marked no-show' : ($ride->isExpired() ? 'Expired' : 'Cancelled'), 'at' => $ride->cancelled_at?->toIso8601String(), 'state' => 'stop'];
         }
 
         return $out;

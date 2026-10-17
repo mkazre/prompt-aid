@@ -26,7 +26,7 @@ class DoctorMatchRequest extends Model
         'appointment_id', 'patient_profile_id', 'specialty', 'mode', 'lat', 'lng', 'status',
         'outcome_reason', 'base_fee', 'multiplier', 'price', 'price_breakdown', 'attempts',
         'expires_at', 'matched_at', 'doctor_profile_id', 'clinic_id', 'invoice_id',
-        'cancelled_at', 'cancel_fee',
+        'cancelled_at', 'cancel_fee', 'radius_km',
     ];
 
     protected function casts(): array

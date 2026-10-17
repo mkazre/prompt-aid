@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { api, apiErrorMessage } from '../../api/client';
 import { Ride } from '../../api/types';
 import { PaButton, PaEmptyState } from '../../components/pa';
 import RideMap from '../../components/RideMap';
+import RiderCard from '../../components/RiderCard';
+import TripRecorder from '../../components/safety/TripRecorder';
 import { pa, paFonts, paRadius, type } from '../../theme';
 
 const NEXT_STATUS: Record<string, { next: string; label: string; primary?: boolean } | undefined> = {
@@ -22,6 +24,8 @@ export default function ActiveRideScreen({ navigation }: any) {
   const [updating, setUpdating] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
   const locationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
@@ -59,28 +63,40 @@ export default function ActiveRideScreen({ navigation }: any) {
     const step = NEXT_STATUS[ride.status];
     if (!step) return;
 
+    // Trip PIN: the patient reads the 4 digits from their app; the server checks it (rate limited).
+    const needsPin = step.next === 'in_progress' && ride.pin_required !== false;
+    if (needsPin && !/^\d{4}$/.test(pin.trim())) {
+      setPinError("Enter the 4-digit trip PIN from the patient's app.");
+      return;
+    }
+
     setUpdating(true);
+    setPinError(null);
     try {
       await api.post(`/driver/rides/${ride.id}/status`, {
         status: step.next,
         lat: pos?.lat,
         lng: pos?.lng,
+        ...(needsPin ? { pin: pin.trim() } : {}),
       });
+      setPin('');
       if (step.next === 'completed') {
         Alert.alert('Trip completed', 'Great job! You are ready for your next trip.');
         navigation.navigate('Drive');
       } else {
         await load();
       }
-    } catch (e) {
-      Alert.alert('Could not update trip', apiErrorMessage(e));
+    } catch (e: any) {
+      const msg = apiErrorMessage(e);
+      if (step.next === 'in_progress' && [422, 429].includes(e?.response?.status)) setPinError(msg);
+      else Alert.alert('Could not update trip', msg);
     } finally {
       setUpdating(false);
     }
   }
 
   function call() {
-    const phone = ride?.patient?.user?.phone;
+    const phone = ride?.rider?.phone ?? ride?.patient?.user?.phone;
     if (!phone) return Alert.alert('No phone number on file for this patient.');
     Linking.openURL(`tel:${phone}`);
   }
@@ -145,7 +161,7 @@ export default function ActiveRideScreen({ navigation }: any) {
       <View style={{ padding: 16 }}>
         <View style={styles.spread}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.patientName}>{ride.patient?.user?.name ?? 'Patient'}</Text>
+            <Text style={styles.patientName}>{ride.rider?.full_name ?? ride.patient?.user?.name ?? 'Patient'}</Text>
             <Text style={styles.meta}>
               → {ride.dropoff_address}
               {ride.wait_and_return ? ' · wait & return' : ''}
@@ -160,6 +176,27 @@ export default function ActiveRideScreen({ navigation }: any) {
           <PaButton title="Cancel" onPress={cancel} variant="ghost" loading={cancelling} style={styles.actionBtn} />
         </View>
 
+        <RiderCard rider={ride.rider} />
+
+        {ride.status === 'arrived' && ride.pin_required !== false ? (
+          <View style={styles.pinBox}>
+            <Text style={styles.pinLabel}>Patient's 4-digit trip PIN</Text>
+            <TextInput
+              value={pin}
+              onChangeText={(v) => {
+                setPin(v.replace(/[^0-9]/g, '').slice(0, 4));
+                setPinError(null);
+              }}
+              keyboardType="number-pad"
+              maxLength={4}
+              placeholder="••••"
+              style={styles.pinInput}
+              accessibilityLabel="Trip PIN"
+            />
+            {pinError ? <Text style={styles.pinError}>{pinError}</Text> : <Text style={styles.pinHelp}>Ask the patient for the PIN shown in their app before starting.</Text>}
+          </View>
+        ) : null}
+
         {step && (
           <PaButton
             title={step.label}
@@ -168,6 +205,13 @@ export default function ActiveRideScreen({ navigation }: any) {
             variant={step.primary ? 'primary' : 'ghost'}
           />
         )}
+
+        {/* Trip audio recording (safety) — accepted → completed. */}
+        {ACTIVE_STATUSES.includes(ride.status) ? (
+          <View style={{ marginTop: 14 }}>
+            <TripRecorder rideId={ride.id} role="driver" />
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -182,4 +226,9 @@ const styles = StyleSheet.create({
   meta: { ...type.small, marginTop: 2 },
   actionsRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
   actionBtn: { flex: 1, paddingVertical: 10 },
+  pinBox: { backgroundColor: pa.beaconWash, borderWidth: 1, borderColor: pa.beaconLine, borderRadius: 12, padding: 12, marginBottom: 12 },
+  pinLabel: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
+  pinInput: { marginTop: 8, backgroundColor: pa.surface, borderWidth: 1, borderColor: pa.line, borderRadius: 10, paddingVertical: 10, fontFamily: paFonts.black, fontSize: 28, letterSpacing: 12, textAlign: 'center', color: pa.ink },
+  pinHelp: { ...type.small, marginTop: 6 },
+  pinError: { fontFamily: paFonts.bold, fontSize: 13, color: pa.signal, marginTop: 6 },
 });

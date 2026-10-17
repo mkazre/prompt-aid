@@ -164,7 +164,7 @@
     if (p.invoice) {
       var paid = p.invoice.status === 'paid';
       bill = '<div class="pa-dn-price"><div><div class="pa-label" style="margin:0">Consultation · ' + esc(p.invoice.invoice_no) + '</div><div class="v" style="font-size:22px">' + money(p.invoice.total) + '</div></div>' +
-        '<div>' + (paid ? '<span class="pa-badge is-go">Paid</span>' : '<button class="pa-btn-quiet pa-btn-sm" type="button" data-dn="pay">Pay now by card</button>') + '</div></div>';
+        '<div>' + (paid ? '<span class="pa-badge is-go">Paid</span>' : '<button class="pa-btn-quiet pa-btn-sm" type="button" data-dn="pay">Pay now</button>') + '</div></div>';
       if (p.can_cancel) {
         bill += '<p class="pa-muted" style="font-size:12px;margin:8px 0 0">' + (p.cancel_fee_now > 0
           ? 'Cancelling now costs ' + money(p.cancel_fee_now) + ' (the doctor has set time aside for you).'
@@ -214,6 +214,15 @@
         : 'Cancel this request? You will not be charged.';
       if (!window.confirm(warn)) return;
     }
+    // Pay through the shared payment sheet (PayFast / Paystack / Ozow, or test mode).
+    if (kind === 'pay' && window.PromptAidPay && p.invoice) {
+      window.PromptAidPay.open({
+        payable_type: 'invoice', payable_id: p.invoice.id, amount: p.invoice.total,
+        title: 'Consultation · ' + p.invoice.invoice_no,
+        onPaid: function () { if (typeof poll === 'function') poll(); else window.location.reload(); }
+      });
+      return;
+    }
     var url = cfg.base + '/' + p.id + '/' + (kind === 'cancel' ? 'cancel' : kind === 'pay' ? 'pay' : 'waitlist');
     state.busy = true;
     if (btn) btn.disabled = true;
@@ -256,7 +265,7 @@
     var m = mode();
     if (m === 'in_person' && !state.loc) { error('Share your location (or use your saved address) so we can find rooms near you.'); return; }
     var body = { specialty: specialty(), mode: m };
-    if (m === 'in_person') { body.lat = state.loc.lat; body.lng = state.loc.lng; }
+    if (m === 'in_person') { body.lat = state.loc.lat; body.lng = state.loc.lng; var rk = $('dn-radius'); if (rk && rk.value) body.radius_km = Number(rk.value); }
     state.busy = true; reqBtn.disabled = true; error('');
     api('POST', cfg.storeUrl, body)
       .then(function (json) { render(json.data); })

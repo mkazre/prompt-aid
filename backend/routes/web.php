@@ -196,10 +196,14 @@ Route::middleware('auth')->group(function () {
     require __DIR__.'/web_health.php';
     require __DIR__.'/web_platform.php';
     require __DIR__.'/web_commerce.php';
+    require __DIR__.'/web_dispatch.php';
 });
 
 // Support stream: /help, /faq, newsletter, /account/support, /account/feedback.
 require __DIR__.'/web_support.php';
+require __DIR__.'/web_video.php';
+require __DIR__.'/web_payments.php';
+require __DIR__.'/web_safety.php';
 
 // Page builder catch-all — must stay last. Never matches a path starting
 // with a reserved segment (auth, dashboard, checkout, rides, the Filament
@@ -207,5 +211,5 @@ require __DIR__.'/web_support.php';
 // exclusion is baked into the route's own pattern rather than relying on
 // "runs after everything else" alone.
 Route::get('/{path}', [PageBuilderRenderController::class, 'render'])
-    ->where('path', '^(?!(login|register|join|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets|driver|trip|tick|health-articles|general-practitioners|dentists|virtual-consult|radiology|laboratories|allied|see-a-doctor-now|topic-of-the-month|topics|testimonials)(/|$)).+$')
+    ->where('path', '^(?!(login|register|join|dashboard|account|logout|appointments|checkout|rides|staff|vendor|partner|api|contact|doctors|clinics|pharmacies|storage|build|about|how-it-works|for-providers|faq|privacy|terms|legal-popia|shop|labs|specialists|shuttle|emergency|assets|driver|trip|tick|health-articles|general-practitioners|dentists|virtual-consult|radiology|laboratories|allied|see-a-doctor-now|topic-of-the-month|topics|testimonials|pay|payments)(/|$)).+$')
     ->name('page-builder.render');

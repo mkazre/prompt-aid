@@ -63,7 +63,7 @@ class ShuttleSettings
         'shuttle_dispatch_radius_km' => '8',
         'shuttle_dispatch_max_radius_km' => '25',
         'shuttle_dispatch_timeout_minutes' => '5',
-        'shuttle_trip_pin_mode' => 'web_only',
+        'shuttle_trip_pin_mode' => 'all', // the driver app now collects the PIN; existing installs keep their saved value (Dispatch settings)
         'shuttle_scheduled_dispatch_lead_minutes' => '20',
 
         // --- Data retention (POPIA) ---
@@ -129,7 +129,7 @@ class ShuttleSettings
         Setting::set($key, $value === null ? null : (string) $value);
     }
 
-    /** "web_only" (default — mobile app doesn't send a PIN yet), "all", or "off". */
+    /** "all" (default — web console and driver app both ask for the PIN), "web_only" (older app builds), or "off". */
     public static function pinRequired(bool $fromApi): bool
     {
         return match (self::str('shuttle_trip_pin_mode')) {

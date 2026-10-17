@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', \App\Http\Middleware\FeatureGate::class);
         $middleware->appendToGroup('api', \App\Http\Middleware\FeatureGate::class);
 
+        // Payments: gateways POST to these (verified by signature/hash, never by CSRF token).
+        $middleware->validateCsrfTokens(except: ['pay/*', 'api/payments/webhooks/*']);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
             'feature' => \App\Http\Middleware\FeatureGate::class,

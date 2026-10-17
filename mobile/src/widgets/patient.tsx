@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { fetchActiveRide, isRideActive, RideLike } from '../services/activeRide';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { pa, paFonts } from '../theme';
@@ -148,8 +150,41 @@ export function VisitStats({ config, data, navigation }: WidgetProps<{ items: { 
 // ---------------------------------------------------------------- ride
 
 export function UpcomingRide({ config, data, navigation }: WidgetProps<{ ride: any | null }>) {
-  const r = data?.ride;
-  if (!r) return null;
+  // The widget payload can carry a stale "requested" ride days later, so
+  // re-check against the truly-active ride (GET /rides/active, contract with
+  // dispatch) whenever Home is focused. Unknown yet → render nothing.
+  const [live, setLive] = useState<{ ride: RideLike | null } | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      fetchActiveRide()
+        .then((ride) => { if (alive) setLive({ ride }); })
+        .catch(() => {
+          // Offline: trust the payload only if it passes the client-side staleness check.
+          if (alive) setLive({ ride: isRideActive(data?.ride) ? data!.ride : null });
+        });
+      return () => { alive = false; };
+    }, [data?.ride?.id]),
+  );
+  if (!live) return null;
+  // Prefer the widget payload's richer fields (driver_name) when it is the same ride.
+  // A future scheduled booking from the payload also counts (it isn't "active" yet).
+  const futureBooking = data?.ride?.scheduled_for && new Date(data.ride.scheduled_for).getTime() > Date.now() && isRideActive(data.ride) ? data.ride : null;
+  const r: any = live.ride ? (data?.ride?.id === live.ride.id ? { ...live.ride, ...data.ride } : live.ride) : futureBooking;
+  if (!r) {
+    return (
+      <WCard onPress={() => goTo(navigation, 'Rides/ShuttleRequest')}>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <IconCircle name="navigation" color="#6A4C93" />
+          <View style={{ flex: 1 }}>
+            <Text style={s.rowTitle}>Need a ride to your appointment?</Text>
+            <Text style={s.rowSub}>Door-to-door shuttle, incl. wheelchair & stretcher vehicles.</Text>
+          </View>
+        </View>
+        <WButton title="Book a shuttle" onPress={() => goTo(navigation, 'Rides/ShuttleRequest')} style={{ marginTop: 12 }} />
+      </WCard>
+    );
+  }
   return (
     <WCard onPress={() => goTo(navigation, 'Rides/RideTrack', { rideId: r.id })}>
       <WHeader title={config.title} subtitle={r.ride_ref} />

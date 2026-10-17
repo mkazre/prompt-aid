@@ -61,7 +61,9 @@ class PageController extends Controller
 
     public function clinics(Request $request)
     {
+        $geo = $request->filled('radius_km') ? \App\Support\GeoRadius::fromRequest($request) : null;
         $clinics = Clinic::where('status', 'active')
+            ->when($geo, fn ($q) => \App\Support\GeoRadius::box($q, 'lat', 'lng', $geo))
             ->withCount('doctors')
             ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
             ->paginate(9)
@@ -90,8 +92,10 @@ class PageController extends Controller
     {
         $search = trim((string) $request->string('search'));
 
+        $geo = $request->filled('radius_km') ? \App\Support\GeoRadius::fromRequest($request) : null;
         $doctors = DoctorProfile::query()
             ->where('status', 'active')
+            ->when($geo, fn ($q) => $q->whereHas('clinics', fn ($cq) => \App\Support\GeoRadius::box($cq, 'clinics.lat', 'clinics.lng', $geo)))
             ->with(['user', 'clinics', 'availabilities' => fn ($q) => $q->where('is_active', true)])
             ->when($group === 'gp', fn ($q) => $q->generalPractitioners())
             ->when($group === 'dentists', fn ($q) => $q->dentists())

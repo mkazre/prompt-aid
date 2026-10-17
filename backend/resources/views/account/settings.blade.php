@@ -29,6 +29,28 @@
     </div>
   </div>
 
+  @if (auth()->user()?->patientProfile)
+  @php
+    $stRadiusOptions = \App\Support\DispatchSettings::radiusOptions();
+    $stRadius = auth()->user()->patientProfile->search_radius_km !== null ? (int) auth()->user()->patientProfile->search_radius_km : (int) \App\Support\DispatchSettings::defaultRadius();
+  @endphp
+  <div class="pa-card" style="margin-bottom:20px">
+    <div class="pa-card-head"><h3>Search radius</h3></div>
+    <div class="pa-card-body">
+      <p style="font-size:15px;color:var(--pa-ink-soft);margin-top:0">How far we look for doctors, pharmacies and shuttle drivers by default. You can change it on each request.</p>
+      <form method="POST" action="{{ route('dispatch.radius') }}" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        @csrf
+        <select class="pa-field" name="radius_km" style="max-width:140px">
+          @foreach ($stRadiusOptions as $km)
+            <option value="{{ $km }}" @selected($km === $stRadius)>{{ $km }} km</option>
+          @endforeach
+        </select>
+        <button class="pa-btn" type="submit">Save</button>
+      </form>
+    </div>
+  </div>
+  @endif
+
   <div class="pa-card">
     <div class="pa-card-head"><h3>Your data</h3></div>
     <div class="pa-card-body">

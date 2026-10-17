@@ -118,6 +118,16 @@ class AccountAnonymiser
                 $kept[] = 'Uploaded prescriptions — kept per Pharmacy Act / SAPC record-keeping rules.';
             }
 
+            if (Schema::hasTable('ride_recordings')) {
+                $rec = app(\App\Services\Safety\RideRecordingService::class)->purgeForUser($user->id, $patient?->id);
+                if ($rec['deleted']) {
+                    $removed[] = "{$rec['deleted']} shuttle trip audio recording(s) deleted.";
+                }
+                if ($rec['kept']) {
+                    $kept[] = "{$rec['kept']} shuttle trip audio recording(s) on legal hold (SOS / complaint / investigation) — kept until the hold is released, then deleted.";
+                }
+            }
+
             if (Schema::hasTable('triage_submissions')) {
                 DB::table('triage_submissions')->where('user_id', $user->id)->update([
                     'pickup_lat' => null, 'pickup_lng' => null, 'pickup_address' => null,

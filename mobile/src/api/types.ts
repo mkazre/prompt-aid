@@ -234,7 +234,39 @@ export interface Ride {
   started_at?: string | null;
   completed_at?: string | null;
   driver?: DriverProfile;
-  patient?: { id: number; user?: { name: string; phone: string } };
+  patient?: { id: number; name?: string; phone?: string | null; user?: { name: string; phone: string | null } };
+  // Lifecycle contract (server): is_active = not terminal AND not stale.
+  is_active?: boolean;
+  is_terminal?: boolean;
+  is_expired?: boolean;
+  status_label?: string;
+  dispatch_state?: string | null;
+  radius_km?: number | null;
+  pickup_notes?: string | null;
+  /** Patient owner only, while the ride is live. */
+  trip_pin?: string | null;
+  /** Drivers only. */
+  pin_required?: boolean;
+  rider?: RiderProfile;
+}
+
+/** "Who am I picking up" card for drivers (App\Services\Dispatch\RiderProfile). */
+export interface RiderProfile {
+  first_name: string;
+  initials: string;
+  rating: number | null;
+  rating_count: number;
+  rating_label: string;
+  trips_completed: number;
+  member_since: string | null;
+  verified: { phone: boolean; id: boolean; medical_aid: boolean };
+  needs: string[];
+  pickup_notes: string | null;
+  full_name: string | null;
+  photo_url: string | null;
+  phone: string | null;
+  booked_by: { name: string; phone: string | null } | null;
+  emergency_contact: { name: string | null; phone: string } | null;
 }
 
 export interface RideSeries {

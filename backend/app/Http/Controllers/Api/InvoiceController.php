@@ -40,6 +40,11 @@ class InvoiceController extends Controller
         $invoice = $request->user()->patientProfile->invoices()->findOrFail($id);
         $result = $this->gateway->charge($invoice, $data['method']);
 
+        if (! empty($result['pending'])) {
+            // Online gateways live: pay via POST /payments/intents (in-app payment sheet).
+            return response()->json(['message' => 'Please pay online using the payment sheet.', 'requires_checkout' => true], 422);
+        }
+
         $payment = Payment::query()->create([
             'invoice_id' => $invoice->id,
             'method' => $data['method'],

@@ -30,6 +30,8 @@ class WebRideController extends Controller
             'vehicle_type' => ['nullable', 'in:sedan,suv,van,wheelchair_accessible,stretcher'],
             'wait_and_return' => ['nullable', 'boolean'],
             'quote_token' => ['nullable', 'string', 'max:4000'],
+            'radius_km' => ['nullable', 'numeric', 'min:1', 'max:500'],
+            'pickup_notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $patient = $request->user()->patientProfile;
@@ -38,8 +40,9 @@ class WebRideController extends Controller
         }
 
         // One live on-demand trip at a time (scheduled rides don't count).
+        // Stale (long-over) rides never block a new booking — Ride::isActive().
         $active = $patient->rides()->whereNull('scheduled_for')
-            ->whereNotIn('status', [Ride::STATUS_COMPLETED, Ride::STATUS_CANCELLED])->latest('requested_at')->first();
+            ->whereNotIn('status', Ride::TERMINAL)->latest('requested_at')->get()->first(fn (Ride $r) => $r->isActive());
         if ($active) {
             return redirect()->route('rides.track', $active)->with('error', 'You already have a trip in progress. Cancel it first to book another.');
         }
@@ -65,6 +68,10 @@ class WebRideController extends Controller
             $vehicle,
             (bool) Setting::get('ride_auto_assign_shuttle', true),
             $locked,
+            null,
+            isset($data['radius_km']) ? (float) $data['radius_km'] : ($patient->search_radius_km !== null ? (float) $patient->search_radius_km : null),
+            $data['pickup_notes'] ?? null,
+            $request->user()->id,
         );
 
         if (! empty($data['wait_and_return'])) {
@@ -128,8 +135,10 @@ class WebRideController extends Controller
     {
         $this->authorizePatient($request, $ride);
 
+        $data = $request->validate(['radius_km' => ['nullable', 'numeric', 'min:1', 'max:500']]);
+
         try {
-            $dispatch->retryDispatch($ride);
+            $dispatch->retryDispatch($ride, isset($data['radius_km']) ? (float) $data['radius_km'] : null);
         } catch (RideActionException $e) {
             return $this->fail($request, $e);
         }

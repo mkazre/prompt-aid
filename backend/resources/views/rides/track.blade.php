@@ -49,13 +49,15 @@
           <div class="pa-sh-progress" style="margin-top:10px"><i id="sh-search-bar"></i></div>
         </div>
         <div id="sh-nodrivers" hidden style="margin-top:14px">
-          <div class="pa-note" style="margin-bottom:12px">No driver accepted your request in time. Drivers may be busy nearby — you can search again, or cancel at no charge.</div>
+          <div class="pa-note" style="margin-bottom:12px">No driver accepted your request in time. Drivers may be busy nearby — you can search again (try a wider radius), or cancel at no charge.</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><label class="pa-label" for="sh-retry-radius" style="margin:0">Search within</label><select class="pa-field" id="sh-retry-radius" style="max-width:130px"></select></div>
           <div class="pa-drv-grid2">
             <button type="button" class="pa-btn" id="sh-retry">Search again</button>
             <button type="button" class="pa-btn-ghost" data-sh-cancel>Cancel request</button>
           </div>
         </div>
         <div id="sh-waiting" class="pa-note" hidden style="margin-top:12px"></div>
+        <div id="sh-expired" class="pa-note" hidden style="margin-top:12px"></div>
       </div>
 
       {{-- Driver --}}
@@ -92,6 +94,9 @@
         <button type="button" class="pa-btn pa-sh-sos" id="sh-sos">SOS</button>
         <button type="button" class="pa-btn-ghost" data-sh-cancel id="sh-cancel-btn">Cancel trip</button>
       </div>
+
+      {{-- Trip audio recording (safety): record button, other-party notice, both sides' recordings --}}
+      @include('safety.trip-recorder', ['ride' => $ride, 'role' => 'patient', 'showList' => true])
 
       @if ($ride->status === 'completed')
         @include('rides.partials.receipt', ['ride' => $ride])

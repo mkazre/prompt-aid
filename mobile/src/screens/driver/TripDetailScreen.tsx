@@ -6,6 +6,7 @@ import { Ride } from '../../api/types';
 import { PaBadge, PaCard, headline } from '../../components/pa';
 import { formatDate, formatTime } from '../../components/pa/driver-extras';
 import RideMap from '../../components/RideMap';
+import RiderCard from '../../components/RiderCard';
 import { pa, paFonts, type } from '../../theme';
 
 /** Read-only detail for a past, scheduled or in-flight trip — reached from
@@ -41,7 +42,7 @@ export default function TripDetailScreen({ route }: any) {
       <View style={{ padding: 16 }}>
         <View style={styles.spread}>
           <Text style={type.h3}>{ride.ride_ref}</Text>
-          <PaBadge status={ride.status} />
+          <PaBadge status={ride.is_expired ? undefined : ride.status} label={ride.is_expired ? 'Expired' : undefined} tone={ride.is_expired ? 'ink' : undefined} />
         </View>
         <Text style={styles.when}>
           {ride.scheduled_for ? `Scheduled ${formatDate(ride.scheduled_for)} · ${formatTime(ride.scheduled_for)}` : `Requested ${formatDate(ride.requested_at)} · ${formatTime(ride.requested_at)}`}
@@ -55,12 +56,16 @@ export default function TripDetailScreen({ route }: any) {
           <Row label="Fare" value={`R ${(ride.fare_final ?? ride.fare_estimate ?? 0).toFixed(0)}`} last />
         </PaCard>
 
-        {ride.patient?.user?.name && (
+        {ride.rider ? (
+          <View style={{ marginTop: 12 }}>
+            <RiderCard rider={ride.rider} />
+          </View>
+        ) : ride.patient?.user?.name ? (
           <PaCard style={{ marginTop: 12 }}>
             <Row label="Patient" value={ride.patient.user.name} last={!ride.patient.user.phone} />
-            {ride.patient.user.phone && <Row label="Phone" value={ride.patient.user.phone} last />}
+            {ride.patient.user.phone ? <Row label="Phone" value={ride.patient.user.phone} last /> : null}
           </PaCard>
-        )}
+        ) : null}
       </View>
     </ScrollView>
   );
