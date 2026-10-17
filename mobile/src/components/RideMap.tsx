@@ -4,6 +4,31 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { CAR_ICON, DESTINATION_ICON, PICKUP_ICON } from './mapIconData';
 import { pa, paFonts } from '../theme';
+import { api } from '../api/client';
+
+type TileConfig = { url: string; subdomains?: string; attribution?: string; maxZoom?: number };
+
+// Tile provider + key come from the admin "Maps" settings, so switching provider needs no app build.
+let tileConfigCache: { cfg: TileConfig | null; at: number } | null = null;
+let tileConfigPending: Promise<TileConfig | null> | null = null;
+
+function loadTileConfig(): Promise<TileConfig | null> {
+  if (tileConfigCache && Date.now() - tileConfigCache.at < 10 * 60 * 1000) return Promise.resolve(tileConfigCache.cfg);
+  if (!tileConfigPending) {
+    tileConfigPending = api
+      .get('/map-config', { timeout: 4000 })
+      .then((res) => {
+        const cfg = res.data?.data?.url ? (res.data.data as TileConfig) : null;
+        tileConfigCache = { cfg, at: Date.now() };
+        return cfg;
+      })
+      .catch(() => tileConfigCache?.cfg ?? null)
+      .finally(() => {
+        tileConfigPending = null;
+      });
+  }
+  return tileConfigPending;
+}
 
 type LatLng = { lat: number | string; lng: number | string };
 
@@ -69,6 +94,18 @@ export default function RideMap({ pickup, dropoff, driver, route, tripRoute, cen
   const [tilesShown, setTilesShown] = useState(false);
   const [failed, setFailed] = useState(false);
   const [userLoc, setUserLoc] = useState<[number, number] | null>(null);
+  const [tileCfg, setTileCfg] = useState<TileConfig | null | undefined>(tileConfigCache ? tileConfigCache.cfg : undefined);
+
+  useEffect(() => {
+    if (tileCfg !== undefined) return;
+    let alive = true;
+    const timer = setTimeout(() => alive && setTileCfg((v) => (v === undefined ? null : v)), 5000);
+    loadTileConfig().then((cfg) => alive && setTileCfg(cfg));
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [tileCfg]);
 
   const p = pt(pickup);
   const d = pt(dropoff);
@@ -128,12 +165,14 @@ export default function RideMap({ pickup, dropoff, driver, route, tripRoute, cen
     if (pageReady) push();
   }, [stateJson, pageReady, push]);
 
-  // Built once per mount: initial view only. Everything else arrives via paUpdate.
+  // Built once the tile config is known: initial view only. Everything else arrives via paUpdate.
+  const cfgReady = tileCfg !== undefined;
   const html = useMemo(() => {
+    if (!cfgReady) return '';
     const start = p ?? drv ?? c ?? d ?? [DEFAULT_CENTER.lat, DEFAULT_CENTER.lng];
-    return buildHtml(start);
+    return buildHtml(start, tileCfg ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cfgReady]);
 
   function onMessage(e: WebViewMessageEvent) {
     const msg = e.nativeEvent.data;
@@ -144,7 +183,7 @@ export default function RideMap({ pickup, dropoff, driver, route, tripRoute, cen
 
   return (
     <View style={[styles.container, { height }]}>
-      <WebView
+      {cfgReady ? <WebView
         ref={webviewRef}
         originWhitelist={['*']}
         source={{ html, baseUrl: BASE_URL }}
@@ -160,7 +199,7 @@ export default function RideMap({ pickup, dropoff, driver, route, tripRoute, cen
         onLoadEnd={() => setPageReady(true)}
         onMessage={onMessage}
         onError={() => setFailed(true)}
-      />
+      /> : null}
       {!tilesShown ? (
         <View style={styles.skeleton} pointerEvents="none">
           {failed ? (
@@ -174,7 +213,14 @@ export default function RideMap({ pickup, dropoff, driver, route, tripRoute, cen
   );
 }
 
-function buildHtml(start: [number, number]) {
+function buildHtml(start: [number, number], cfg: TileConfig | null) {
+  const primary = cfg
+    ? [{ url: cfg.url, opts: { subdomains: cfg.subdomains || 'abc', maxZoom: cfg.maxZoom || 19, attribution: cfg.attribution || '&copy; OpenStreetMap contributors' } }]
+    : [];
+  const sourcesJson = JSON.stringify([
+    ...primary,
+    { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', opts: { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' } },
+  ]).replace(/</g, '\\u003c');
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -206,10 +252,7 @@ function buildHtml(start: [number, number]) {
 
     function boot() {
       var map = L.map('map', { zoomControl: false, attributionControl: true }).setView(${JSON.stringify(start)}, 13);
-      var sources = [
-        { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', opts: { subdomains: 'abcd', maxZoom: 20, attribution: '&copy; OpenStreetMap contributors &copy; CARTO' } },
-        { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', opts: { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' } }
-      ];
+      var sources = ${sourcesJson};
       var srcIdx = 0, errors = 0, tiles = null;
       function useSource(i) {
         if (tiles) map.removeLayer(tiles);

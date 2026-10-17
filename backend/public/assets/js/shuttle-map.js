@@ -17,10 +17,10 @@
   function map(el, opts) {
     opts = opts || {};
     var m = L.map(el, { zoomControl: true, attributionControl: true }).setView(opts.center || [-26.2041, 28.0473], opts.zoom || 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    (window.PaMapTiles ? window.PaMapTiles(L) : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19,
-    }).addTo(m);
+    })).addTo(m);
     return m;
   }
 

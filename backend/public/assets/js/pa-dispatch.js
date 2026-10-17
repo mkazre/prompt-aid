@@ -211,7 +211,7 @@
     if (!box || !window.L) return;
     try {
       map = L.map(box, { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+      (window.PaMapTiles ? window.PaMapTiles(L) : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })).addTo(map);
       var a = [card.pickup.lat, card.pickup.lng], b = [card.dropoff.lat, card.dropoff.lng];
       L.circleMarker(a, { radius: 8, color: '#fff', weight: 3, fillColor: '#1E8E3E', fillOpacity: 1 }).addTo(map);
       L.circleMarker(b, { radius: 8, color: '#fff', weight: 3, fillColor: '#D0211C', fillOpacity: 1 }).addTo(map);

@@ -33,6 +33,7 @@
 </style>
 @endif
 @stack('meta')
+@include('partials.map-config')
 </head>
 <body data-pa-root="{{ url('/') }}"{{ isset($noTriage) && $noTriage ? ' data-pa-no-triage' : '' }}>
 @include('partials.support.announcements')

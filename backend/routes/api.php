@@ -29,6 +29,7 @@ Route::get('/app-pages/{key}', [\App\Http\Controllers\Api\AccountController::cla
 
 Route::post('/triage/submit', [TriageSubmissionController::class, 'store']);
 Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
+Route::get('/map-config', \App\Http\Controllers\Api\MapConfigController::class);
 Route::get('/app-links', fn () => response()->json(['data' => \App\Support\SiteLinks::forJs()]));
 // Admin-editable copy + links for the mobile app (see App\Support\SiteContent).
 Route::get('/site-content', fn () => response()->json(['data' => \App\Support\SiteContent::all() + [

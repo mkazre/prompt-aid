@@ -40,6 +40,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerTickJobs();
 
+        \Filament\Support\Facades\FilamentView::registerRenderHook(
+            \Filament\View\PanelsRenderHook::HEAD_END,
+            fn () => view('partials.map-config')->render(),
+        );
+
         // POPIA retention / anonymisation sweeps (hourly, bounded per run).
         \App\Jobs\Privacy\RetentionJobs::registerOnTick();
 

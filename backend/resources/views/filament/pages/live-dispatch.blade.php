@@ -21,7 +21,7 @@
                 },
                 start() {
                     this.map = L.map(this.$refs.map).setView([-26.2041, 28.0473], 11);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }).addTo(this.map);
+                    (window.PaMapTiles ? window.PaMapTiles(L) : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 })).addTo(this.map);
                     this.layers = L.layerGroup().addTo(this.map);
                     this.map.on('dragstart', () => { this.fitted = true; });
                     this.refresh();

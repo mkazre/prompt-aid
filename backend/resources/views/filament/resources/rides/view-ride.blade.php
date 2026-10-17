@@ -32,7 +32,7 @@
                 },
                 start() {
                     this.map = L.map(this.$refs.map).setView(cfg.pickup, 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }).addTo(this.map);
+                    (window.PaMapTiles ? window.PaMapTiles(L) : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 })).addTo(this.map);
                     const pin = (u) => L.icon({ iconUrl: u, iconSize: [22, 30], iconAnchor: [11, 30] });
                     L.marker(cfg.pickup, { icon: pin(cfg.pickupIcon) }).bindPopup('Pickup').addTo(this.map);
                     L.marker(cfg.dropoff, { icon: pin(cfg.dropIcon) }).bindPopup('Drop-off').addTo(this.map);
