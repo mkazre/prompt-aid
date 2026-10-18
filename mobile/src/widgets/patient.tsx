@@ -46,7 +46,7 @@ export function SearchShortcuts({ config, navigation }: WidgetProps) {
       <View style={p.shortcuts}>
         {tiles.map((sc) => (
           <Pressable key={sc.label} onPress={() => goTo(navigation, sc.target ?? undefined, sc.params ?? undefined)} style={({ pressed }) => [p.shortcut, pressed && { opacity: 0.7 }]}>
-            <View style={[p.shortcutCircle, sc.color ? { backgroundColor: sc.color + '1A' } : null]}>
+            <View style={p.shortcutCircle}>
               {sc.icon_image_url ? (
                 <Image source={{ uri: sc.icon_image_url }} style={{ width: 26, height: 26 }} resizeMode="contain" />
               ) : (
@@ -533,7 +533,7 @@ const p = StyleSheet.create({
   searchInput: { flex: 1, fontFamily: paFonts.regular, fontSize: 14, color: pa.ink, paddingVertical: 0 },
   shortcuts: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 14, marginTop: 16 },
   shortcut: { width: '31%', alignItems: 'center', gap: 6 },
-  shortcutCircle: { width: 58, height: 58, borderRadius: 29, backgroundColor: pa.surface, alignItems: 'center', justifyContent: 'center', ...wShadow },
+  shortcutCircle: { width: 58, height: 58, borderRadius: 29, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', ...wShadow },
   shortcutLabel: { fontFamily: paFonts.bold, fontSize: 12, color: pa.ink },
   dark: { backgroundColor: pa.ink },
   darkEyebrow: { fontFamily: paFonts.black, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: pa.beacon, marginBottom: 12 },
