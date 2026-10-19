@@ -100,8 +100,11 @@
                         <div>
                             <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#D0211C">New request</div>
                             <div style="font-size:20px;font-weight:800;margin-top:4px">
-                                {{ $offer['mode'] === 'video' ? 'Video consult' : 'In-person consult' }} · {{ $offer['specialty'] }}
+                                {{ $offer['mode_label'] ?? ($offer['mode'] === 'video' ? 'Video consult' : 'In-person consult') }} · {{ $offer['specialty'] }}
                             </div>
+                            @foreach (($offer['lines'] ?? []) as $offerLine)
+                                <div style="font-size:13px;margin-top:2px;opacity:.85">{{ $offerLine }}</div>
+                            @endforeach
                             <div style="font-size:14px;margin-top:4px;opacity:.8">
                                 Patient: {{ $offer['patient_first_name'] }}
                                 @if ($offer['distance_km'] !== null) · {{ number_format($offer['distance_km'], 1) }} km from your practice @endif
@@ -135,14 +138,17 @@
                             <div>
                                 <div style="font-size:18px;font-weight:800">{{ $consult['patient_name'] }}</div>
                                 <div style="font-size:14px;opacity:.8">
-                                    {{ $consult['mode'] === 'video' ? 'Video consult' : 'In person' }} · {{ $consult['specialty'] }} · R{{ number_format($consult['price'], 2) }}
+                                    {{ $consult['mode_label'] ?? ($consult['mode'] === 'video' ? 'Video consult' : 'In person') }} · {{ $consult['specialty'] }} · R{{ number_format($consult['price'], 2) }}
                                     @if ($s['consultClinic']) · at {{ $s['consultClinic']->name }} @endif
                                 </div>
                                 <div style="font-size:12px;opacity:.6">Accepted {{ \Illuminate\Support\Carbon::parse($consult['matched_at'])->diffForHumans() }}</div>
                             </div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap">
                                 @if ($s['joinUrl'])
-                                    <x-filament::button tag="a" :href="$s['joinUrl']" target="_blank" color="success" icon="heroicon-o-video-camera">Join video</x-filament::button>
+                                    <x-filament::button tag="a" :href="$s['joinUrl']" color="success" icon="heroicon-o-video-camera">Join video</x-filament::button>
+                                @endif
+                                @if (! empty($consult['card_url']))
+                                    <x-filament::button tag="a" :href="$consult['card_url']" color="success" icon="heroicon-o-phone">Call the patient</x-filament::button>
                                 @endif
                                 <x-filament::button color="primary" icon="heroicon-o-check-badge" wire:click="complete({{ (int) $consult['appointment_id'] }})" wire:confirm="Mark this consult as completed? You'll be available for new requests.">Complete</x-filament::button>
                             </div>

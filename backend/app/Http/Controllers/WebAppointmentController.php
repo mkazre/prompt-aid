@@ -15,8 +15,11 @@ class WebAppointmentController extends Controller
             'clinic_id' => ['required', 'integer', 'exists:clinics,id'],
             'date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required'],
-            'visit_type' => ['required', 'in:clinic,telemed'],
+            'visit_type' => ['required', 'in:clinic,telemed,phone'],
             'reason' => ['nullable', 'string', 'max:1000'],
+            'callback_phone' => ['required_if:visit_type,phone', 'nullable', 'string', 'max:32'],
+            'callback_channel' => ['nullable', 'in:phone,whatsapp,either'],
+            'callback_note' => ['nullable', 'string', 'max:500'],
             'service_id' => ['nullable', 'integer'],
         ]);
 
@@ -42,6 +45,7 @@ class WebAppointmentController extends Controller
                 $data['start_time'],
                 $data['visit_type'],
                 $data['reason'] ?? null,
+                \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note']),
             );
         } catch (\RuntimeException $e) {
             return back()->withErrors(['start_time' => $e->getMessage()]);

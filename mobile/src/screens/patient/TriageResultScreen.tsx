@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api } from '../../api/client';
@@ -53,7 +53,7 @@ function submitTriageResult(params: {
   observations: Props['route']['params']['observations'];
   reasons: string[];
   facilityTypes: string[];
-}) {
+}, onReference?: (reference: string) => void) {
   try {
     void api
       .post('/triage/submit', {
@@ -66,6 +66,10 @@ function submitTriageResult(params: {
         reasons: params.reasons,
         facility_types: params.facilityTypes,
       })
+      .then(({ data }) => {
+        // Server reference links this result to an orange "speak to a doctor now" request.
+        if (data?.reference && onReference) onReference(String(data.reference));
+      })
       .catch(() => {
         /* fire-and-forget: never blocks or interrupts the patient */
       });
@@ -77,6 +81,7 @@ function submitTriageResult(params: {
 export default function TriageResultScreen({ navigation, route }: Props) {
   const { selfReported, ageBand, pregnant, symptoms, discriminators, observations } = route.params;
   const { primary } = useEmergencyContacts();
+  const [serverRef, setServerRef] = useState<string | null>(null);
 
   const result = useMemo(
     () => assess({ selfReported, ageBand, pregnant, symptoms, discriminators, observations }),
@@ -93,7 +98,7 @@ export default function TriageResultScreen({ navigation, route }: Props) {
       observations,
       reasons: result.reasons,
       facilityTypes: result.facilityTypes,
-    });
+    }, setServerRef);
     // Submit once per computed verdict — result is memoised on the same inputs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result.level]);
@@ -112,6 +117,22 @@ export default function TriageResultScreen({ navigation, route }: Props) {
       <View style={{ padding: 16 }}>
         {result.callAmbulance ? (
           <PaButton title={`Call an ambulance now · ${primary.phone}`} onPress={() => Linking.openURL(primary.tel_url)} style={{ marginBottom: 16, backgroundColor: pa.signal }} />
+        ) : null}
+
+        {result.level === 'orange' ? (
+          <PaCard style={{ marginBottom: 16, borderWidth: 2, borderColor: pa.sats.orange }}>
+            <Text style={styles.cardHead}>Speak to a doctor now</Text>
+            <Text style={[styles.adviceLine, { marginTop: 6, marginBottom: 12 }]}>
+              Your request goes to every available doctor at once — the first to accept takes your consult and sees these answers.
+            </Text>
+            <PaButton title="Video consult now" onPress={() => navigation.navigate('InstantConsult', { mode: 'video', triageReference: serverRef ?? undefined })} />
+            <PaButton
+              title="Request a call back"
+              variant="ghost"
+              onPress={() => navigation.navigate('InstantConsult', { mode: 'callback', triageReference: serverRef ?? undefined })}
+              style={{ marginTop: 8 }}
+            />
+          </PaCard>
         ) : null}
 
         <PaCard style={{ marginBottom: 16 }}>

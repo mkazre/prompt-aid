@@ -85,6 +85,11 @@ class DoctorNowSettingsPage extends Page
             'inperson_radius_km' => DoctorNowSettings::float('doctor_now_inperson_radius_km'),
             'location_stale_minutes' => DoctorNowSettings::int('doctor_now_location_stale_minutes'),
             'waitlist_hours' => DoctorNowSettings::int('doctor_now_waitlist_hours'),
+            'video_enabled' => DoctorNowSettings::bool('doctor_now_video_enabled'),
+            'callback_enabled' => DoctorNowSettings::bool('doctor_now_callback_enabled'),
+            'callback_target_minutes' => DoctorNowSettings::int('doctor_now_callback_target_minutes'),
+            'autojoin_seconds' => DoctorNowSettings::int('doctor_now_autojoin_seconds'),
+            'ring_seconds' => DoctorNowSettings::int('doctor_now_ring_seconds'),
             'timezone' => DoctorNowSettings::str('doctor_now_timezone'),
             'default_fee' => DoctorNowSettings::float('doctor_now_default_fee'),
             'specialty_fees' => $fees,
@@ -105,8 +110,21 @@ class DoctorNowSettingsPage extends Page
     {
         return $schema
             ->components([
+                Section::make('Orange triage — speak to a doctor now')
+                    ->description('The orange option of the Emergency Scale offers "Video consult now" and "Request a call back". Both go to every qualifying available doctor at once when System → Dispatch has "See a doctor now" on Broadcast (first to accept wins; the others see "Taken by another doctor"). If every alerted doctor lets the offer time out, the patient is told straight away and can retry or call dispatch.')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Toggle::make('video_enabled')->label('Offer "Video consult now"'),
+                            Toggle::make('callback_enabled')->label('Offer "Request a call back"'),
+                        ]),
+                        Grid::make(3)->schema([
+                            TextInput::make('callback_target_minutes')->label('Call-back response target (minutes)')->helperText('Shown to the patient ("the doctor will call you within N minutes") and used for SLA reporting.')->numeric()->minValue(1)->maxValue(240)->required(),
+                            TextInput::make('autojoin_seconds')->label('Patient auto-joins the video after (seconds)')->helperText('0 = join immediately. A "Join now" button is always shown.')->numeric()->minValue(0)->maxValue(30)->required(),
+                            TextInput::make('ring_seconds')->label('Patient\'s phone rings for (seconds)')->numeric()->minValue(30)->maxValue(900)->required(),
+                        ]),
+                    ]),
                 Section::make('Matching')
-                    ->description('Requests are offered to one doctor at a time: right specialty, online with a live console (heartbeat), not busy; in-person within the radius. Fairness: least recently offered/assigned first, rating breaks ties.')
+                    ->description('Who gets a request: right specialty (GP / general unless the patient chose one), online with a live console or app (heartbeat), not busy; in-person within the radius. Broadcast / sequential / manual is set per service in System → Dispatch. Sequential: one doctor at a time, least recently offered/assigned first, rating breaks ties.')
                     ->schema([
                         Toggle::make('enabled')->label('On-demand consults enabled'),
                         Grid::make(3)->schema([
@@ -211,6 +229,11 @@ class DoctorNowSettingsPage extends Page
             'doctor_now_inperson_radius_km' => (float) $d['inperson_radius_km'],
             'doctor_now_location_stale_minutes' => (int) $d['location_stale_minutes'],
             'doctor_now_waitlist_hours' => (int) $d['waitlist_hours'],
+            'doctor_now_video_enabled' => (bool) ($d['video_enabled'] ?? false),
+            'doctor_now_callback_enabled' => (bool) ($d['callback_enabled'] ?? false),
+            'doctor_now_callback_target_minutes' => (int) $d['callback_target_minutes'],
+            'doctor_now_autojoin_seconds' => (int) $d['autojoin_seconds'],
+            'doctor_now_ring_seconds' => (int) $d['ring_seconds'],
             'doctor_now_timezone' => (string) $d['timezone'],
             'doctor_now_default_fee' => (float) $d['default_fee'],
             'doctor_now_time_bands' => json_encode($bands),

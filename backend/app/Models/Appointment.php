@@ -31,11 +31,24 @@ class Appointment extends Model
 
     public const MODE_VIDEO = 'video';
 
+    /** The doctor phones (or WhatsApp-calls) the patient back. */
+    public const MODE_CALLBACK = 'callback';
+
+    /** visit_type for a call-back consult (mode = callback). */
+    public const VISIT_PHONE = 'phone';
+
+    public const CALLBACK_CHANNELS = ['phone', 'whatsapp', 'either'];
+
+    public const CALL_OUTCOMES = ['completed', 'no_answer', 'escalated'];
+
     protected $fillable = [
         'booking_ref', 'patient_profile_id', 'doctor_profile_id', 'clinic_id', 'service_id',
         'date', 'start_time', 'end_time', 'visit_type', 'status', 'reason', 'cancel_reason', 'ride_requested',
         'mode', 'meet_url', 'meet_event_id', 'meet_created_at', 'requested_specialty',
         'video_room', 'video_ended_at',
+        'triage_submission_id', 'callback_phone', 'callback_channel', 'callback_note',
+        'called_at', 'call_attempts', 'call_outcome', 'call_outcome_at',
+        'call_started_at', 'ring_answered_at', 'ring_declined_at',
     ];
 
     protected function casts(): array
@@ -47,6 +60,12 @@ class Appointment extends Model
             'video_ended_at' => 'datetime',
             'reminder_24h_sent_at' => 'datetime',
             'reminder_1h_sent_at' => 'datetime',
+            'called_at' => 'datetime',
+            'call_attempts' => 'integer',
+            'call_outcome_at' => 'datetime',
+            'call_started_at' => 'datetime',
+            'ring_answered_at' => 'datetime',
+            'ring_declined_at' => 'datetime',
         ];
     }
 
@@ -88,6 +107,10 @@ class Appointment extends Model
 
     public function isVideo(): bool
     {
+        if ($this->mode === self::MODE_CALLBACK) {
+            return false;
+        }
+
         // Slot bookings express video as visit_type=telemed without setting mode.
         return $this->mode === self::MODE_VIDEO || $this->visit_type === 'telemed';
     }
@@ -131,6 +154,16 @@ class Appointment extends Model
         $end = $this->videoWindowEnd();
 
         return $start && $end && now()->between($start, $end);
+    }
+
+    public function isCallback(): bool
+    {
+        return $this->mode === self::MODE_CALLBACK;
+    }
+
+    public function triageSubmission(): BelongsTo
+    {
+        return $this->belongsTo(TriageSubmission::class);
     }
 
     public function patient(): BelongsTo

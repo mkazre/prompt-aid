@@ -14,4 +14,4 @@
 @endphp
 <link rel="stylesheet" href="{{ asset('assets/css/pa-dispatch.css') }}?v=1">
 <script>window.PA_DISPATCH = @json($paDispatchCfg);</script>
-<script src="{{ asset('assets/js/pa-dispatch.js') }}?v=1" defer></script>
+<script src="{{ asset('assets/js/pa-dispatch.js') }}?v=2" defer></script>

@@ -67,7 +67,7 @@ class DoctorBookingController extends Controller
             'service_id' => ['nullable', 'integer'],
             'date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
-            'visit_type' => ['required', 'in:clinic,telemed,home'],
+            'visit_type' => ['required', 'in:clinic,telemed,home,phone'],
             'reason' => ['nullable', 'string', 'max:1000'],
         ], ['clinic_id.in' => 'Choose one of your own clinics.']);
 

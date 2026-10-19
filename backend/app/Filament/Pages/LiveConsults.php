@@ -102,8 +102,14 @@ class LiveConsults extends Page
     {
         $this->guard(function () use ($offerId) {
             $offer = DoctorMatchOffer::query()->whereKey($offerId)->where('doctor_profile_id', $this->doctor()->id)->firstOrFail();
-            $this->service()->accept($offer, $this->doctor());
+            $req = $this->service()->accept($offer, $this->doctor());
             Notification::make()->title('Consult accepted — the patient has been notified')->success()->send();
+            // Video → straight into the call (the patient is ringing); call back → the call card.
+            if ($req->mode === Appointment::MODE_VIDEO) {
+                $this->redirect(ConsultCall::getUrl(['appointment' => $req->appointment_id], panel: 'admin'));
+            } elseif ($req->mode === Appointment::MODE_CALLBACK) {
+                $this->redirect(CallbackConsult::getUrl(['appointment' => $req->appointment_id], panel: 'admin'));
+            }
         });
     }
 

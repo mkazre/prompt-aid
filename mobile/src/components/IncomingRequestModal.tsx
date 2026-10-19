@@ -310,17 +310,19 @@ export default function IncomingRequestModal({ offers, recent, sound, onAccepted
             </View>
           </>
         ) : (
-          <ResultState phase={phase} message={message} icon={ICONS[c.icon] ?? 'notifications'} />
+          <ResultState phase={phase} message={message} icon={ICONS[c.icon] ?? 'notifications'} service={c.service} />
         )}
       </View>
     </Modal>
   );
 }
 
-function ResultState({ phase, message, icon }: { phase: Phase; message: string; icon: keyof typeof Ionicons.glyphMap }) {
+function ResultState({ phase, message, icon, service }: { phase: Phase; message: string; icon: keyof typeof Ionicons.glyphMap; service?: string }) {
   const map: Record<string, [string, string, string]> = {
     accepted: ['Accepted', message || 'The patient has been notified.', pa.go],
-    taken: ['Accepted by another provider', 'This request is no longer available.', pa.sats.orange],
+    taken: service === 'doctor_now' || service === 'doctor_later'
+      ? ['Taken by another doctor', 'Another doctor accepted this consult first.', pa.sats.orange]
+      : ['Accepted by another provider', 'This request is no longer available.', pa.sats.orange],
     expired: ['Request expired', message || 'You did not respond in time.', pa.muted],
     cancelled: ['Request cancelled', 'The patient or our team cancelled this request.', pa.muted],
     error: ['Could not accept', message || 'Please try again.', pa.signal],

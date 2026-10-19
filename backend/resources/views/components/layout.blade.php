@@ -194,6 +194,20 @@
 <script src="{{ asset('assets/js/promptaid.js') }}"></script>
 <script src="{{ asset('assets/js/pa-support.js') }}" defer></script>
 @auth<script src="{{ asset('assets/js/pa-alerts.js') }}" defer></script>@endauth
+@if (auth()->user()?->isPatient())
+@php
+  // "Dr X is calling you" — incoming video consult on any page (logic: assets/js/pa-consult-ring.js).
+  $paRingCfg = [
+      'ringUrl' => route('account.consult-ring'),
+      'answerUrl' => url('/account/consults/__ID__/ring/answer'),
+      'declineUrl' => url('/account/consults/__ID__/ring/decline'),
+      'soundUrl' => asset('assets/sounds/request-alert.mp3'),
+      'csrf' => csrf_token(),
+  ];
+@endphp
+<script>window.PA_RING = @json($paRingCfg);</script>
+<script src="{{ asset('assets/js/pa-consult-ring.js') }}?v=1" defer></script>
+@endif
 @stack('scripts')
 </body>
 </html>

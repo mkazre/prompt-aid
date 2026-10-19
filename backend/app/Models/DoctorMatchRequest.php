@@ -26,7 +26,7 @@ class DoctorMatchRequest extends Model
         'appointment_id', 'patient_profile_id', 'specialty', 'mode', 'lat', 'lng', 'status',
         'outcome_reason', 'base_fee', 'multiplier', 'price', 'price_breakdown', 'attempts',
         'expires_at', 'matched_at', 'doctor_profile_id', 'clinic_id', 'invoice_id',
-        'cancelled_at', 'cancel_fee', 'radius_km',
+        'cancelled_at', 'cancel_fee', 'radius_km', 'triage_submission_id',
     ];
 
     protected function casts(): array
@@ -69,6 +69,11 @@ class DoctorMatchRequest extends Model
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
+    }
+
+    public function triageSubmission(): BelongsTo
+    {
+        return $this->belongsTo(TriageSubmission::class);
     }
 
     public function invoice(): BelongsTo

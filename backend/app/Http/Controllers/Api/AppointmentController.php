@@ -61,8 +61,11 @@ class AppointmentController extends Controller
             'service_id' => ['nullable', 'integer', 'exists:services,id'],
             'date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required'],
-            'visit_type' => ['required', 'in:clinic,telemed,home'],
+            'visit_type' => ['required', 'in:clinic,telemed,home,phone'],
             'reason' => ['nullable', 'string', 'max:1000'],
+            'callback_phone' => ['required_if:visit_type,phone', 'nullable', 'string', 'max:32'],
+            'callback_channel' => ['nullable', 'in:phone,whatsapp,either'],
+            'callback_note' => ['nullable', 'string', 'max:500'],
         ]);
 
         $doctor = DoctorProfile::findOrFail($data['doctor_profile_id']);
@@ -82,6 +85,7 @@ class AppointmentController extends Controller
                 $data['start_time'],
                 $data['visit_type'],
                 $data['reason'] ?? null,
+                \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note']),
             );
         } catch (\RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);

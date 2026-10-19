@@ -121,7 +121,8 @@ export function DoctorTodayAppointments({ config, data, navigation, ctx }: Widge
   const items = data?.items ?? [];
 
   function open(a: Appointment) {
-    if (a.is_video || a.mode === 'video' || a.visit_type === 'telemed') navigation.navigate('ConsultRoom', { appointment: a });
+    if (a.is_callback || a.mode === 'callback') navigation.navigate('ConsultCard', { appointmentId: a.id });
+    else if (a.is_video || a.mode === 'video' || a.visit_type === 'telemed') navigation.navigate('ConsultRoom', { appointment: a });
     else navigation.navigate('DoctorEncounter', { appointment: a });
   }
 

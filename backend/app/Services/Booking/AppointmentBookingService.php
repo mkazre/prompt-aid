@@ -180,7 +180,23 @@ class AppointmentBookingService
         $endTime = Carbon::parse($startTime)->addMinutes($duration)->format('H:i');
         $byDoctor = (bool) ($options['by_doctor'] ?? false);
 
-        $appointment = Appointment::query()->create([
+        // Call back: the doctor phones / WhatsApp-calls the patient at the slot time.
+        $callback = [];
+        if ($visitType === Appointment::VISIT_PHONE) {
+            $phone = \App\Services\Consults\ConsultCallService::normalisePhone($options['callback_phone'] ?? null)
+                ?? \App\Services\Consults\ConsultCallService::normalisePhone($patient->user?->phone);
+            if (! $phone) {
+                throw new \RuntimeException('Enter the phone number the doctor should call.');
+            }
+            $note = trim(strip_tags((string) ($options['callback_note'] ?? '')));
+            $callback = [
+                'callback_phone' => $phone,
+                'callback_channel' => in_array($options['callback_channel'] ?? null, Appointment::CALLBACK_CHANNELS, true) ? $options['callback_channel'] : 'either',
+                'callback_note' => $note !== '' ? mb_substr($note, 0, 500) : null,
+            ];
+        }
+
+        $appointment = Appointment::query()->create($callback + [
             'patient_profile_id' => $patient->id,
             'doctor_profile_id' => $doctor->id,
             'clinic_id' => $clinicId,
@@ -189,7 +205,11 @@ class AppointmentBookingService
             'start_time' => $startTime,
             'end_time' => $endTime,
             'visit_type' => $visitType,
-            'mode' => $visitType === 'telemed' ? Appointment::MODE_VIDEO : Appointment::MODE_IN_PERSON,
+            'mode' => match ($visitType) {
+                'telemed' => Appointment::MODE_VIDEO,
+                Appointment::VISIT_PHONE => Appointment::MODE_CALLBACK,
+                default => Appointment::MODE_IN_PERSON,
+            },
             'status' => $options['status'] ?? Appointment::STATUS_PENDING,
             'reason' => $reason,
         ]);

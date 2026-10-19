@@ -51,6 +51,17 @@ class VideoConsultController extends Controller
             return response()->json(array_merge($base, ['message' => 'Video calls are temporarily unavailable. Please try again shortly.']), 503);
         }
 
+        // Patient joining stops the ring; the doctor opening the call (app "Start") rings the patient.
+        try {
+            $calls = app(\App\Services\Consults\ConsultCallService::class);
+            if ($this->video->isModerator($appt, $user)) {
+                $calls->ring($appt);
+            } else {
+                $calls->answer($appt, $user);
+            }
+        } catch (\Throwable) {
+        }
+
         return response()->json(array_merge($base, $payload))->header('Cache-Control', 'no-store, private');
     }
 

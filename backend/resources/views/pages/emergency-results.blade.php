@@ -30,6 +30,24 @@
     <a class="pa-emergency-cta" style="margin-bottom:24px" href="{{ $primaryEmergencyContact?->tel_url }}">This is an emergency — call {{ $primaryEmergencyContact?->phone }} now</a>
   @endif
 
+  @if($level === 'orange')
+    @php
+      $orangeQs = $submission ? '&triage='.urlencode($submission->reference) : '';
+      $orangeVideoUrl = url('/account/see-a-doctor').'?mode=video'.$orangeQs;
+      $orangeCallbackUrl = url('/account/see-a-doctor').'?mode=callback'.$orangeQs;
+    @endphp
+    <div class="pa-card" style="margin-bottom:24px;border:2px solid var(--pa-sats-orange)">
+      <div class="pa-card-head"><h3>Speak to a doctor now</h3></div>
+      <div class="pa-card-body">
+        <p style="margin:0 0 14px;font-size:15px;color:var(--pa-ink-soft)">Your request goes to every available doctor at once — the first to accept takes your consult.@if($submission) They will see your triage answers ({{ $submission->reference }}).@endif</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="pa-btn pa-btn-lg" href="{{ $orangeVideoUrl }}">Video consult now</a>
+          <a class="pa-btn-ghost pa-btn-lg" href="{{ $orangeCallbackUrl }}">Request a call back</a>
+        </div>
+      </div>
+    </div>
+  @endif
+
   @if(! $hasRealLocation)
     <div class="pa-note-stop" style="margin-bottom:20px">We could not get your location, so the list below is sorted from central Johannesburg rather than from where you actually are. <a href="{{ route('emergency') }}">Go back and allow location access</a> or enter an address for a more accurate list.</div>
   @endif

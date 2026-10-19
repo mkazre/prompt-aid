@@ -43,11 +43,12 @@ class AppointmentsTable
                     'completed' => 'Completed', 'cancelled' => 'Cancelled', 'no_show' => 'No Show',
                     'matching' => 'Awaiting Match',
                 ]),
-                SelectFilter::make('visit_type')->options(['clinic' => 'At Clinic', 'telemed' => 'Telemedicine', 'home' => 'Home Visit']),
+                SelectFilter::make('visit_type')->options(['clinic' => 'At Clinic', 'telemed' => 'Telemedicine', 'phone' => 'Phone call back', 'home' => 'Home Visit']),
                 SelectFilter::make('clinic_id')->relationship('clinic', 'name')->label('Clinic'),
             ])
             ->recordActions([
                 \App\Filament\Resources\Appointments\AppointmentVideoAction::make(),
+                \App\Filament\Resources\Appointments\AppointmentVideoAction::callback(),
                 EditAction::make(),
             ])
             // Streamed CSV download (no queue): current filters/search/sort, or the ticked rows.

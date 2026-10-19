@@ -4,6 +4,8 @@ import { NavigationContainer, createNavigationContainerRef } from '@react-naviga
 import { Linking } from 'react-native';
 import { useAlerts } from '../services/alerts';
 import ProviderDispatchHost from '../components/ProviderDispatchHost';
+import PatientCallHost from '../components/PatientCallHost';
+import ConsultCardScreen from '../screens/comms/ConsultCardScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -73,6 +75,12 @@ function SignedInStack({ Tabs }: { Tabs: React.ComponentType<any> }) {
         options={{ headerShown: true, title: 'Login & security', headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerShadowVisible: false }}
       />
             <AppStack.Screen name="VideoCall" component={VideoCallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
+      {/* Doctor's call-back consult card (orange triage call back / booked call back). */}
+      <AppStack.Screen
+        name="ConsultCard"
+        component={ConsultCardScreen}
+        options={{ headerShown: true, title: 'Call-back consult', headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerShadowVisible: false }}
+      />
       {/* Help & support (every role), Help centre FAQs and the NPS survey. */}
       <AppStack.Group screenOptions={supportHeader}>
         <AppStack.Screen name="Support" component={SupportScreen} options={{ title: 'Help & support' }} />
@@ -93,6 +101,17 @@ export default function RootNavigator() {
     if (!navRef.isReady()) return;
     // Incoming request offers open the full-screen alert (ProviderDispatchHost), not the feed.
     if (data?.type === 'dispatch_offer' || data?.offer_key) return;
+    // "Dr X is calling you — tap to join": straight into the in-app video call.
+    const callId = Number(data?.appointment_id ?? data?.params?.appointment_id);
+    if (data?.type === 'consult_call' && callId) {
+      (navRef.navigate as (n: string, p?: object) => void).call(navRef, 'VideoCall', { appointmentId: callId, name: data?.doctor_name });
+      return;
+    }
+    // On-demand request updates (matched, call back accepted, no doctor) open the request screen.
+    if (data?.route === 'see_doctor_now' || data?.type === 'consult_callback') {
+      (navRef.navigate as (n: string, p?: object) => void).call(navRef, 'Main', { screen: 'Home', params: { screen: 'InstantConsult' } });
+      return;
+    }
     if (data?.route === 'ChatList' || data?.type === 'chat_message') navRef.navigate('ChatList');
     else if (data?.route === 'support_ticket' && data?.params?.ticket_id) navRef.navigate('SupportThread', { ticketId: data.params.ticket_id });
     else if (data?.route === 'feedback' && data?.params?.token) navRef.navigate('Feedback', { token: data.params.token });
@@ -124,6 +143,13 @@ export default function RootNavigator() {
       {!user ? <AuthStack /> : <SignedInStack key={user.role} Tabs={Tabs} />}
       {/* Incoming request alert (swipe/accept/decline) over every screen for provider roles. */}
       {user ? <ProviderDispatchHost role={user.role} navigate={(name, params) => navRef.isReady() && (navRef.navigate as (n: string, p?: object) => void).call(navRef, name, params)} /> : null}
+      {/* Patients: "Dr X is calling you" — incoming video consult over every screen, auto-joins in-app. */}
+      {user ? (
+        <PatientCallHost
+          enabled={user.role === 'patient'}
+          navigate={(name, params) => navRef.isReady() && (navRef.navigate as (n: string, p?: object) => void).call(navRef, name, params)}
+        />
+      ) : null}
     </NavigationContainer>
   );
 }

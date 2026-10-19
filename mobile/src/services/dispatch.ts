@@ -42,6 +42,9 @@ export interface DispatchOfferCard {
   expires_at: string | null;
   swipe: boolean;
   url: string | null;
+  /** doctor_now: video | callback | in_person, and the appointment it books. */
+  mode?: string | null;
+  appointment_id?: number | null;
 }
 
 export interface ProviderAvailability {
@@ -67,7 +70,7 @@ export interface InboxResponse {
 
 export interface AcceptResult {
   message: string;
-  next?: { type: string; ride_id?: number; request_id?: number; appointment_id?: number; subject_id?: number; url?: string };
+  next?: { type: string; ride_id?: number; request_id?: number; appointment_id?: number; subject_id?: number; url?: string; mode?: 'video' | 'callback' | 'in_person' | string; patient_name?: string | null };
 }
 
 export const PROVIDER_ROLES = ['doctor', 'driver', 'pharmacy_admin', 'third_party'];

@@ -261,7 +261,7 @@
   function showState(card, state, msg) {
     clearInterval(ringTimer); stopSound(); flash(false);
     var titles = {
-      taken: ['Accepted by another provider', 'This request is no longer available.'],
+      taken: card.service === 'doctor_now' || card.service === 'doctor_later' ? ['Taken by another doctor', 'Another doctor accepted this consult first.'] : ['Accepted by another provider', 'This request is no longer available.'],
       expired: ['Request expired', 'You did not respond in time.'],
       cancelled: ['Request cancelled', 'The patient or our team cancelled this request.'],
       accepted: ['Accepted ✓', msg || 'The patient has been notified.'],

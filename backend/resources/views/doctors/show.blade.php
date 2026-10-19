@@ -148,10 +148,27 @@
                   </select>
                 </div>
               @endif
-              <div class="pa-tabs" style="display:grid;grid-template-columns:1fr 1fr;margin-bottom:14px">
+              @php
+                $bookPhone = \App\Services\Consults\ConsultCallService::displayPhone(\App\Services\Consults\ConsultCallService::normalisePhone(auth()->user()?->phone)) ?? (string) auth()->user()?->phone;
+              @endphp
+              <div class="pa-tabs" style="display:grid;grid-template-columns:repeat({{ $doctor->offers_video ? 3 : 1 }},1fr);margin-bottom:14px">
                 <label class="pa-tab is-on" style="text-align:center;cursor:pointer"><input type="radio" name="visit_type" value="clinic" checked style="margin-right:6px">In person</label>
                 @if ($doctor->offers_video)<label class="pa-tab" style="text-align:center;cursor:pointer"><input type="radio" name="visit_type" value="telemed" style="margin-right:6px">Video</label>@endif
+                @if ($doctor->offers_video)<label class="pa-tab" style="text-align:center;cursor:pointer"><input type="radio" name="visit_type" value="phone" style="margin-right:6px">Call back</label>@endif
               </div>
+              @if ($doctor->offers_video)
+                <div id="booking-callback" style="display:none;margin-bottom:14px">
+                  <div class="pa-formrow"><label class="pa-label" for="callback_phone">Number the doctor should call</label>
+                    <input class="pa-field" type="tel" name="callback_phone" id="callback_phone" maxlength="32" autocomplete="tel" value="{{ old('callback_phone', $bookPhone) }}">
+                  </div>
+                  <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">
+                    <label><input type="radio" name="callback_channel" value="phone"> Normal call</label>
+                    <label><input type="radio" name="callback_channel" value="whatsapp"> WhatsApp call</label>
+                    <label><input type="radio" name="callback_channel" value="either" checked> Either</label>
+                  </div>
+                  <p style="font-size:12px;color:var(--pa-muted);margin:6px 0 0">At your appointment time the doctor phones you on this number.</p>
+                </div>
+              @endif
               {{-- Red = not available today, so the calendar starts tomorrow. --}}
               <input type="hidden" name="date" id="date" value="{{ old('date', ($doctor->liveStatus() === 'red' ? now()->addDay() : now())->toDateString()) }}">
               <input type="hidden" name="start_time" id="start_time">
@@ -180,6 +197,8 @@
               document.querySelectorAll('#booking-form input[name="visit_type"]').forEach(function (r) {
                 r.addEventListener('change', function () {
                   document.querySelectorAll('#booking-form input[name="visit_type"]').forEach(function (x) { x.closest('label').classList.toggle('is-on', x.checked); });
+                  var cbBox = document.getElementById('booking-callback');
+                  if (cbBox) cbBox.style.display = r.value === 'phone' && r.checked ? 'block' : 'none';
                 });
               });
             </script>

@@ -36,6 +36,8 @@ export type TriageStackParamList = {
     discriminators: string[];
     observations: import('../../services/triage').Observations;
   };
+  /** Orange → "speak to a doctor now" (Home stack). */
+  InstantConsult: { mode?: 'video' | 'callback' | 'in_person'; triageReference?: string } | undefined;
 };
 
 type Props = NativeStackScreenProps<TriageStackParamList, 'TriageStart'>;

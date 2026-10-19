@@ -54,17 +54,24 @@ class DoctorNowController extends Controller
             'offerSeconds' => DoctorNowSettings::int('doctor_now_offer_timeout_seconds'),
             'requestMinutes' => DoctorNowSettings::int('doctor_now_request_timeout_minutes'),
             'freeCancelMinutes' => DoctorNowSettings::int('doctor_now_free_cancel_minutes'),
+            // Orange triage "speak to a doctor now": video / call back (+ in person, less prominent).
+            'defaultSpecialty' => DoctorMatchService::defaultSpecialty(),
+            'modes' => DoctorMatchService::enabledModes(),
+            'triageRef' => mb_substr((string) $request->query('triage', ''), 0, 40),
+            'callbackPhone' => \App\Services\Consults\ConsultCallService::displayPhone(\App\Services\Consults\ConsultCallService::normalisePhone($request->user()->phone)) ?? (string) $request->user()->phone,
+            'callbackTarget' => \App\Services\Consults\ConsultCallService::targetMinutes(),
+            'dispatch' => \App\Models\EmergencyContact::primary(),
         ]);
     }
 
     public function quote(Request $request)
     {
         $data = $request->validate([
-            'specialty' => ['required', 'string', 'max:255'],
-            'mode' => ['required', 'in:video,in_person'],
+            'specialty' => ['nullable', 'string', 'max:255'],
+            'mode' => ['required', 'in:video,in_person,callback'],
         ]);
 
-        return response()->json(['data' => $this->pricing->quote($data['specialty'], $data['mode'])]);
+        return response()->json(['data' => $this->pricing->quote(($data['specialty'] ?? '') ?: (string) DoctorMatchService::defaultSpecialty(), $data['mode'])]);
     }
 
     public function store(Request $request)
@@ -73,15 +80,20 @@ class DoctorNowController extends Controller
         abort_unless($patient, 403);
 
         $data = $request->validate([
-            'specialty' => ['required', 'string', 'max:255'],
-            'mode' => ['required', 'in:video,in_person'],
+            // Specialty defaults to GP / general (orange triage "speak to a doctor now").
+            'specialty' => ['nullable', 'string', 'max:255'],
+            'mode' => ['required', 'in:video,in_person,callback'],
             'lat' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-90,90'],
             'lng' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-180,180'],
             'radius_km' => ['nullable', 'numeric', 'min:1', 'max:500'],
+            'callback_phone' => ['required_if:mode,callback', 'nullable', 'string', 'max:32'],
+            'callback_channel' => ['nullable', 'in:phone,whatsapp,either'],
+            'callback_note' => ['nullable', 'string', 'max:500'],
+            'triage_reference' => ['nullable', 'string', 'max:40'],
         ]);
 
         try {
-            $match = $this->match->start($patient, $data['specialty'], $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : $patient->search_radius_km);
+            $match = $this->match->start($patient, $data['specialty'] ?? null, $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : $patient->search_radius_km, \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note', 'triage_reference']));
         } catch (DoctorMatchException $e) {
             $open = $this->match->openRequestFor($patient);
 

@@ -27,3 +27,19 @@ Route::middleware('role:'.User::ROLE_DOCTOR)->prefix('doctor')->group(function (
     Route::post('/offers/{offer}/decline', [DoctorMatchController::class, 'declineOffer'])->whereNumber('offer');
     Route::get('/consults/current', [DoctorMatchController::class, 'currentConsult']);
 });
+
+// Orange triage "speak to a doctor now" after accept: patient incoming call
+// (ring) + doctor call-back card / Start / outcomes. Ownership-checked in
+// ConsultCallController (404 for anyone else).
+Route::prefix('consults')->group(function () {
+    Route::middleware('throttle:60,1')->get('/ring', [\App\Http\Controllers\ConsultCallController::class, 'ring']);
+    Route::post('/{appointment}/ring/answer', [\App\Http\Controllers\ConsultCallController::class, 'answer'])->whereNumber('appointment');
+    Route::post('/{appointment}/ring/decline', [\App\Http\Controllers\ConsultCallController::class, 'decline'])->whereNumber('appointment');
+    Route::get('/{appointment}/card', [\App\Http\Controllers\ConsultCallController::class, 'card'])->whereNumber('appointment');
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::post('/{appointment}/start', [\App\Http\Controllers\ConsultCallController::class, 'start'])->whereNumber('appointment');
+        Route::post('/{appointment}/calling', [\App\Http\Controllers\ConsultCallController::class, 'calling'])->whereNumber('appointment');
+        Route::post('/{appointment}/outcome', [\App\Http\Controllers\ConsultCallController::class, 'outcome'])->whereNumber('appointment');
+        Route::post('/{appointment}/video', [\App\Http\Controllers\ConsultCallController::class, 'switchToVideo'])->whereNumber('appointment');
+    });
+});

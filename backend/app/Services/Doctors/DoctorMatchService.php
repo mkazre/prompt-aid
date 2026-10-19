@@ -15,6 +15,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\PatientProfile;
 use App\Models\Payment;
+use App\Services\Consults\ConsultCallService;
 use App\Services\Dispatch\ProviderAlerts;
 use App\Support\DispatchSettings;
 use App\Support\DoctorNowSettings;
@@ -175,15 +176,49 @@ class DoctorMatchService
         return $this->start($patient, $specialty, $mode, $lat, $lng)->appointment()->first();
     }
 
-    public function start(PatientProfile $patient, string $specialty, string $mode, ?float $lat = null, ?float $lng = null, ?float $radiusKm = null): DoctorMatchRequest
+    /** "GP / general" unless the patient chose a specialty: the first General… specialty, else the first one. */
+    public static function defaultSpecialty(): ?string
+    {
+        $all = self::specialties();
+        foreach ($all as $s) {
+            if (preg_match('/general|\bgp\b|family/i', $s)) {
+                return $s;
+            }
+        }
+
+        return $all[0] ?? null;
+    }
+
+    /** Which "speak to a doctor now" options are switched on (admin → On-demand doctors). @return array<int, string> */
+    public static function enabledModes(): array
+    {
+        return array_values(array_filter([
+            DoctorNowSettings::bool('doctor_now_video_enabled') ? Appointment::MODE_VIDEO : null,
+            DoctorNowSettings::bool('doctor_now_callback_enabled') ? Appointment::MODE_CALLBACK : null,
+            Appointment::MODE_IN_PERSON,
+        ]));
+    }
+
+    /**
+     * @param  array{callback_phone?: ?string, callback_channel?: ?string, callback_note?: ?string, triage_reference?: ?string}  $extra
+     */
+    public function start(PatientProfile $patient, ?string $specialty, string $mode, ?float $lat = null, ?float $lng = null, ?float $radiusKm = null, array $extra = []): DoctorMatchRequest
     {
         if (! DoctorNowSettings::bool('doctor_now_enabled')) {
             throw new DoctorMatchException('On-demand consultations are switched off right now. Please book a time slot instead.', 409);
         }
 
-        $specialty = trim($specialty);
-        if (! in_array($mode, [Appointment::MODE_VIDEO, Appointment::MODE_IN_PERSON], true)) {
-            throw new DoctorMatchException('Choose video or in person.');
+        $specialty = trim((string) $specialty);
+        if ($specialty === '') {
+            $specialty = (string) self::defaultSpecialty();
+        }
+        if (! in_array($mode, [Appointment::MODE_VIDEO, Appointment::MODE_IN_PERSON, Appointment::MODE_CALLBACK], true)) {
+            throw new DoctorMatchException('Choose a video consult, a call back or in person.');
+        }
+        if (! in_array($mode, self::enabledModes(), true)) {
+            throw new DoctorMatchException($mode === Appointment::MODE_CALLBACK
+                ? 'Call backs are not available right now. Please choose a video consult.'
+                : 'Video consults are not available right now. Please request a call back.', 409);
         }
         if (! in_array(mb_strtolower($specialty), array_map('mb_strtolower', self::specialties()), true)) {
             throw new DoctorMatchException('We don\'t have doctors in that specialty yet.');
@@ -192,28 +227,52 @@ class DoctorMatchService
             throw new DoctorMatchException('We need your location to find a doctor\'s rooms near you.');
         }
 
+        $callbackPhone = null;
+        $channel = null;
+        $note = null;
+        if ($mode === Appointment::MODE_CALLBACK) {
+            $callbackPhone = ConsultCallService::normalisePhone($extra['callback_phone'] ?? null)
+                ?? ConsultCallService::normalisePhone($patient->user?->phone);
+            if (! $callbackPhone) {
+                throw new DoctorMatchException('Enter the phone number the doctor should call.', 422);
+            }
+            $channel = in_array($extra['callback_channel'] ?? null, Appointment::CALLBACK_CHANNELS, true) ? $extra['callback_channel'] : 'either';
+            $note = trim(strip_tags((string) ($extra['callback_note'] ?? '')));
+            $note = $note !== '' ? mb_substr($note, 0, 500) : null;
+        }
+
         $existing = $this->openRequestFor($patient);
         if ($existing) {
             throw new DoctorMatchException('You already have a doctor request in progress.', 409);
         }
 
+        $triage = app(ConsultCallService::class)->resolveTriage($patient, $extra['triage_reference'] ?? null);
         $quote = $this->pricing->quote($specialty, $mode);
         $now = now();
 
-        $request = DB::transaction(function () use ($patient, $specialty, $mode, $lat, $lng, $quote, $now, $radiusKm) {
+        $request = DB::transaction(function () use ($patient, $specialty, $mode, $lat, $lng, $quote, $now, $radiusKm, $callbackPhone, $channel, $note, $triage) {
             $appointment = Appointment::query()->create([
                 'patient_profile_id' => $patient->id,
+                // Appointment dates/times are South African clinic time (see Appointment::CLINIC_TIMEZONE).
                 'doctor_profile_id' => null,
                 'clinic_id' => null,
-                'date' => $now->toDateString(),
-                'start_time' => $now->format('H:i:s'),
-                'end_time' => $now->clone()->addMinutes(self::DEFAULT_DURATION_MINUTES)->format('H:i:s'),
+                'date' => $now->copy()->setTimezone(Appointment::CLINIC_TIMEZONE)->toDateString(),
+                'start_time' => $now->copy()->setTimezone(Appointment::CLINIC_TIMEZONE)->format('H:i:s'),
+                'end_time' => $now->copy()->setTimezone(Appointment::CLINIC_TIMEZONE)->addMinutes(self::DEFAULT_DURATION_MINUTES)->format('H:i:s'),
                 // visit_type predates the mode column; map the closest legacy value.
-                'visit_type' => $mode === Appointment::MODE_VIDEO ? 'telemed' : 'clinic',
+                'visit_type' => match ($mode) {
+                    Appointment::MODE_VIDEO => 'telemed',
+                    Appointment::MODE_CALLBACK => Appointment::VISIT_PHONE,
+                    default => 'clinic',
+                },
                 'status' => Appointment::STATUS_MATCHING,
                 'mode' => $mode,
                 'requested_specialty' => $specialty,
-                'reason' => 'See a doctor now',
+                'reason' => $mode === Appointment::MODE_CALLBACK ? 'Doctor call back requested' : 'See a doctor now',
+                'callback_phone' => $callbackPhone,
+                'callback_channel' => $channel,
+                'callback_note' => $note,
+                'triage_submission_id' => $triage?->id,
             ]);
 
             return DoctorMatchRequest::query()->create([
@@ -231,6 +290,7 @@ class DoctorMatchService
                 'attempts' => 0,
                 'expires_at' => $now->clone()->addMinutes(max(1, DoctorNowSettings::int('doctor_now_request_timeout_minutes'))),
                 'radius_km' => $radiusKm !== null && $mode === Appointment::MODE_IN_PERSON ? DispatchSettings::clampRadius($radiusKm) : null,
+                'triage_submission_id' => $triage?->id,
             ]);
         });
 
@@ -533,7 +593,17 @@ class DoctorMatchService
                     return $events;
                 }
                 $timeout = max(10, DoctorNowSettings::int('doctor_now_offer_timeout_seconds'));
-                foreach ($this->pickCandidates($req, true)->take(60) as $candidate) {
+                $candidates = $this->pickCandidates($req, true)->take(60);
+                if ($candidates->isEmpty() && (int) $req->attempts > 0
+                    && ! DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->where('status', DoctorMatchOffer::OFFERED)->exists()) {
+                    // Every alerted doctor declined or let the alert lapse and nobody new is
+                    // online: tell the patient now (retry / call dispatch), not after a silent wait.
+                    $this->expireLocked($req, 'no_doctor_accepted');
+                    $events[] = ['expired', $req];
+
+                    return $events;
+                }
+                foreach ($candidates as $candidate) {
                     $offer = DoctorMatchOffer::query()->create([
                         'doctor_match_request_id' => $req->id,
                         'appointment_id' => $req->appointment_id,
@@ -798,6 +868,9 @@ class DoctorMatchService
             $offer = DoctorMatchOffer::query()->whereKey($offer->id)->lockForUpdate()->first();
             $req = DoctorMatchRequest::query()->whereKey($offer->doctor_match_request_id)->lockForUpdate()->first();
 
+            if ($req && $req->status === DoctorMatchRequest::MATCHED && (int) $req->doctor_profile_id !== (int) $doctor->id) {
+                return 'taken';
+            }
             if ($offer->status !== DoctorMatchOffer::OFFERED || ! $req || $req->status !== DoctorMatchRequest::SEARCHING) {
                 return 'gone';
             }
@@ -822,13 +895,17 @@ class DoctorMatchService
             $req->appointment->update([
                 'doctor_profile_id' => $doctor->id,
                 'clinic_id' => $clinic?->id,
-                'date' => $now->toDateString(),
-                'start_time' => $now->format('H:i:s'),
-                'end_time' => $now->clone()->addMinutes(self::DEFAULT_DURATION_MINUTES)->format('H:i:s'),
+                'date' => $now->copy()->setTimezone(Appointment::CLINIC_TIMEZONE)->toDateString(),
+                'start_time' => $now->copy()->setTimezone(Appointment::CLINIC_TIMEZONE)->format('H:i:s'),
+                'end_time' => $now->copy()->setTimezone(Appointment::CLINIC_TIMEZONE)->addMinutes(self::DEFAULT_DURATION_MINUTES)->format('H:i:s'),
                 'status' => Appointment::STATUS_CONFIRMED,
             ]);
 
-            $modeLabel = $req->mode === Appointment::MODE_VIDEO ? 'video' : 'in-person';
+            $modeLabel = match ($req->mode) {
+                Appointment::MODE_VIDEO => 'video',
+                Appointment::MODE_CALLBACK => 'call-back',
+                default => 'in-person',
+            };
             $breakdown = (array) $req->price_breakdown;
             $suffix = ! empty($breakdown['notes']) ? ' ('.implode('; ', (array) $breakdown['notes']).')' : '';
             $invoice = Invoice::query()->create([
@@ -871,6 +948,9 @@ class DoctorMatchService
         });
         $this->bumpOffered((int) $offer->doctor_match_request_id);
 
+        if ($result === 'taken') {
+            throw new DoctorMatchException('This consult was taken by another doctor.', 409);
+        }
         if ($result === 'gone') {
             throw new DoctorMatchException('This request has already been taken or cancelled.', 409);
         }
@@ -887,6 +967,15 @@ class DoctorMatchService
             $this->notifyMatched($result);
         } catch (\Throwable $e) {
             Log::warning('[DoctorMatch] notify matched failed: '.$e->getMessage());
+        }
+
+        // Video: the patient's screen rings straight away ("Dr X is ready — joining…").
+        if ($result->mode === Appointment::MODE_VIDEO && $result->appointment) {
+            try {
+                app(ConsultCallService::class)->ring($result->appointment->fresh());
+            } catch (\Throwable $e) {
+                Log::warning('[DoctorMatch] ring failed: '.$e->getMessage());
+            }
         }
 
         return $result->fresh();
@@ -1091,7 +1180,13 @@ class DoctorMatchService
         }
 
         $invoice = $request->invoice;
-        $apptActive = $appt && in_array($appt->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED], true);
+        $calls = app(ConsultCallService::class);
+        try {
+            $dispatch = \App\Models\EmergencyContact::primary();
+        } catch (\Throwable) {
+            $dispatch = null;
+        }
+        $apptActive =$appt && in_array($appt->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED], true);
 
         return [
             'id' => $request->id,
@@ -1116,6 +1211,10 @@ class DoctorMatchService
             'offer_pending' => $request->status === DoctorMatchRequest::SEARCHING && DoctorMatchOffer::query()
                 ->where('doctor_match_request_id', $request->id)->where('status', DoctorMatchOffer::OFFERED)->exists(),
             'online_doctors' => $online,
+            // "Sent to N available doctors — the first to accept takes your consult."
+            'alerted_doctors' => $request->status === DoctorMatchRequest::SEARCHING ? DoctorMatchOffer::query()
+                ->where('doctor_match_request_id', $request->id)->where('status', DoctorMatchOffer::OFFERED)->where('expires_at', '>', now())->count() : 0,
+            'broadcast' => DispatchSettings::mode('doctor_now') === 'broadcast',
             'eta_seconds' => $request->status === DoctorMatchRequest::SEARCHING && $online > 0 ? $this->typicalSecondsToAccept($request->specialty, $request->mode) : null,
             'matched_at' => $request->matched_at?->toIso8601String(),
             'doctor' => $doctorData,
@@ -1123,6 +1222,15 @@ class DoctorMatchService
             'can_join_video' => (bool) ($appt && $request->status === DoctorMatchRequest::MATCHED && $appt->canJoinVideoNow()),
             'video_url' => $appt && $request->status === DoctorMatchRequest::MATCHED && $appt->isVideo() && \Illuminate\Support\Facades\Route::has('account.appointments.video')
                 ? route('account.appointments.video', $appt) : null,
+            // In-page / in-app call (no external browser) + the "incoming call" state once the doctor is ready.
+            'call_url' => $appt && $request->status === DoctorMatchRequest::MATCHED && $appt->isVideo() && \Illuminate\Support\Facades\Route::has('account.appointments.call')
+                ? route('account.appointments.call', $appt) : null,
+            'ring' => $appt && $request->status === DoctorMatchRequest::MATCHED ? $calls->ringPayload($appt) : null,
+            'auto_join_seconds' => ConsultCallService::autoJoinSeconds(),
+            'callback' => $appt ? $calls->callbackPayload($appt) : null,
+            'triage' => $request->triage_submission_id ? (fn ($t) => $t ? ['reference' => $t['reference'], 'level' => $t['level'], 'level_label' => $t['level_label']] : null)($calls->triageSummary($request->triageSubmission)) : null,
+            'dispatch_phone' => $dispatch?->phone,
+            'dispatch_tel' => $dispatch?->tel_url,
             'invoice' => $invoice ? [
                 'id' => $invoice->id,
                 'invoice_no' => $invoice->invoice_no,
@@ -1147,6 +1255,9 @@ class DoctorMatchService
                 ? 'You cancelled after the doctor accepted. A cancellation fee of R'.number_format((float) $request->cancel_fee, 2).' applies.'
                 : 'You cancelled within the free cancellation window. You have not been charged.',
             'cancelled_by_provider' => 'The practice cancelled this consult. You have not been charged.',
+            'accepted' => $request->mode === Appointment::MODE_CALLBACK && $request->doctor?->user
+                ? 'Dr. '.$request->doctor->user->name.' will call you'.(($p = ConsultCallService::displayPhone(app(ConsultCallService::class)->callbackDigits($request->appointment))) ? ' on '.$p : '').' within '.ConsultCallService::targetMinutes().' minutes.'
+                : null,
             default => null,
         };
     }
@@ -1188,8 +1299,11 @@ class DoctorMatchService
             'request_id' => $offer->doctor_match_request_id,
             'appointment_id' => $offer->appointment_id,
             'mode' => $req?->mode,
+            'mode_label' => self::modeLabel($req?->mode),
             'specialty' => $req?->specialty,
             'patient_first_name' => trim(strtok($patientName, ' ') ?: $patientName),
+            'lines' => $req ? $this->offerLines($req) : [],
+            'triage_level' => $req?->triageSubmission?->level,
             'distance_km' => $offer->distance_km,
             'price' => (float) ($req?->price ?? 0),
             'offered_at' => $offer->offered_at?->toIso8601String(),
@@ -1217,7 +1331,33 @@ class DoctorMatchService
             'matched_at' => $req->matched_at?->toIso8601String(),
             'can_join_video' => (bool) $appt?->canJoinVideoNow(),
             'price' => (float) $req->price,
+            'mode_label' => self::modeLabel($req->mode),
+            'callback' => $appt ? app(ConsultCallService::class)->callbackPayload($appt, true) : null,
+            'card_url' => $appt && $req->mode === Appointment::MODE_CALLBACK && class_exists(\App\Filament\Pages\CallbackConsult::class)
+                ? \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $appt->id], panel: 'admin') : null,
         ];
+    }
+
+    public static function modeLabel(?string $mode): string
+    {
+        return match ($mode) {
+            Appointment::MODE_VIDEO => 'Video consult',
+            Appointment::MODE_CALLBACK => 'Call back',
+            default => 'In-person consult',
+        };
+    }
+
+    /**
+     * Alert lines for the doctor: age/sex, triage level + presenting
+     * symptoms, call-back preference.
+     *
+     * @return array<int, string>
+     */
+    public function offerLines(DoctorMatchRequest $req): array
+    {
+        $req->loadMissing(['patient.user', 'appointment', 'triageSubmission']);
+
+        return app(ConsultCallService::class)->alertLines($req->patient, $req->triageSubmission, $req->appointment, (string) $req->mode);
     }
 
     // ------------------------------------------------------------------
@@ -1232,10 +1372,17 @@ class DoctorMatchService
             return;
         }
         $req = $offer->matchRequest;
-        $modeLabel = $req->mode === Appointment::MODE_VIDEO ? 'video' : 'in-person';
+        $req->loadMissing('triageSubmission');
         $secs = max(10, DoctorNowSettings::int('doctor_now_offer_timeout_seconds'));
+        $level = $req->triageSubmission?->level;
+        $prefix = $level ? strtoupper($level).' · ' : '';
+        $title = $req->mode === Appointment::MODE_CALLBACK
+            ? $prefix.'Patient asks a doctor to call back NOW'
+            : ($req->mode === Appointment::MODE_VIDEO ? $prefix.'Patient needs a video consult NOW' : 'See a patient now - '.$req->specialty);
+        $lines = $this->offerLines($req);
+        $body = trim(implode(' · ', array_slice($lines, 0, 3)).' Accept within '.$secs.'s — first doctor to accept takes it.');
 
-        ProviderAlerts::offer($user, 'See a patient now - '.$req->specialty, "A patient needs a {$modeLabel} {$req->specialty} consult now. Accept within {$secs}s.", [
+        ProviderAlerts::offer($user, $title, $body, [
             'service' => 'doctor_now', 'request_id' => $req->id, 'offer_id' => $offer->id, 'offer_key' => 'dm:'.$offer->id,
             'route' => 'doctor_offer', 'params' => ['offer_id' => $offer->id], 'url' => '/staff/live-consults',
         ]);
@@ -1248,22 +1395,30 @@ class DoctorMatchService
         $patientUser = $req->patient?->user;
         $doctorUser = $req->doctor?->user;
 
-        if ($patientUser) {
-            $how = $req->mode === Appointment::MODE_VIDEO ? 'Join the video call from your account.' : 'Head to the practice — directions are on your request page.';
-            $this->notifier->push($patientUser, 'Doctor matched', "Dr. {$doctorName} accepted your request. {$how}", [
+        // Video: ConsultCallService::ring() sends the "Dr X is calling you" push right after this.
+        if ($patientUser && $req->mode !== Appointment::MODE_VIDEO) {
+            $how = $req->mode === Appointment::MODE_CALLBACK
+                ? ($this->outcomeMessage($req) ?? 'The doctor will call you shortly.').' Keep your phone close.'
+                : 'Head to the practice — directions are on your request page.';
+            $this->notifier->push($patientUser, $req->mode === Appointment::MODE_CALLBACK ? 'A doctor will call you back' : 'Doctor matched', "Dr. {$doctorName} accepted your request. {$how}", [
                 'type' => 'appointment',
-                'data' => ['route' => 'appointment', 'params' => ['appointment_id' => $req->appointment_id], 'url' => '/account/see-a-doctor'],
+                'data' => ['route' => 'see_doctor_now', 'params' => ['appointment_id' => $req->appointment_id, 'request_id' => $req->id], 'url' => '/account/see-a-doctor'],
             ]);
         }
 
         if ($doctorUser) {
+            $cardUrl = match ($req->mode) {
+                Appointment::MODE_CALLBACK => \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
+                Appointment::MODE_VIDEO => \App\Filament\Pages\ConsultCall::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
+                default => url('/staff/live-consults'),
+            };
             StaffNotifier::alert(
                 $doctorUser,
                 'On-demand consult confirmed',
-                "{$patientUser?->name} — {$req->mode} consult. Open Live consults to start.",
+                "{$patientUser?->name} — ".mb_strtolower(self::modeLabel($req->mode)).'. Open it to start.',
                 icon: 'heroicon-o-bolt',
                 color: 'success',
-                url: url('/staff/live-consults'),
+                url: $cardUrl,
                 actionLabel: 'Open',
             );
         }
@@ -1276,7 +1431,12 @@ class DoctorMatchService
             return;
         }
 
-        $this->notifier->push($user, 'No doctor available', ($this->outcomeMessage($req) ?? 'Your request expired.').' You can ask to be notified when one is online, or book the next slot.', [
+        try {
+            $dispatch = \App\Models\EmergencyContact::primary()?->phone;
+        } catch (\Throwable) {
+            $dispatch = null;
+        }
+        $this->notifier->push($user, 'No doctor available', ($this->outcomeMessage($req) ?? 'Your request expired.').' Try again'.($dispatch ? ', or call dispatch on '.$dispatch.' if it gets worse.' : '.'), [
             'type' => 'appointment',
             'data' => ['route' => 'see_doctor_now', 'params' => ['request_id' => $req->id], 'url' => '/account/see-a-doctor'],
         ]);

@@ -95,17 +95,40 @@ class LiveRequests extends Page
         }
 
         // See a doctor now
-        $reqs = DoctorMatchRequest::query()->with(['patient.user', 'doctor.user'])
-            ->when($live, fn ($q) => $q->where('status', DoctorMatchRequest::SEARCHING), fn ($q) => $q->where('status', '!=', DoctorMatchRequest::SEARCHING)->where('updated_at', '>=', now()->subDay()))
+        // Live also keeps accepted call backs until the doctor records an outcome (SLA: called on time?).
+        $openAppt = fn ($a) => $a->whereIn('status', [\App\Models\Appointment::STATUS_PENDING, \App\Models\Appointment::STATUS_CONFIRMED, \App\Models\Appointment::STATUS_CHECKED_IN]);
+        $reqs = DoctorMatchRequest::query()->with(['patient.user', 'doctor.user', 'appointment', 'triageSubmission'])
+            ->when($live,
+                fn ($q) => $q->where(fn ($w) => $w->where('status', DoctorMatchRequest::SEARCHING)
+                    ->orWhere(fn ($cb) => $cb->where('status', DoctorMatchRequest::MATCHED)->where('mode', 'callback')->where('matched_at', '>=', now()->subHours(12))->whereHas('appointment', $openAppt))),
+                fn ($q) => $q->where('status', '!=', DoctorMatchRequest::SEARCHING)->where('updated_at', '>=', now()->subDay()))
             ->latest('id')->limit(50)->get();
+        $calls = app(\App\Services\Consults\ConsultCallService::class);
         foreach ($reqs as $m) {
+            $detail = $m->specialty.' · '.\App\Services\Doctors\DoctorMatchService::modeLabel($m->mode);
+            if ($m->triageSubmission) {
+                $detail .= ' · triage '.strtoupper((string) $m->triageSubmission->level);
+            }
+            $status = $m->status;
+            if ($m->mode === 'callback' && $m->appointment && ($cb = $calls->callbackPayload($m->appointment))) {
+                $detail .= ' · '.($cb['phone_display'] ?? '').' ('.$cb['channel_label'].')';
+                if ($m->status === DoctorMatchRequest::MATCHED) {
+                    $toCall = $m->matched_at && $m->appointment->called_at ? (int) round($m->matched_at->diffInMinutes($m->appointment->called_at, true)) : null;
+                    $status = 'accepted · '.match (true) {
+                        (bool) $cb['outcome'] => 'outcome: '.str_replace('_', ' ', $cb['outcome']).($toCall !== null ? ' · called after '.$toCall.' min' : ''),
+                        (bool) $cb['called_at'] => 'calling'.($toCall !== null ? ' (after '.$toCall.' min)' : ''),
+                        $cb['overdue'] => 'NOT CALLED — overdue (target '.$cb['target_minutes'].' min)',
+                        default => 'awaiting call (target '.$cb['target_minutes'].' min)',
+                    };
+                }
+            }
             $rows[] = [
                 'key' => 'dm:'.$m->id, 'service' => 'Doctor now', 'ref' => '#'.$m->id,
-                'patient' => $m->patient?->user?->name, 'detail' => $m->specialty.' · '.str_replace('_', ' ', (string) $m->mode),
-                'status' => $m->status, 'mode' => DispatchSettings::mode('doctor_now'),
+                'patient' => $m->patient?->user?->name, 'detail' => $detail,
+                'status' => $status, 'mode' => DispatchSettings::mode('doctor_now'),
                 'notified' => $m->status === DoctorMatchRequest::SEARCHING ? DoctorMatchOffer::query()->where('doctor_match_request_id', $m->id)->where('status', DoctorMatchOffer::OFFERED)->where('expires_at', '>', now())->count() : 0,
                 'provider' => $m->doctor?->user?->name, 'when' => $m->created_at?->copy()->setTimezone('Africa/Johannesburg')->format('d M H:i'),
-                'can_assign' => $live, 'can_cancel' => $live, 'url' => null,
+                'can_assign' => $live && $m->status === DoctorMatchRequest::SEARCHING, 'can_cancel' => $live && $m->status === DoctorMatchRequest::SEARCHING, 'url' => null,
             ];
         }
 

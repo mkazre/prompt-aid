@@ -35,4 +35,22 @@ class AppointmentVideoAction
                 : null)
             ->openUrlInNewTab(fn (?Appointment $record) => (bool) ($record?->meet_url && app(VideoRoomService::class)->allowMeetOverride()));
     }
+
+    /**
+     * "Call patient" for the appointment's own doctor on a call-back
+     * consult (patient chose "call me back" when booking, or an orange
+     * triage call back). Opens the call card: Call / WhatsApp / outcomes.
+     */
+    public static function callback(): Action
+    {
+        return Action::make('callPatient')
+            ->label('Call patient')
+            ->icon('heroicon-o-phone')
+            ->color('success')
+            ->visible(fn (?Appointment $record): bool => $record !== null
+                && $record->isCallback()
+                && in_array($record->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED, Appointment::STATUS_CHECKED_IN], true)
+                && (int) $record->doctor_profile_id === (int) Auth::user()?->doctorProfile?->id)
+            ->url(fn (?Appointment $record) => $record ? \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $record->id], panel: 'admin') : null);
+    }
 }

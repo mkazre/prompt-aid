@@ -36,7 +36,7 @@ class AppointmentForm
                         TimePicker::make('start_time')->required(),
                         TimePicker::make('end_time')->required(),
                         Select::make('visit_type')
-                            ->options(['clinic' => 'At Clinic', 'telemed' => 'Telemedicine', 'home' => 'Home Visit'])
+                            ->options(['clinic' => 'At Clinic', 'telemed' => 'Telemedicine', 'phone' => 'Phone call back', 'home' => 'Home Visit'])
                             ->required()->default('clinic'),
                         Select::make('status')
                             ->options([

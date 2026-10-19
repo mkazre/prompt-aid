@@ -14,6 +14,7 @@ class EditAppointment extends EditRecord
     {
         return [
             \App\Filament\Resources\Appointments\AppointmentVideoAction::make(),
+                \App\Filament\Resources\Appointments\AppointmentVideoAction::callback(),
             DeleteAction::make(),
         ];
     }

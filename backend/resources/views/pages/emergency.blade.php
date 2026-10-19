@@ -377,6 +377,7 @@
       .catch(function () { return null; /* never blocks or interrupts the patient */ });
   }
 
+  var doctorNowUrl = '{{ url('/account/see-a-doctor') }}';
   function render() {
     var res = T.assess(state);
     var m = res.meta;
@@ -387,6 +388,10 @@
         if (refEl) refEl.textContent = server.reference;
         var link = document.getElementById('pa-results-link');
         if (link) link.href = '{{ route('emergency.results') }}?level=' + res.level + '&ref=' + encodeURIComponent(server.reference);
+        ['video', 'callback'].forEach(function (m) {
+          var a = document.getElementById('pa-orange-' + m);
+          if (a) a.href = doctorNowUrl + '?mode=' + m + '&triage=' + encodeURIComponent(server.reference);
+        });
       }
     });
     document.querySelectorAll('#pa-satsbar span').forEach(function (s) {
@@ -407,6 +412,14 @@
         '<p>Target time to be seen: <strong>' + m.targetLabel + '</strong>. Reference <strong id="pa-verdict-ref">' + res.reference + '</strong> — show this at reception.</p>' +
       '</div>' +
       (res.callAmbulance ? '<a class="pa-emergency-cta" style="margin-top:2px" href="' + primaryEmergency.tel + '">Call an ambulance now · ' + primaryEmergency.phone + '</a>' : '') +
+      (res.level === 'orange'
+        ? '<div class="pa-card" style="margin-top:20px;border:2px solid var(--pa-sats-orange)"><div class="pa-card-head"><h3>Speak to a doctor now</h3></div>' +
+          '<div class="pa-card-body"><p style="margin:0 0 14px;font-size:15px;color:var(--pa-ink-soft)">Your request goes to every available doctor at once — the first to accept takes your consult.</p>' +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+          '<a class="pa-btn pa-btn-lg" id="pa-orange-video" href="' + doctorNowUrl + '?mode=video">Video consult now</a>' +
+          '<a class="pa-btn-ghost pa-btn-lg" id="pa-orange-callback" href="' + doctorNowUrl + '?mode=callback">Request a call back</a>' +
+          '</div></div></div>'
+        : '') +
       '<div class="pa-card" style="margin-top:20px">' +
         '<div class="pa-card-head"><h3>What to do right now</h3>' +
         '<span class="pa-countdown" style="font-size:22px">' + (m.target === 0 ? 'NOW' : m.target < 120 ? m.target + ' min' : m.target < 1440 ? Math.round(m.target / 60) + ' hrs' : Math.round(m.target / 1440) + ' days') + '</span></div>' +

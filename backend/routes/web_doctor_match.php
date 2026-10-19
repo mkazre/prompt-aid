@@ -17,3 +17,8 @@ Route::prefix('account/see-a-doctor')->name('account.doctor-now')->group(functio
     Route::post('/{id}/waitlist', [DoctorNowController::class, 'waitlist'])->whereNumber('id')->name('.waitlist');
     Route::middleware('throttle:10,1')->post('/{id}/pay', [DoctorNowController::class, 'pay'])->whereNumber('id')->name('.pay');
 });
+
+// Incoming video call ("Dr X is calling you") for patients on any website page.
+Route::middleware('throttle:60,1')->get('/account/consult-ring', [\App\Http\Controllers\ConsultCallController::class, 'ring'])->name('account.consult-ring');
+Route::post('/account/consults/{appointment}/ring/answer', [\App\Http\Controllers\ConsultCallController::class, 'answer'])->whereNumber('appointment')->name('account.consult-ring.answer');
+Route::post('/account/consults/{appointment}/ring/decline', [\App\Http\Controllers\ConsultCallController::class, 'decline'])->whereNumber('appointment')->name('account.consult-ring.decline');

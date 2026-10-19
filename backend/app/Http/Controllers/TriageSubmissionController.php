@@ -40,7 +40,9 @@ class TriageSubmissionController extends Controller
         $submission = TriageSubmission::query()->create([
             ...$data,
             'reference' => 'SATS-'.strtoupper(Str::random(6)),
-            'user_id' => $request->user()?->id,
+            // The app posts here outside the auth group: resolve its bearer token too, so the
+            // result can be linked to a later "speak to a doctor now" request.
+            'user_id' => ($request->user() ?? auth('sanctum')->user())?->id,
             'ip' => $request->ip(),
         ]);
 

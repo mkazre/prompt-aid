@@ -16,7 +16,8 @@ import { telUrl, websiteUrl } from '../../services/siteContent';
 const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 import { addDays, longDate, parseYmd, startOfToday, time12, ymd } from '../../services/dates';
 
-type Mode = 'clinic' | 'telemed';
+type Mode = 'clinic' | 'telemed' | 'phone';
+const visitLabel = (m: Mode, clinicName?: string) => (m === 'telemed' ? 'Video call' : m === 'phone' ? 'Doctor calls you' : clinicName ?? 'In person');
 
 /**
  * Two-step booking. Step 1: doctor, service, clinic, in-person vs video,
@@ -26,6 +27,9 @@ type Mode = 'clinic' | 'telemed';
 export default function DoctorDetailScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  // "Call back" bookings: the doctor phones / WhatsApp-calls the patient at the slot time.
+  const [cbPhone, setCbPhone] = useState<string>(String((user as any)?.phone ?? ''));
+  const [cbChannel, setCbChannel] = useState<'phone' | 'whatsapp' | 'either'>('either');
   const { doctorId } = route.params;
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [clinicId, setClinicId] = useState<number | null>(null);
@@ -94,6 +98,7 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
         start_time: slot,
         visit_type: mode,
         reason: reason.trim() || undefined,
+        ...(mode === 'phone' ? { callback_phone: cbPhone.trim(), callback_channel: cbChannel } : {}),
       });
       setConfirmed(data.data);
       setReason('');
@@ -257,6 +262,7 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
             <View style={styles.modeRow}>
               <ModeOption icon="business-outline" label="In person" active={mode === 'clinic'} onPress={() => setMode('clinic')} />
               <ModeOption icon="videocam-outline" label="Video call" active={mode === 'telemed'} onPress={() => setMode('telemed')} />
+              <ModeOption icon="call-outline" label="Call back" active={mode === 'phone'} onPress={() => setMode('phone')} />
             </View>
 
             <SoftCard style={{ marginTop: 6 }}>
@@ -269,7 +275,7 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
             <SoftCard style={{ marginBottom: 16 }}>
               <SummaryRow icon="calendar-outline" label="Date" value={longDate(parseYmd(date))} />
               <SummaryRow icon="time-outline" label="Time" value={time12(slot)} />
-              <SummaryRow icon={mode === 'telemed' ? 'videocam-outline' : 'business-outline'} label="Visit" value={mode === 'telemed' ? 'Video call' : clinic?.name ?? 'In person'} />
+              <SummaryRow icon={mode === 'telemed' ? 'videocam-outline' : mode === 'phone' ? 'call-outline' : 'business-outline'} label="Visit" value={visitLabel(mode, clinic?.name)} />
               <SummaryRow icon="medkit-outline" label="Service" value={service ? service.name : 'Consultation'} />
               <SummaryRow icon="card-outline" label="Fee" value={`R ${Math.round(price)}`} last />
             </SoftCard>
@@ -278,6 +284,26 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
             <View style={[ui.input, { backgroundColor: pa.paper, marginBottom: 14 }]}>
               <Text style={{ fontFamily: paFonts.regular, fontSize: 15, color: pa.ink }}>{user?.name}</Text>
             </View>
+
+            {mode === 'phone' ? (
+              <>
+                <Text style={styles.label}>Number the doctor should call</Text>
+                <TextInput
+                  value={cbPhone}
+                  onChangeText={setCbPhone}
+                  keyboardType="phone-pad"
+                  autoComplete="tel"
+                  maxLength={32}
+                  placeholder="082 123 4567"
+                  style={[ui.input, { marginBottom: 10, fontFamily: paFonts.regular, fontSize: 15, color: pa.ink }]}
+                />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+                  <Chip label="Normal call" active={cbChannel === 'phone'} onPress={() => setCbChannel('phone')} />
+                  <Chip label="WhatsApp call" active={cbChannel === 'whatsapp'} onPress={() => setCbChannel('whatsapp')} />
+                  <Chip label="Either" active={cbChannel === 'either'} onPress={() => setCbChannel('either')} />
+                </View>
+              </>
+            ) : null}
 
             <Text style={styles.label}>Notes for the doctor (optional)</Text>
             <TextInput
@@ -328,7 +354,7 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
           { label: 'Date', value: longDate(parseYmd(confirmed.date)) },
           { label: 'Time', value: time12(confirmed.start_time) },
           { label: 'Doctor', value: doctor.name.startsWith('Dr') ? doctor.name : `Dr ${doctor.name}` },
-          { label: 'Visit', value: mode === 'telemed' ? 'Video call' : clinic?.name ?? 'In person' },
+          { label: 'Visit', value: visitLabel(mode, clinic?.name) },
         ] : undefined}
         primaryLabel="View my appointments"
         onPrimary={() => {

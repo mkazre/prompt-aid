@@ -167,7 +167,7 @@ export interface Appointment {
   date: string;
   start_time: string;
   end_time: string;
-  visit_type: 'clinic' | 'telemed' | 'home';
+  visit_type: 'clinic' | 'telemed' | 'home' | 'phone';
   status: 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show' | 'matching';
   reason: string | null;
   requested_specialty?: string | null;
@@ -175,8 +175,11 @@ export interface Appointment {
   // backend/database/migrations/2026_09_23_100011_add_video_fields_to_appointments_table.php)
   // but AppointmentResource does not serialize them yet — optional here so the
   // UI degrades gracefully until the backend exposes them.
-  mode?: 'in_person' | 'video';
+  mode?: 'in_person' | 'video' | 'callback';
   meet_url?: string | null;
+  /** Call-back consult (orange triage call back / booked "call back"); tel/wa.me links only for the doctor. */
+  is_callback?: boolean;
+  callback?: import('../services/consults').CallbackInfo | null;
   // In-app video (join URL itself comes from GET /appointments/{id}/video).
   is_video?: boolean;
   can_join_video?: boolean;

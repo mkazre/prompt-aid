@@ -25,6 +25,12 @@ class AppointmentResource extends JsonResource
             'is_video' => $this->isVideo(),
             'can_join_video' => $this->canJoinVideoNow(),
             'video_ended_at' => $this->video_ended_at?->toIso8601String(),
+            // Call-back consults (orange triage / "call me back" bookings). tel/wa.me links only for the appointment's doctor.
+            'is_callback' => $this->isCallback(),
+            'callback' => $this->isCallback() ? app(\App\Services\Consults\ConsultCallService::class)->callbackPayload(
+                $this->resource,
+                (int) ($request->user()?->doctorProfile?->id ?? 0) === (int) $this->doctor_profile_id,
+            ) : null,
             'requested_specialty' => $this->requested_specialty,
             'reason' => $this->reason,
             'cancel_reason' => $this->cancel_reason,

@@ -39,7 +39,13 @@ export default function ProviderDispatchHost({
 
   function onAccepted(res: AcceptResult, card: DispatchOfferCard) {
     setTimeout(() => {
+      const next = res.next;
       if (card.service === 'shuttle') navigate('Main', { screen: 'Drive', params: { screen: 'Trip' } });
+      // Video: straight into the in-app call (the patient's phone is ringing). Call back: the call card.
+      else if (role === 'doctor' && card.service === 'doctor_now' && next?.appointment_id && next?.mode === 'video')
+        navigate('VideoCall', { appointmentId: next.appointment_id, name: next.patient_name ?? card.patient_first_name ?? 'Patient' });
+      else if (role === 'doctor' && card.service === 'doctor_now' && next?.appointment_id && next?.mode === 'callback')
+        navigate('ConsultCard', { appointmentId: next.appointment_id });
       else if (role === 'doctor') navigate('Main', { screen: 'DoctorDashboard', params: { screen: 'DoctorDashboardHome' } });
       else if (role === 'pharmacy_admin') navigate('Main', { screen: card.service === 'script_review' ? 'Scripts' : 'Orders' });
       else if (role === 'third_party') navigate('Main', { screen: 'Requests' });

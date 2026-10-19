@@ -75,6 +75,13 @@ class ConsultCall extends Page
 
         $this->summary = $this->buildSummary($appt);
 
+        // Doctor is in the room: the patient's app / browser rings and auto-joins.
+        try {
+            app(\App\Services\Consults\ConsultCallService::class)->ring($appt);
+        } catch (Throwable $e) {
+            Log::warning('Consult ring failed: '.$e->getMessage(), ['appointment_id' => $appt->id]);
+        }
+
         try {
             $conversation = app(ChatService::class)->forAppointment($appt, $user);
             $this->messageUrl = $conversation ? ConversationResource::getUrl('view', ['record' => $conversation]) : null;
@@ -117,6 +124,16 @@ class ConsultCall extends Page
             $rows['Blood group'] = (string) $p->blood_group;
         }
         $rows['Reason for visit'] = (string) ($appt->reason ?: '—');
+        $triage = app(\App\Services\Consults\ConsultCallService::class)->triageSummary(
+            $appt->triageSubmission ?? \App\Models\TriageSubmission::query()->find(\App\Models\DoctorMatchRequest::query()->where('appointment_id', $appt->id)->value('triage_submission_id'))
+        );
+        if ($triage) {
+            $rows['Triage'] = $triage['level_label'].' · '.$triage['reference'];
+            $what = array_merge($triage['symptoms'], $triage['discriminators']);
+            if ($what || $triage['reasons']) {
+                $rows['Presenting'] = implode(', ', $what ?: $triage['reasons']);
+            }
+        }
         $rows['Allergies'] = (string) ($p?->allergies ?: 'None recorded');
         $rows['Chronic conditions'] = (string) ($p?->chronic_conditions ?: 'None recorded');
 

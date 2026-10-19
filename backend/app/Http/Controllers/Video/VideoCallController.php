@@ -36,6 +36,11 @@ class VideoCallController extends Controller
         if ($this->video->allowMeetOverride() && $appointment->meet_url) {
             return redirect()->away($appointment->meet_url);
         }
+        // The patient picked up: stop the "Dr X is calling you" ring.
+        try {
+            app(\App\Services\Consults\ConsultCallService::class)->answer($appointment, $user);
+        } catch (\Throwable) {
+        }
 
         return $this->render($appointment, $user, $request->boolean('audio'), 'web');
     }

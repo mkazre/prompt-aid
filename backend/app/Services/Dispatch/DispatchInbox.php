@@ -87,7 +87,7 @@ class DispatchInbox
         }
 
         if ($user->role === User::ROLE_DOCTOR && ($doctor = $user->doctorProfile)) {
-            DoctorMatchOffer::query()->with('matchRequest.patient.user')->where('doctor_profile_id', $doctor->id)
+            DoctorMatchOffer::query()->with(['matchRequest.patient.user', 'matchRequest.triageSubmission', 'matchRequest.appointment'])->where('doctor_profile_id', $doctor->id)
                 ->where(fn ($q) => $q->where('status', DoctorMatchOffer::OFFERED)->orWhere('responded_at', '>=', now()->subSeconds(90)))
                 ->where('offered_at', '>=', now()->subMinutes(30))
                 ->latest('id')->limit(15)->get()
@@ -212,12 +212,22 @@ class DispatchInbox
             'state' => $state,
             'request_id' => $o->doctor_match_request_id,
             'offer_id' => $o->id,
-            'title' => 'Patient wants to see a doctor NOW',
-            'subtitle' => ($req?->mode === 'video' ? 'Video consult' : 'In-person consult').' · '.($req?->specialty ?? ''),
+            'title' => match ($req?->mode) {
+                'callback' => 'Patient asks a doctor to CALL BACK now',
+                'video' => 'Patient needs a VIDEO consult now',
+                default => 'Patient wants to see a doctor NOW',
+            },
+            'subtitle' => DoctorMatchService::modeLabel($req?->mode).' · '.($req?->specialty ?? ''),
             'patient_first_name' => trim(strtok($name, ' ') ?: $name),
             'rider' => null,
-            'badges' => array_values(array_filter(['Now', $req?->mode === 'video' ? 'Video' : 'In person'])),
-            'lines' => [],
+            'badges' => array_values(array_filter([
+                $req?->triageSubmission?->level ? strtoupper($req->triageSubmission->level) : null,
+                'Now',
+                match ($req?->mode) { 'video' => 'Video', 'callback' => 'Call back', default => 'In person' },
+            ])),
+            'mode' => $req?->mode,
+            'appointment_id' => $o->appointment_id,
+            'lines' => $req && $state === 'pending' ? $this->doctors->offerLines($req) : [],
             'earning' => (float) ($req?->price ?? 0),
             'fare' => (float) ($req?->price ?? 0),
             'distance_km' => $o->distance_km !== null ? (float) $o->distance_km : null,
@@ -303,7 +313,20 @@ class DispatchInbox
                 $offer = DoctorMatchOffer::query()->where('doctor_profile_id', $doctor?->id)->findOrFail($id);
                 $req = $this->doctors->accept($offer, $doctor);
 
-                return ['message' => 'Consult accepted. The patient has been notified.', 'next' => ['type' => 'doctor_now', 'request_id' => $req->id, 'appointment_id' => $req->appointment_id, 'url' => '/staff/live-consults']];
+                // Video → straight into the in-panel call (the patient's screen is ringing);
+                // call back → the call card with Call / WhatsApp buttons.
+                $url = match ($req->mode) {
+                    'video' => \App\Filament\Pages\ConsultCall::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
+                    'callback' => \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
+                    default => '/staff/live-consults',
+                };
+                $msg = match ($req->mode) {
+                    'video' => 'Consult accepted — opening the video call. The patient is joining.',
+                    'callback' => 'Consult accepted — call the patient now.',
+                    default => 'Consult accepted. The patient has been notified.',
+                };
+
+                return ['message' => $msg, 'next' => ['type' => 'doctor_now', 'request_id' => $req->id, 'appointment_id' => $req->appointment_id, 'mode' => $req->mode, 'patient_name' => $req->appointment?->patient?->user?->name, 'url' => $url]];
             }
             $offer = DispatchOffer::query()->where('provider_user_id', $user->id)->findOrFail($id);
             $job = $this->engine->accept($offer, $user);

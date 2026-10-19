@@ -12,7 +12,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var csrfMeta = document.querySelector('meta[name="csrf-token"]');
   var csrf = csrfMeta ? csrfMeta.getAttribute('content') : '';
-  var state = { current: cfg.current, loc: null, pollTimer: null, quoteSeq: 0, busy: false };
+  var state = { current: cfg.current, loc: null, pollTimer: null, quoteSeq: 0, busy: false, lastBody: null };
+  function modeLabel(m) { return m === 'video' ? 'Video consult' : m === 'callback' ? 'Call back' : 'In person'; }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -85,7 +86,11 @@
     if (s) s.textContent = '✓ ' + label;
   }
   function syncMode() {
-    show('dn-inperson', mode() === 'in_person');
+    var m = mode();
+    show('dn-inperson', m === 'in_person');
+    show('dn-callback', m === 'callback');
+    var b = $('dn-request');
+    if (b) b.textContent = m === 'video' ? 'Start video consult now' : m === 'callback' ? 'Request a call back' : 'Request a doctor now';
     loadQuote();
   }
 
@@ -100,16 +105,27 @@
     if (!p) { loadQuote(); return; }
 
     if (p.status === 'searching') { renderSearching(p); schedule(3000); }
-    else if (p.status === 'matched') { renderMatched(p); schedule(15000); }
+    else if (p.status === 'matched') {
+      renderMatched(p);
+      // Video: keep a short poll until the call rings / starts; call back: watch for "calling now".
+      schedule(p.mode === 'video' && !p.ring ? 4000 : p.mode === 'callback' ? 8000 : 15000);
+    }
     else { renderClosed(p); }
   }
 
   function renderSearching(p) {
-    var line = p.offer_pending
-      ? 'Asking a doctor now (' + p.attempts + ' of up to ' + p.max_attempts + ')…'
-      : (p.online_doctors > 0 ? 'Contacting available doctors…' : 'Waiting for a ' + p.specialty + ' to come online…');
+    var line;
+    if (p.broadcast && p.alerted_doctors > 0) {
+      line = 'Sent to ' + p.alerted_doctors + ' available doctor' + (p.alerted_doctors === 1 ? '' : 's') + ' — the first to accept will take your consult.';
+    } else if (p.offer_pending) {
+      line = 'Asking a doctor now (' + p.attempts + ' of up to ' + p.max_attempts + ')…';
+    } else {
+      line = p.online_doctors > 0 ? 'Alerting available doctors…' : 'Waiting for a ' + p.specialty + ' to come online…';
+    }
     $('dn-search-line').textContent = line;
-    var meta = [esc(p.specialty), p.mode === 'video' ? 'Video consult' : 'In person', money(p.price)];
+    var st = $('dn-search-title');
+    if (st) st.textContent = p.mode === 'callback' ? 'Finding a doctor to call you' : p.mode === 'video' ? 'Finding a doctor for your video consult' : 'Finding your doctor';
+    var meta = [esc(p.specialty), modeLabel(p.mode), money(p.price)];
     if (p.eta_seconds) meta.push('usually matched in ~' + fmtSecs(p.eta_seconds));
     meta.push('search ends in ' + fmtSecs(p.seconds_left));
     $('dn-search-meta').innerHTML = meta.join(' · ');
@@ -142,10 +158,23 @@
     var where = '';
     var actions = '';
     if (p.mode === 'video') {
-      where = '<div class="pa-note">Your video consult is ready. Join now — the room stays open for 30 minutes after the booked half hour.</div>';
-      actions += p.can_join_video && p.video_url
-        ? '<a class="pa-btn" href="' + esc(p.video_url) + '" target="_blank" rel="noopener">Join video</a>'
+      var joinUrl = p.call_url || p.video_url;
+      where = p.ring
+        ? '<div class="pa-note"><strong>' + esc(d.name || 'Your doctor') + ' is ready.</strong> Joining your video consult…</div>'
+        : '<div class="pa-note">' + esc(d.name || 'Your doctor') + ' accepted. Your screen will ring and join the video consult automatically as soon as the doctor is in the room — keep this page open.</div>';
+      actions += p.can_join_video && joinUrl
+        ? '<a class="pa-btn" href="' + esc(joinUrl) + '">Join video now</a>'
         : '<button class="pa-btn" type="button" disabled>Video room closed</button>';
+      if (p.ring && window.PromptAidRing) window.PromptAidRing.show(p.ring);
+    } else if (p.mode === 'callback' && p.callback) {
+      var cb = p.callback;
+      var due = cb.due_at ? new Date(cb.due_at) : null;
+      var dueTxt = due ? due.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      where = cb.outcome === 'no_answer'
+        ? '<div class="pa-note-stop"><strong>' + esc(d.name || 'Your doctor') + ' tried to call you.</strong> Keep your phone close — they will try again on ' + esc(cb.phone_display || '') + '.</div>'
+        : cb.called_at
+          ? '<div class="pa-note"><strong>' + esc(d.name || 'Your doctor') + ' is calling you now</strong> on ' + esc(cb.phone_display || '') + ' (' + esc(cb.channel_label) + '). Answer your phone.</div>'
+          : '<div class="pa-note"><strong>' + esc(d.name || 'Your doctor') + ' will call you on ' + esc(cb.phone_display || '') + ' within ' + esc(cb.target_minutes) + ' minutes</strong>' + (dueTxt ? ' (by about ' + esc(dueTxt) + ')' : '') + '. ' + esc(cb.channel_label) + '. Keep your phone close and the line free.</div>';
     } else if (p.clinic) {
       where = '<div class="pa-label">Go to</div><div style="font-weight:700">' + esc(p.clinic.name) + '</div>' +
         (p.clinic.address ? '<div class="pa-muted" style="font-size:14px">' + esc(p.clinic.address) + '</div>' : '');
@@ -180,9 +209,11 @@
     $('dn-c-msg').textContent = p.outcome_message || (expired ? 'No doctor accepted in time. You have not been charged.' : 'This request was cancelled.');
     var a = '';
     if (expired) {
+      a += '<button type="button" class="pa-btn" data-dn="retry">Try again</button>';
+      if (p.dispatch_tel) a += '<a class="pa-btn-ghost" href="' + esc(p.dispatch_tel) + '">Call dispatch · ' + esc(p.dispatch_phone || '') + '</a>';
       a += p.waitlisted
         ? '<span class="pa-badge is-go" style="align-self:center">We\'ll notify you when a ' + esc(p.specialty) + ' is online</span>'
-        : '<button type="button" class="pa-btn" data-dn="waitlist">Notify me when one is online</button>';
+        : '<button type="button" class="pa-btn-ghost" data-dn="waitlist">Notify me when one is online</button>';
     }
     if (p.book_url) a += '<a class="pa-btn-ghost" href="' + esc(p.book_url) + '">Book the next slot</a>';
     a += '<button type="button" class="pa-btn-ghost" data-dn="new">Start a new request</button>';
@@ -206,6 +237,7 @@
     var p = state.current;
     if (state.busy) return;
     if (kind === 'new') { render(null); return; }
+    if (kind === 'retry') { if (state.lastBody) submit(state.lastBody, btn); else render(null); return; }
     if (kind === 'message') { $('dn-msg-form').submit(); return; }
     if (!p) return;
     if (kind === 'cancel') {
@@ -259,21 +291,35 @@
     setLoc(cfg.savedLocation.lat, cfg.savedLocation.lng, cfg.savedLocation.label);
   });
 
-  var reqBtn = $('dn-request');
-  if (reqBtn) reqBtn.addEventListener('click', function () {
+  function submit(body, btn) {
     if (state.busy) return;
-    var m = mode();
-    if (m === 'in_person' && !state.loc) { error('Share your location (or use your saved address) so we can find rooms near you.'); return; }
-    var body = { specialty: specialty(), mode: m };
-    if (m === 'in_person') { body.lat = state.loc.lat; body.lng = state.loc.lng; var rk = $('dn-radius'); if (rk && rk.value) body.radius_km = Number(rk.value); }
-    state.busy = true; reqBtn.disabled = true; error('');
+    state.lastBody = body;
+    state.busy = true; if (btn) btn.disabled = true; error('');
     api('POST', cfg.storeUrl, body)
       .then(function (json) { render(json.data); })
       .catch(function (e) {
         error(e.message);
         if (e.payload && e.payload.data) render(e.payload.data);
       })
-      .then(function () { state.busy = false; reqBtn.disabled = false; });
+      .then(function () { state.busy = false; if (btn) btn.disabled = false; });
+  }
+
+  var reqBtn = $('dn-request');
+  if (reqBtn) reqBtn.addEventListener('click', function () {
+    if (state.busy) return;
+    var m = mode();
+    if (m === 'in_person' && !state.loc) { error('Share your location (or use your saved address) so we can find rooms near you.'); return; }
+    var body = { specialty: specialty(), mode: m };
+    if (cfg.triageRef) body.triage_reference = cfg.triageRef;
+    if (m === 'in_person') { body.lat = state.loc.lat; body.lng = state.loc.lng; var rk = $('dn-radius'); if (rk && rk.value) body.radius_km = Number(rk.value); }
+    if (m === 'callback') {
+      var ph = $('dn-cb-phone'), ch = document.querySelector('input[name="dn-cb-channel"]:checked'), nt = $('dn-cb-note');
+      body.callback_phone = ph ? ph.value.trim() : '';
+      if (!body.callback_phone) { error('Enter the phone number the doctor should call.'); if (ph) ph.focus(); return; }
+      body.callback_channel = ch ? ch.value : 'either';
+      if (nt && nt.value.trim()) body.callback_note = nt.value.trim();
+    }
+    submit(body, reqBtn);
   });
 
   document.addEventListener('visibilitychange', function () {

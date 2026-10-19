@@ -24,6 +24,15 @@ class DoctorNowSettings
         'doctor_now_location_stale_minutes' => '60',
         'doctor_now_waitlist_hours' => '4',
 
+        // --- Orange triage: "speak to a doctor now" options ---
+        'doctor_now_video_enabled' => '1',
+        'doctor_now_callback_enabled' => '1',
+        // Shown to the patient ("Dr X will call you within N minutes") and used for SLA reporting.
+        'doctor_now_callback_target_minutes' => '10',
+        // Patient "incoming call" screen: seconds before it auto-joins the video, and how long it rings.
+        'doctor_now_autojoin_seconds' => '3',
+        'doctor_now_ring_seconds' => '120',
+
         // --- Pricing ---
         'doctor_now_timezone' => 'Africa/Johannesburg',
         'doctor_now_default_fee' => '450',
