@@ -62,7 +62,7 @@
           <div class="pa-spread" style="padding:16px 22px;border-bottom:1px solid var(--pa-line-soft)">
             <div>
               <div style="font-size:15px;font-weight:700">{{ $appt->doctor?->user?->name ?? 'Finding your doctor…' }}</div>
-              <div style="font-size:13px;color:var(--pa-muted);margin-top:2px">{{ $appt->clinic->name }} · {{ $appt->date->format('d M Y') }} at {{ \Illuminate\Support\Carbon::parse($appt->start_time)->format('H:i') }}</div>
+              <div style="font-size:13px;color:var(--pa-muted);margin-top:2px">{{ $appt->clinic?->name ?? (in_array($appt->mode ?? null, ['video', 'callback'], true) ? ($appt->mode === 'callback' ? 'Phone call-back' : 'Video consult') : 'Online consult') }} · {{ $appt->date->format('d M Y') }} at {{ \Illuminate\Support\Carbon::parse($appt->start_time)->format('H:i') }}</div>
             </div>
             <span class="pa-badge {{ in_array($appt->status, ['completed', 'confirmed']) ? 'is-go' : (in_array($appt->status, ['cancelled', 'no_show']) ? 'is-stop' : 'is-wait') }}">{{ str($appt->status)->headline() }}</span>
           </div>
@@ -95,7 +95,7 @@
           <div class="pa-spread" style="padding:16px 22px;border-bottom:1px solid var(--pa-line-soft)">
             <div>
               <div style="font-size:15px;font-weight:700">{{ $order->order_no }}</div>
-              <div style="font-size:13px;color:var(--pa-muted);margin-top:2px">{{ $order->pharmacy->name }} · R{{ number_format($order->total, 2) }}</div>
+              <div style="font-size:13px;color:var(--pa-muted);margin-top:2px">{{ $order->pharmacy?->name ?? 'Pharmacy' }} · R{{ number_format($order->total, 2) }}</div>
             </div>
             <span class="pa-badge {{ in_array($order->status, ['delivered', 'confirmed']) ? 'is-go' : ($order->status === 'cancelled' ? 'is-stop' : 'is-wait') }}">{{ str($order->status)->headline() }}</span>
           </div>
@@ -131,7 +131,7 @@
         <div class="pa-note" style="margin-top:22px">
           Active ride <strong>{{ $activeRide->ride_ref }}</strong> — status: {{ str($activeRide->status)->headline() }}
           @if ($activeRide->driver)
-            <br>Driver: {{ $activeRide->driver->user->name }} ({{ $activeRide->driver->vehicle_plate_no }})
+            <br>Driver: {{ $activeRide->driver?->user?->name ?? 'Your driver' }}@if($activeRide->driver?->vehicle_plate_no) ({{ $activeRide->driver->vehicle_plate_no }})@endif
           @endif
           <br><a href="{{ route('rides.track', $activeRide) }}" style="font-weight:700">Track live on map →</a>
         </div>

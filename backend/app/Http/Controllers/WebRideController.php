@@ -20,7 +20,10 @@ class WebRideController extends Controller
 {
     public function store(Request $request, RideDispatchService $dispatch, PricingService $pricing)
     {
-        $data = $request->validate([
+        // The confirm form is rendered by POST /shuttle/quote, so "back" would be a GET
+        // to a POST-only URL (405). Failures always return to the shuttle form instead.
+        $shuttleForm = route('shuttle').'#request';
+        $rules = [
             'pickup_address' => ['required', 'string', 'max:255'],
             'pickup_lat' => ['required', 'numeric', 'between:-90,90'],
             'pickup_lng' => ['required', 'numeric', 'between:-180,180'],
@@ -32,11 +35,16 @@ class WebRideController extends Controller
             'quote_token' => ['nullable', 'string', 'max:4000'],
             'radius_km' => ['nullable', 'numeric', 'min:1', 'max:500'],
             'pickup_notes' => ['nullable', 'string', 'max:500'],
-        ]);
+        ];
+        try {
+            $data = $request->validate($rules);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e->redirectTo($shuttleForm);
+        }
 
         $patient = $request->user()->patientProfile;
         if (! $patient) {
-            return back()->withInput()->withErrors(['pickup_address' => 'Shuttle trips can only be booked from a patient account.']);
+            return redirect()->to($shuttleForm)->withInput()->withErrors(['pickup_address' => 'Shuttle trips can only be booked from a patient account. Log in with your patient account to book.']);
         }
 
         // One live on-demand trip at a time (scheduled rides don't count).

@@ -13,7 +13,7 @@
       @forelse ($orders as $order)
         <tr>
           <td><div class="t-main">{{ $order->order_no }}</div><div class="t-sub">{{ $order->created_at->format('d M Y') }} · {{ $order->delivery_address ? 'delivery' : 'collection' }}</div></td>
-          <td>{{ $order->pharmacy->name }}</td>
+          <td>{{ $order->pharmacy?->name ?? '—' }}</td>
           <td>{{ $order->items->count() }} item(s)</td>
           <td><span class="pa-badge {{ in_array($order->status, ['delivered', 'confirmed']) ? 'is-go' : ($order->status === 'cancelled' ? 'is-stop' : 'is-wait') }}">{{ str($order->status)->headline() }}</span></td>
           <td>R{{ number_format($order->total, 2) }}@if ($order->discount_amount > 0)<div class="t-sub">incl. R{{ number_format($order->discount_amount, 2) }} off{{ $order->promo_code ? ' ('.$order->promo_code.')' : '' }}</div>@endif @if ($order->member_discount > 0)<div class="t-sub">incl. R{{ number_format($order->member_discount, 2) }} member discount</div>@endif</td>

@@ -39,7 +39,7 @@ class PricingService
 
     public function rateCardFor(string $vehicleType): RideRateCard
     {
-        return RideRateCard::query()->where('vehicle_type', $vehicleType)->where('is_active', true)->first()
+        return RideRateCard::query()->where('vehicle_type', $vehicleType)->where('is_active', true)->latest('updated_at')->latest('id')->first()
             ?? new RideRateCard(['vehicle_type' => $vehicleType, 'base_fare' => 30, 'per_km_rate' => 12, 'per_minute_rate' => 0, 'minimum_fare' => 30]);
     }
 
@@ -288,7 +288,13 @@ class PricingService
         $ttl = max(1, ShuttleSettings::int('shuttle_quote_ttl_minutes'));
         $expires = now()->addMinutes($ttl);
 
-        return RideRateCard::query()->where('is_active', true)->orderBy('base_fare')->get()
+        // One quote per vehicle type: if an admin left several active cards for the
+        // same type, the most recently edited one wins.
+        return RideRateCard::query()->where('is_active', true)->get()
+            ->sortByDesc(fn (RideRateCard $c) => [$c->updated_at?->getTimestamp() ?? 0, $c->id])
+            ->unique('vehicle_type')
+            ->sortBy('base_fare')
+            ->values()
             ->map(function (RideRateCard $card) use ($route, $mult, $bookingFee, $maxMult, $expires, $pLat, $pLng, $dLat, $dLng) {
                 $b = self::calculate($card->only(['base_fare', 'per_km_rate', 'per_minute_rate', 'minimum_fare']), $route['distance_km'], $route['duration_min'], $mult['time_multiplier'], $mult['surge_multiplier'], $bookingFee, $maxMult);
                 $b['time_label'] = $mult['time_label'];

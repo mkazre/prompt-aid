@@ -112,6 +112,25 @@ else
 fi
 log "Code copied into $APP_DIR"
 
+# --- 4b. Remove stale code files ------------------------------------------------
+# Copying never deletes, so files later removed from git (e.g. an old Filament
+# widget) stay on the server and still get auto-loaded. Delete only files that git
+# once tracked under these code folders and that are no longer in HEAD. Uploads,
+# storage, .env, vendor and anything git never knew about are never touched.
+STALE_COUNT=0
+while IFS= read -r rel; do
+  [ -z "$rel" ] && continue
+  target="$APP_DIR/${rel#backend/}"
+  if [ -f "$target" ]; then
+    rm -f "$target" && STALE_COUNT=$((STALE_COUNT+1)) && log "Removed stale file: ${rel#backend/}"
+  fi
+done < <(
+  cd "$REPO_DIR" && comm -23 \
+    <(git log --pretty=format: --name-only -m HEAD -- backend/app backend/config backend/resources backend/routes 2>/dev/null | grep -v '^$' | sort -u) \
+    <(git ls-tree -r --name-only HEAD -- backend/app backend/config backend/resources backend/routes | sort -u)
+)
+log "Stale code files removed: $STALE_COUNT"
+
 # Version stamp shown on Staff → System → System health.
 mkdir -p "$APP_DIR/storage/app" 2>/dev/null
 ( cd "$REPO_DIR" && git log -1 --format='Commit %h (%ad) %s' --date=format:'%Y-%m-%d %H:%M' 2>/dev/null || echo "Commit unknown" ) > "$APP_DIR/storage/app/deployed.txt" 2>/dev/null \
