@@ -5,11 +5,17 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { setAudioModeAsync } from 'expo-audio';
 import { apiErrorMessage } from '../../api/client';
 import { endVideoCall, fetchVideoJoin, VideoJoin } from '../../api/comms';
+import { initials } from '../../components/pa';
+import { HubCallChannel, hubPresence } from '../../services/consults';
 import { paFonts } from '../../theme';
 
+/** audioOnly = in-app VOICE call (Jitsi audio-only: camera off, no video UI, uses data — no phone number exchanged). */
 type Params = { appointmentId: number; audioOnly?: boolean; name?: string };
+
+const PRESENCE_MS = 15000;
 
 type CallEvent =
   | { type: 'joined' }
@@ -17,6 +23,7 @@ type CallEvent =
   | { type: 'audio'; muted: boolean }
   | { type: 'video'; muted: boolean }
   | { type: 'ended'; reason?: string; seconds?: number }
+  | { type: 'channel'; channel: HubCallChannel }
   | { type: 'error'; code?: string; message?: string };
 
 async function ensureAndroidPermissions(audioOnly: boolean) {
@@ -66,8 +73,49 @@ export default function VideoCallScreen() {
   const [seconds, setSeconds] = useState(0);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(!audioOnly);
+  // Consult hub: the channel can change mid-call (video <-> voice) without leaving the consult.
+  const [channel, setChannel] = useState<HubCallChannel>(audioOnly ? 'voice' : 'video');
+  const [speakerOn, setSpeakerOn] = useState(true);
+  const [consultFrom, setConsultFrom] = useState<number | null>(null);
   const ended = useRef(false);
   const retried = useRef(false);
+  const channelRef = useRef<HubCallChannel>(channel);
+  channelRef.current = channel;
+  const inCall = useRef(false);
+
+  // Presence heartbeats: both sides inside the call = the consult is connected
+  // (server fires ConsultStarted once). Older servers 404 here — ignored.
+  const beat = useCallback(
+    (state: 'in' | 'out' = 'in') => {
+      hubPresence(appointmentId, channelRef.current, state)
+        .then((h) => {
+          if (h?.consult?.connected_at && h.server_time) {
+            const skew = Date.parse(h.server_time) - Date.now();
+            setConsultFrom(Date.parse(h.consult.connected_at) - skew);
+          }
+        })
+        .catch(() => undefined);
+    },
+    [appointmentId],
+  );
+
+  useEffect(() => {
+    if (!connected) return;
+    const t = setInterval(() => {
+      if (inCall.current) beat('in');
+    }, PRESENCE_MS);
+    return () => clearInterval(t);
+  }, [connected, beat]);
+
+  useEffect(
+    () => () => {
+      if (inCall.current) beat('out');
+      inCall.current = false;
+      // Hand the audio route back to normal (speaker toggle is best effort).
+      setAudioModeAsync({ shouldRouteThroughEarpiece: false } as any).catch(() => undefined);
+    },
+    [beat],
+  );
 
   const load = useCallback(async () => {
     setError(null);
@@ -140,6 +188,26 @@ export default function VideoCallScreen() {
     run('window.paCall&&window.paCall.flipCamera();');
   }
 
+  async function switchChannel(next: HubCallChannel) {
+    if (next === channel) return;
+    if (next === 'video' && !(await ensureAndroidPermissions(false))) {
+      Alert.alert('Camera needed', 'Allow camera access in Settings to switch to video.');
+      return;
+    }
+    setChannel(next);
+    channelRef.current = next;
+    // Same conference, no reconnect: the page turns the camera off/on and swaps the UI.
+    run(`if(window.paCall&&window.paCall.setChannel){window.paCall.setChannel('${next}');}else if(window.paCall){window.paCall.toggleVideo();}`);
+    if (inCall.current) beat('in');
+  }
+
+  function toggleSpeaker() {
+    const next = !speakerOn;
+    setSpeakerOn(next);
+    // Android: routes call audio to the loudspeaker / earpiece (best effort inside the WebView call).
+    setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true, shouldRouteThroughEarpiece: !next } as any).catch(() => undefined);
+  }
+
   function openChat() {
     // Chat is pushed on top; this screen (and the call audio) stays mounted underneath.
     navigation.navigate('Chat', { appointmentId, title: join?.counterpart_name ?? name });
@@ -148,6 +216,8 @@ export default function VideoCallScreen() {
   function leave() {
     if (ended.current) return;
     ended.current = true;
+    if (inCall.current) beat('out');
+    inCall.current = false;
     endVideoCall(appointmentId).catch(() => undefined);
     if (navigation.canGoBack()) navigation.goBack();
   }
@@ -178,6 +248,11 @@ export default function VideoCallScreen() {
     switch (msg.type) {
       case 'joined':
         setConnected(true);
+        inCall.current = true;
+        beat('in');
+        break;
+      case 'channel':
+        if (msg.channel === 'voice' || msg.channel === 'video') setChannel(msg.channel);
         break;
       case 'presence':
         setRemote(msg.remote);
@@ -211,7 +286,9 @@ export default function VideoCallScreen() {
       `${join.join_url}&config.toolbarButtons=${encodeURIComponent('[]')}&config.hideConferenceSubject=true&interfaceConfig.SHOW_JITSI_WATERMARK=false`
     : null;
 
-  const status = !join ? 'Preparing…' : !connected ? 'Connecting…' : embedded && remote === 0 ? `Waiting for ${title}…` : fmtTimer(seconds);
+  const shownSeconds = consultFrom ? Math.max(0, Math.floor((Date.now() - consultFrom) / 1000)) : seconds;
+  const status = !join ? 'Preparing…' : !connected ? 'Connecting…' : embedded && remote === 0 ? `Waiting for ${title}…` : fmtTimer(shownSeconds);
+  const voice = channel === 'voice';
   const compact = width < 380;
   const btn = compact ? 48 : 56;
   const endW = compact ? 64 : 72;
@@ -282,8 +359,22 @@ export default function VideoCallScreen() {
           />
         )}
 
+        {/* In-app voice call: big avatar + timer over the (still running, hidden) call page */}
+        {!error && voice && uri ? (
+          <View style={[StyleSheet.absoluteFill, styles.voice, { paddingTop: insets.top + 56 }]}>
+            <View style={[styles.avatar, connected && remote > 0 ? styles.avatarLive : null]}>
+              <Text style={styles.avatarText}>{initials(title)}</Text>
+            </View>
+            <Text style={styles.voiceName} numberOfLines={2}>
+              {title}
+            </Text>
+            <Text style={styles.voiceSub}>{status}</Text>
+            <Text style={styles.voiceNote}>Voice call in the app · uses data, not airtime</Text>
+          </View>
+        ) : null}
+
         {/* Name + timer: top-left, below the status bar, never over the controls */}
-        {!error ? (
+        {!error && !voice ? (
           <View pointerEvents="none" style={[styles.top, { top: insets.top + 8, left: insets.left + 12, right: insets.right + 12 }]}>
             <View style={styles.namePill}>
               <View style={[styles.dot, connected && (remote > 0 || !embedded) ? styles.dotLive : null]} />
@@ -306,12 +397,22 @@ export default function VideoCallScreen() {
         <View style={[styles.controls, { paddingBottom: insets.bottom + 12, paddingLeft: insets.left + 12, paddingRight: insets.right + 12 }]}>
           <View style={styles.controlsRow}>
             <CtrlButton size={btn} icon={micOn ? 'mic-outline' : 'mic-off-outline'} off={!micOn} disabled={!join} onPress={toggleMic} label={micOn ? 'Mute microphone' : 'Unmute microphone'} />
-            <CtrlButton size={btn} icon={camOn ? 'videocam-outline' : 'videocam-off-outline'} off={!camOn} disabled={!join} onPress={toggleCam} label={camOn ? 'Turn camera off' : 'Turn camera on'} />
+            {voice ? (
+              <CtrlButton size={btn} icon={speakerOn ? 'volume-high-outline' : 'ear-outline'} off={!speakerOn} disabled={!join} onPress={toggleSpeaker} label={speakerOn ? 'Use earpiece' : 'Use speaker'} />
+            ) : (
+              <CtrlButton size={btn} icon={camOn ? 'videocam-outline' : 'videocam-off-outline'} off={!camOn} disabled={!join} onPress={toggleCam} label={camOn ? 'Turn camera off' : 'Turn camera on'} />
+            )}
             <Pressable onPress={confirmHangUp} style={[styles.hang, { width: endW, height: btn }]} accessibilityRole="button" accessibilityLabel="Hang up">
               <Ionicons name="call" size={26} color="#fff" style={{ transform: [{ rotate: '135deg' }] }} />
             </Pressable>
             {embedded ? (
-              <CtrlButton size={btn} icon="camera-reverse-outline" disabled={!connected || !camOn} onPress={flipCam} label="Switch camera" />
+              <CtrlButton
+                size={btn}
+                icon={voice ? 'videocam-outline' : 'call-outline'}
+                disabled={!connected}
+                onPress={() => switchChannel(voice ? 'video' : 'voice')}
+                label={voice ? 'Switch to video' : 'Switch to voice call'}
+              />
             ) : null}
             <CtrlButton size={btn} icon="chatbubble-ellipses-outline" onPress={openChat} label="Message" />
           </View>
@@ -365,4 +466,11 @@ const styles = StyleSheet.create({
   ctrl: { backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   ctrlOff: { backgroundColor: '#fff' },
   hang: { borderRadius: 28, backgroundColor: '#E5322D', alignItems: 'center', justifyContent: 'center' },
+  voice: { backgroundColor: '#0B0B0D', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 24 },
+  avatar: { width: 128, height: 128, borderRadius: 64, backgroundColor: '#2A2A2E', alignItems: 'center', justifyContent: 'center', borderWidth: 10, borderColor: 'rgba(52,194,122,0.16)' },
+  avatarLive: { borderColor: 'rgba(52,194,122,0.4)' },
+  avatarText: { color: '#fff', fontFamily: paFonts.black, fontSize: 42 },
+  voiceName: { color: '#fff', fontFamily: paFonts.black, fontSize: 24, marginTop: 20, textAlign: 'center' },
+  voiceSub: { color: '#E5E5EA', fontFamily: paFonts.bold, fontSize: 16, marginTop: 6, fontVariant: ['tabular-nums'] },
+  voiceNote: { color: '#A1A1AA', fontFamily: paFonts.regular, fontSize: 13, marginTop: 10, textAlign: 'center' },
 });

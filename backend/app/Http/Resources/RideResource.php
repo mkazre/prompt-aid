@@ -34,6 +34,8 @@ class RideResource extends JsonResource
             'is_expired' => $this->resource->isExpired(),
             'status_label' => app(\App\Services\Rides\RideStatusPresenter::class)->statusLabel($this->resource),
             'dispatch_state' => $this->dispatch_state,
+            // Upfront payment: required = open the PaymentSheet (payable ride) before drivers are alerted.
+            'payment' => app(\App\Services\Payments\RidePaymentService::class)->payload($this->resource),
             'radius_km' => $this->radius_km !== null ? (float) $this->radius_km : null,
             'pickup_notes' => $this->pickup_notes,
             // Trip PIN: only to the patient who owns the ride, only while it is live.

@@ -143,6 +143,13 @@ class ChatService
 
         $this->notifyRecipient($conversation, $sender, $message);
 
+        // Consult hub: the doctor's first reply in a live consult counts as connected (chat).
+        try {
+            app(\App\Services\Consults\ConsultHubService::class)->onChatMessage($conversation, $sender, $message);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Chat] consult hub hook failed: '.$e->getMessage());
+        }
+
         return $message->load('sender:id,name');
     }
 

@@ -12,6 +12,11 @@ import RideMap from '../../components/RideMap';
 import { pa, paFonts } from '../../theme';
 import SuccessModal from '../../components/SuccessModal';
 import WidgetHost from '../../widgets/WidgetHost';
+import { PaymentSheet } from '../../components/payments';
+
+/** Upfront ride payment block from the API (RideResource.payment). */
+type RidePayment = { required: boolean; state: string; amount: number; pay_by: string | null };
+const ridePayment = (r: unknown): RidePayment | null => ((r as { payment?: RidePayment } | null)?.payment ?? null);
 
 const VEHICLE_LABELS: Record<VehicleType, { label: string; sub: string }> = {
   sedan: { label: 'Standard', sub: 'Sedan, 1–3 seats' },
@@ -38,6 +43,9 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState<{ id: number; fare: number | null } | null>(null);
+  // Uber-style: the trip only goes to drivers once this payment is secured.
+  const [payRide, setPayRide] = useState<{ id: number; amount: number; fare: number | null } | null>(null);
+  const [cancellingUnpaid, setCancellingUnpaid] = useState(false);
 
   function resetForm() {
     setPickup('');
@@ -69,7 +77,7 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
 
   // Auto-open tracking once per active ride; going back shows the form plus a "Track" card.
   useEffect(() => {
-    if (activeRide && !requested && redirectedFor.current !== activeRide.id) {
+    if (activeRide && !requested && !payRide && !ridePayment(activeRide)?.required && redirectedFor.current !== activeRide.id) {
       redirectedFor.current = activeRide.id;
       navigation.navigate('RideTrack', { rideId: activeRide.id });
     }
@@ -153,7 +161,11 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
         wait_and_return: waitAndReturn,
       });
       const ride = (data?.data ?? data) as Partial<RideLike> | undefined;
-      if (ride?.id) {
+      const pay = ridePayment(ride);
+      if (ride?.id && pay?.required) {
+        // Pay first (in-app sheet); drivers are alerted once the payment is secured.
+        setPayRide({ id: ride.id, amount: pay.amount, fare: selectedQuote?.fare ?? null });
+      } else if (ride?.id) {
         // Confirm first; tracking opens from the modal's button.
         setRequested({ id: ride.id, fare: selectedQuote?.fare ?? null });
       } else {
@@ -168,6 +180,19 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
 
   const selectedQuote = quotes.find((q) => q.vehicle_type === vehicleType);
 
+  async function cancelUnpaid() {
+    if (!activeRide) return;
+    setCancellingUnpaid(true);
+    try {
+      await api.post(`/rides/${activeRide.id}/cancel`, { reason: 'Payment not completed' });
+    } catch (e) {
+      Alert.alert('Could not cancel', apiErrorMessage(e));
+    } finally {
+      setCancellingUnpaid(false);
+      checkActive();
+    }
+  }
+
   return (
     <ScrollView
       ref={scrollRef}
@@ -175,6 +200,22 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 280 }}
       keyboardShouldPersistTaps="handled"
     >
+      <PaymentSheet
+        visible={!!payRide}
+        payable={payRide ? { type: 'ride', id: payRide.id } : undefined}
+        amount={payRide?.amount}
+        title="Shuttle trip"
+        onPaid={() => {
+          const p = payRide;
+          setPayRide(null);
+          if (p) setRequested({ id: p.id, fare: p.fare });
+          checkActive();
+        }}
+        onClose={() => {
+          setPayRide(null);
+          checkActive();
+        }}
+      />
       <SuccessModal
         visible={!!requested}
         title="Ride requested"
@@ -205,7 +246,19 @@ export default function ShuttleRequestScreen({ navigation, route }: any) {
       <WidgetHost screen="shuttle" style={{ marginHorizontal: 16, marginTop: 12 }} />
 
       <View style={styles.sheet} onLayout={(e) => { sheetY.current = e.nativeEvent.layout.y; }}>
-        {activeRide ? (
+        {activeRide && ridePayment(activeRide)?.required ? (
+          <View style={styles.activeCard}>
+            <Ionicons name="card-outline" size={26} color={pa.signal} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.activeTitle}>Waiting for payment</Text>
+              <Text style={styles.activeSub} numberOfLines={2}>Pay R {Number(ridePayment(activeRide)?.amount ?? 0).toFixed(2)} to send your trip to drivers. You only pay the final fare.</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                <PaButton title="Pay now" onPress={() => setPayRide({ id: activeRide.id, amount: Number(ridePayment(activeRide)?.amount ?? 0), fare: null })} style={{ flex: 1 }} />
+                <PaButton title="Cancel" variant="ghost" loading={cancellingUnpaid} onPress={cancelUnpaid} style={{ flex: 1 }} />
+              </View>
+            </View>
+          </View>
+        ) : activeRide ? (
           <Pressable style={styles.activeCard} onPress={() => navigation.navigate('RideTrack', { rideId: activeRide.id })}>
             <Ionicons name="navigate-circle-outline" size={26} color={pa.info} />
             <View style={{ flex: 1 }}>

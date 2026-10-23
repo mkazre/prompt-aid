@@ -206,7 +206,7 @@
   ];
 @endphp
 <script>window.PA_RING = @json($paRingCfg);</script>
-<script src="{{ asset('assets/js/pa-consult-ring.js') }}?v=1" defer></script>
+<script src="{{ asset('assets/js/pa-consult-ring.js') }}?v=2" defer></script>
 @endif
 @stack('scripts')
 </body>

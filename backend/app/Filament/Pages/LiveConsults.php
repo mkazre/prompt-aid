@@ -105,10 +105,9 @@ class LiveConsults extends Page
             $req = $this->service()->accept($offer, $this->doctor());
             Notification::make()->title('Consult accepted — the patient has been notified')->success()->send();
             // Video → straight into the call (the patient is ringing); call back → the call card.
-            if ($req->mode === Appointment::MODE_VIDEO) {
-                $this->redirect(ConsultCall::getUrl(['appointment' => $req->appointment_id], panel: 'admin'));
-            } elseif ($req->mode === Appointment::MODE_CALLBACK) {
-                $this->redirect(CallbackConsult::getUrl(['appointment' => $req->appointment_id], panel: 'admin'));
+            // Video / call back → the consult hub (video, voice, chat; phone + WhatsApp fallback).
+            if (in_array($req->mode, [Appointment::MODE_VIDEO, Appointment::MODE_CALLBACK], true)) {
+                $this->redirect(ConsultHub::getUrl(['appointment' => $req->appointment_id], panel: 'admin'));
             }
         });
     }

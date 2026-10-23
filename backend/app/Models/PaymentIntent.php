@@ -27,6 +27,12 @@ class PaymentIntent extends Model
 
     public const STATUS_REFUNDED = 'refunded';
 
+    /** Hold: funds secured upfront, not yet captured (see ConsultPaymentService). */
+    public const STATUS_AUTHORIZED = 'authorized';
+
+    /** Hold given back in full (no match, doctor no-show, ride cancelled free). */
+    public const STATUS_RELEASED = 'released';
+
     public const STATUSES = [
         self::STATUS_PENDING => 'Pending',
         self::STATUS_PROCESSING => 'Processing',
@@ -34,6 +40,8 @@ class PaymentIntent extends Model
         self::STATUS_FAILED => 'Failed',
         self::STATUS_CANCELLED => 'Cancelled',
         self::STATUS_REFUNDED => 'Refunded',
+        self::STATUS_AUTHORIZED => 'Authorised (held)',
+        self::STATUS_RELEASED => 'Released',
     ];
 
     /** Morph aliases the API accepts as `payable_type`. */
@@ -42,6 +50,8 @@ class PaymentIntent extends Model
         'order' => Order::class,
         'ride_charge' => RideCharge::class,
         'subscription' => Subscription::class,
+        'consult' => DoctorMatchRequest::class,
+        'ride' => Ride::class,
     ];
 
     protected $fillable = [
@@ -49,6 +59,7 @@ class PaymentIntent extends Model
         'status', 'reference', 'gateway_ref', 'gateway_token', 'description', 'idempotency_key',
         'embed_token_hash', 'embed_expires_at', 'metadata', 'refunded_amount', 'failure_reason',
         'paid_at', 'refunded_at', 'last_checked_at',
+        'capture_mode', 'captured_amount', 'authorized_at', 'captured_at', 'released_at',
     ];
 
     protected $hidden = ['embed_token_hash', 'gateway_token'];
@@ -58,6 +69,10 @@ class PaymentIntent extends Model
         return [
             'amount' => 'float',
             'refunded_amount' => 'float',
+            'captured_amount' => 'float',
+            'authorized_at' => 'datetime',
+            'captured_at' => 'datetime',
+            'released_at' => 'datetime',
             'metadata' => 'array',
             'paid_at' => 'datetime',
             'refunded_at' => 'datetime',
@@ -96,7 +111,7 @@ class PaymentIntent extends Model
 
     public function isFinal(): bool
     {
-        return in_array($this->status, [self::STATUS_PAID, self::STATUS_FAILED, self::STATUS_CANCELLED, self::STATUS_REFUNDED], true);
+        return in_array($this->status, [self::STATUS_PAID, self::STATUS_FAILED, self::STATUS_CANCELLED, self::STATUS_REFUNDED, self::STATUS_AUTHORIZED, self::STATUS_RELEASED], true);
     }
 
     public function payableAlias(): ?string

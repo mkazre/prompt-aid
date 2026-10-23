@@ -71,7 +71,45 @@ class PaymentSettings
         // --- Behaviour ---
         'payments_mock_when_unconfigured' => '1',
         'payments_intent_ttl_minutes' => '30',
+
+        // --- Upfront consult payment (doctor-now video / call back / in person) ---
+        'consult_upfront_payment' => '1',
+        'consult_payment_window_minutes' => '10',
+        'consult_medical_aid_enabled' => '1',
+        'consult_medical_aid_copay' => '100',
+
+        // --- Missed call-back: keep a fee only if the doctor really tried ---
+        'callback_missed_fee' => '100',
+        'callback_missed_min_attempts' => '2',
+        'callback_missed_min_minutes' => '5',
+
+        // --- Booked appointments: full | deposit | at_practice (clinic / doctor can override) ---
+        'appointment_payment_policy' => 'at_practice',
+        'appointment_deposit_percent' => '30',
+        'appointment_free_cancel_hours' => '24',
+        'appointment_late_cancel_keep_percent' => '50',
+
+        // --- Shuttle upfront hold ---
+        'ride_upfront_hold' => '1',
+        'ride_hold_buffer_percent' => '15',
+        'ride_payment_window_minutes' => '10',
+        'appointment_payment_window_minutes' => '30',
+
+        // --- Refund automatically when a paid pharmacy order is cancelled ---
+        'order_auto_refund_on_cancel' => '1',
     ];
+
+    public const POLICIES = ['full' => 'Pay in full when booking', 'deposit' => 'Pay a deposit when booking', 'at_practice' => 'Pay at the practice'];
+
+    public static function int(string $key): int
+    {
+        return (int) self::str($key);
+    }
+
+    public static function float(string $key): float
+    {
+        return (float) self::str($key);
+    }
 
     public static function get(string $key): mixed
     {

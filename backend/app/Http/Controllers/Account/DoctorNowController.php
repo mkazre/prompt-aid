@@ -90,10 +90,11 @@ class DoctorNowController extends Controller
             'callback_channel' => ['nullable', 'in:phone,whatsapp,either'],
             'callback_note' => ['nullable', 'string', 'max:500'],
             'triage_reference' => ['nullable', 'string', 'max:40'],
+            'bill_medical_aid' => ['nullable', 'boolean'],
         ]);
 
         try {
-            $match = $this->match->start($patient, $data['specialty'] ?? null, $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : $patient->search_radius_km, \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note', 'triage_reference']));
+            $match = $this->match->start($patient, $data['specialty'] ?? null, $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : $patient->search_radius_km, \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note', 'triage_reference', 'bill_medical_aid']));
         } catch (DoctorMatchException $e) {
             $open = $this->match->openRequestFor($patient);
 

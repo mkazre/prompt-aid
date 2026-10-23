@@ -49,7 +49,7 @@ class PaymentIntentResource extends Resource
     public static function statusColor(?string $s): string
     {
         return match ($s) {
-            'paid' => 'success', 'failed' => 'danger', 'refunded' => 'gray', 'cancelled' => 'gray', 'processing' => 'warning', default => 'info',
+            'paid' => 'success', 'authorized' => 'warning', 'failed' => 'danger', 'refunded', 'released', 'cancelled' => 'gray', 'processing' => 'warning', default => 'info',
         };
     }
 
@@ -102,6 +102,22 @@ class PaymentIntentResource extends Resource
                         $r = app(PaymentService::class)->refresh($r, 0);
                         Notification::make()->title('Status: '.$r->status)->send();
                     }),
+                Action::make('capture')->label('Capture')->icon('heroicon-o-lock-closed')->color('success')
+                    ->visible(fn (PaymentIntent $r) => $r->status === 'authorized' && static::allowed('edit'))
+                    ->schema([
+                        TextInput::make('amount')->label('Amount to keep (R) — the rest is refunded')->numeric()->required()->minValue(0)
+                            ->default(fn (PaymentIntent $r) => (float) $r->amount),
+                    ])
+                    ->requiresConfirmation()
+                    ->action(function (PaymentIntent $r, array $data) {
+                        $c = app(PaymentService::class)->capture($r, (float) $data['amount'], 'Captured by admin');
+                        Notification::make()->title('Captured R'.number_format($c, 2))->success()->send();
+                    }),
+                Action::make('release')->label('Release')->icon('heroicon-o-lock-open')->color('warning')
+                    ->visible(fn (PaymentIntent $r) => $r->status === 'authorized' && static::allowed('edit'))
+                    ->requiresConfirmation()
+                    ->action(fn (PaymentIntent $r) => static::notify(app(PaymentService::class)->release($r, 'Released by admin')
+                        ? ['success' => true, 'message' => 'Released in full.'] : ['success' => false, 'message' => 'Release needs a manual refund — see the failure note.'])),
                 Action::make('refund')->label('Refund')->icon('heroicon-o-receipt-refund')->color('danger')
                     ->visible(fn (PaymentIntent $r) => $r->status === 'paid' && static::allowed('edit'))
                     ->schema([

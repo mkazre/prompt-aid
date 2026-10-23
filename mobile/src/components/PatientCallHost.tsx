@@ -83,7 +83,8 @@ export default function PatientCallHost({ enabled, navigate }: { enabled: boolea
     handled.current[keyOf(r)] = true;
     close();
     answerRing(r.appointment_id).catch(() => {});
-    navigate('VideoCall', { appointmentId: r.appointment_id, name: r.doctor_name });
+    // Consult hub servers send the channel: voice = in-app audio-only call (no phone number exchanged).
+    navigate('VideoCall', { appointmentId: r.appointment_id, name: r.doctor_name, audioOnly: r.channel === 'voice' });
   }, [close, navigate]);
 
   const decline = useCallback(() => {
@@ -157,6 +158,8 @@ export default function PatientCallHost({ enabled, navigate }: { enabled: boolea
   );
 
   if (!enabled || !ring) return null;
+  const voice = ring.channel === 'voice';
+  const what = voice ? 'voice call' : 'video consult';
   const initials = ring.doctor_name
     .replace(/^Dr\.?\s*/, '')
     .split(/\s+/)
@@ -169,20 +172,20 @@ export default function PatientCallHost({ enabled, navigate }: { enabled: boolea
     <Modal visible animationType="fade" transparent={false} onRequestClose={decline} statusBarTranslucent>
       <View style={[styles.wrap, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 32 }]}>
         <View style={{ alignItems: 'center' }}>
-          <Text style={styles.eyebrow}>Incoming video consult</Text>
+          <Text style={styles.eyebrow}>{voice ? 'Incoming voice call (in-app)' : 'Incoming video consult'}</Text>
           <View style={styles.halo}>
             {ring.doctor_photo_url ? <Image source={{ uri: ring.doctor_photo_url }} style={styles.photo} /> : <Text style={styles.initials}>{initials}</Text>}
           </View>
-          <Text style={styles.title}>{ring.doctor_name} is ready</Text>
+          <Text style={styles.title}>{ring.doctor_name} {voice ? 'is calling you' : 'is ready'}</Text>
           {ring.doctor_specialization ? <Text style={styles.sub}>{ring.doctor_specialization}</Text> : null}
-          <Text style={styles.line}>{secs > 0 ? `Joining your video consult in ${secs}s…` : 'Joining your video consult…'}</Text>
+          <Text style={styles.line}>{secs > 0 ? `Joining your ${what} in ${secs}s…` : `Joining your ${what}…`}</Text>
         </View>
         <View style={styles.actions}>
           <Pressable onPress={decline} style={[styles.btn, styles.decline]} accessibilityRole="button" accessibilityLabel="Not now">
             <Text style={styles.btnText}>Not now</Text>
           </Pressable>
-          <Pressable onPress={join} style={[styles.btn, styles.join]} accessibilityRole="button" accessibilityLabel="Join now">
-            <Text style={styles.btnText}>Join now</Text>
+          <Pressable onPress={join} style={[styles.btn, styles.join]} accessibilityRole="button" accessibilityLabel={voice ? 'Answer' : 'Join now'}>
+            <Text style={styles.btnText}>{voice ? 'Answer' : 'Join now'}</Text>
           </Pressable>
         </View>
       </View>

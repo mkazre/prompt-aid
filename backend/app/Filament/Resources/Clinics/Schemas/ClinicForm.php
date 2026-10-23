@@ -23,6 +23,10 @@ class ClinicForm
                         TextInput::make('name')->required()->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, callable $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
                         TextInput::make('slug')->required()->unique(ignoreRecord: true),
+                        Select::make('payment_policy')->label('Payment at booking')
+                            ->options(\App\Support\PaymentSettings::POLICIES)->placeholder('Use the platform default')
+                            ->helperText('Overrides Staff → Payment settings → Upfront payments for this booking.'),
+                        TextInput::make('deposit_percent')->label('Deposit % (if deposit)')->numeric()->minValue(1)->maxValue(100),
                         Select::make('clinic_admin_id')
                             ->relationship('admin', 'name')
                             ->searchable()

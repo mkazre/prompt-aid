@@ -36,6 +36,30 @@ class RideChargeService
         ]);
         $charge->setRelation('ride', $ride);
 
+        // Upfront hold secured at request time: capture this fare / fee from it (rest refunded).
+        try {
+            $holds = app(\App\Services\Payments\RidePaymentService::class);
+            $hold = $holds->intentFor($ride);
+            $captured = $holds->captureForCharge($ride, $charge);
+            if ($captured > 0 && $hold) {
+                $short = round((float) $charge->amount - $captured, 2);
+                $charge->update([
+                    'amount' => $captured,
+                    'status' => RideCharge::STATUS_PAID,
+                    'gateway' => $hold->gateway,
+                    'gateway_ref' => $hold->gateway_ref ?: $hold->reference,
+                ]);
+                if ($short > 0) {
+                    // Final fare above the held amount: the difference is a normal (payable) charge.
+                    $this->charge($ride, $type, $short, trim(($note ? $note.' — ' : '').'balance above upfront amount'), $method);
+                }
+
+                return $charge->fresh();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[RideChargeService] hold capture failed: '.$e->getMessage());
+        }
+
         try {
             $result = $this->gateway->charge($charge, $method);
             // Online gateways never settle synchronously: the charge stays pending until a

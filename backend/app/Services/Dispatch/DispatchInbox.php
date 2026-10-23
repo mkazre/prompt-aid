@@ -316,8 +316,8 @@ class DispatchInbox
                 // Video → straight into the in-panel call (the patient's screen is ringing);
                 // call back → the call card with Call / WhatsApp buttons.
                 $url = match ($req->mode) {
-                    'video' => \App\Filament\Pages\ConsultCall::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
-                    'callback' => \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
+                    // Consult hub: video / voice / chat + phone / WhatsApp fallback.
+                    'video', 'callback' => \App\Filament\Pages\ConsultHub::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
                     default => '/staff/live-consults',
                 };
                 $msg = match ($req->mode) {

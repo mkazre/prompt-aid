@@ -61,6 +61,7 @@ class Appointment extends Model
             'reminder_24h_sent_at' => 'datetime',
             'reminder_1h_sent_at' => 'datetime',
             'called_at' => 'datetime',
+            'last_call_attempt_at' => 'datetime',
             'call_attempts' => 'integer',
             'call_outcome_at' => 'datetime',
             'call_started_at' => 'datetime',

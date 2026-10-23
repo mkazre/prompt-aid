@@ -25,11 +25,13 @@
         <tr>
           <td><div class="t-main">{{ $appt->date->format('d M Y') }} {{ \Illuminate\Support\Carbon::parse($appt->start_time)->format('H:i') }}</div><div class="t-sub">{{ $appt->booking_ref }}</div></td>
           <td>{{ $appt->doctor?->user?->name ?? 'Matching…' }}</td>
-          <td>{{ $appt->isVideo() ? 'Video consultation' : 'In person' }}{{ $appt->clinic ? ' · '.$appt->clinic->name : '' }}</td>
+          <td>{{ $appt->isVideo() ? 'Video consultation' : ($appt->isCallback() ? 'Call back' : 'In person') }}{{ $appt->clinic ? ' · '.$appt->clinic->name : '' }}</td>
           <td><span class="pa-badge {{ in_array($appt->status, ['completed', 'confirmed', 'checked_in']) ? 'is-go' : (in_array($appt->status, ['cancelled', 'no_show']) ? 'is-stop' : 'is-wait') }}">{{ str($appt->status)->headline() }}</span></td>
           <td class="t-right">
             @if ($appt->isVideo() && $appt->canJoinVideoNow())
-              <a class="pa-btn pa-btn-sm" href="{{ route('account.appointments.call', $appt) }}">Join video</a>
+              <a class="pa-btn pa-btn-sm" href="{{ route('account.consult-hub', $appt) }}">Join consult</a>
+            @elseif ($appt->isCallback() && $appt->doctor_profile_id && in_array($appt->status, ['pending', 'confirmed', 'checked_in']))
+              <a class="pa-btn pa-btn-sm" href="{{ route('account.consult-hub', $appt) }}">Open consult</a>
             @endif
             @if ($appt->doctor_profile_id && $appt->status !== 'matching')
               <form method="POST" action="{{ route('account.messages.start') }}" style="display:inline">

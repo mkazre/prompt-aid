@@ -13,6 +13,7 @@ class Clinic extends Model
     use HasFactory;
 
     protected $fillable = [
+        'payment_policy', 'deposit_percent',
         'clinic_admin_id', 'name', 'slug', 'logo', 'cover_image', 'description',
         'phone', 'email', 'address', 'city', 'state', 'country', 'postal_code',
         'lat', 'lng', 'specialties', 'working_hours', 'status',

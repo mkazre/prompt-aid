@@ -65,7 +65,7 @@ export default function DoctorCalendarScreen() {
 
   function openAppointment(appointment: Appointment) {
     if (appointment.is_callback || appointment.mode === 'callback') {
-      (navigation as any).navigate('ConsultCard', { appointmentId: appointment.id }); // root stack screen
+      (navigation as any).navigate('ConsultHub', { appointmentId: appointment.id }); // root stack screen: consult hub (in-app first, phone fallback)
     } else if (appointment.mode === 'video' && appointment.meet_url) {
       navigation.navigate('ConsultRoom', { appointment });
     } else {

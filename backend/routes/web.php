@@ -80,7 +80,7 @@ foreach (['about', 'how-it-works', 'privacy', 'terms', 'legal-popia'] as $conten
 
 Route::get('/shuttle', [ShuttlePageController::class, 'index'])->name('shuttle');
 Route::post('/shuttle/quote', [ShuttlePageController::class, 'quote'])->middleware('throttle:30,1')->name('shuttle.quote');
-// Back button / refresh / back() after a POST quote lands here as a GET - show the form instead of a 405.
+// Back button / refresh / "back()" after a POST quote lands here as a GET — show the form instead of a 405.
 Route::get('/shuttle/quote', [ShuttlePageController::class, 'index']);
 
 // Public read-only "follow my trip" link (tokenized, expires when the ride ends).
@@ -204,6 +204,7 @@ Route::middleware('auth')->group(function () {
 // Support stream: /help, /faq, newsletter, /account/support, /account/feedback.
 require __DIR__.'/web_support.php';
 require __DIR__.'/web_video.php';
+require __DIR__.'/web_consult_hub.php';
 require __DIR__.'/web_payments.php';
 require __DIR__.'/web_safety.php';
 

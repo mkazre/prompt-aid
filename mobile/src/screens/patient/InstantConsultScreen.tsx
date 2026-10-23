@@ -34,6 +34,9 @@ interface MatchPayload {
   cancel_fee_now: number;
   ring?: RingPayload | null;
   callback?: CallbackInfo | null;
+  /** Consult hub (video / voice / chat + fallback) once matched — video & call back. */
+  hub_url?: string | null;
+  appointment_status?: string | null;
   dispatch_phone?: string | null;
   dispatch_tel?: string | null;
 }
@@ -62,6 +65,7 @@ export default function InstantConsultScreen({ navigation, route }: any) {
   const lastBody = useRef<Record<string, unknown> | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triageReference: string | undefined = route?.params?.triageReference;
+  const hubOpened = useRef<Record<number, true>>({});
 
   const refresh = useCallback(async () => {
     try {
@@ -69,6 +73,11 @@ export default function InstantConsultScreen({ navigation, route }: any) {
       const m: MatchPayload | null = data.data ?? null;
       setMatch(m);
       if (m?.ring) showIncomingCall(m.ring);
+      // Doctor accepted: straight to the connection options (once per consult).
+      if (m && m.status === 'matched' && m.hub_url && (m.mode === 'video' || m.mode === 'callback') && !hubOpened.current[m.appointment_id]) {
+        hubOpened.current[m.appointment_id] = true;
+        navigation.navigate('ConsultHub', { appointmentId: m.appointment_id });
+      }
       return m;
     } catch {
       return undefined; /* keep last state */
@@ -226,7 +235,13 @@ export default function InstantConsultScreen({ navigation, route }: any) {
           <Text style={styles.cardTitle}>{match.doctor?.name ?? 'Your doctor'}</Text>
           {match.doctor?.specialization ? <Text style={styles.muted}>{match.doctor.specialization}</Text> : null}
           <Text style={[styles.body, { marginTop: 8 }]}>{matchedBody(match)}</Text>
-          {match.mode === 'video' && match.can_join_video ? (
+          {match.hub_url && (match.mode === 'video' || match.mode === 'callback') ? (
+            <PaButton
+              title="Open consult: video, voice & chat"
+              onPress={() => navigation.navigate('ConsultHub', { appointmentId: match.appointment_id })}
+              style={{ marginTop: 12 }}
+            />
+          ) : match.mode === 'video' && match.can_join_video ? (
             <PaButton
               title="Join video now"
               onPress={() => navigation.navigate('VideoCall', { appointmentId: match.appointment_id, name: match.doctor?.name })}

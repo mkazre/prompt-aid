@@ -382,9 +382,10 @@ class VideoRoomService
             return $appointment->meet_url;
         }
 
+        // Consult hub (video / voice / chat + fallback) for both sides.
         return $this->isModerator($appointment, $user)
-            ? \App\Filament\Pages\ConsultCall::getUrl(['appointment' => $appointment->id], panel: 'admin')
-            : route('account.appointments.call', $appointment);
+            ? \App\Filament\Pages\ConsultHub::getUrl(['appointment' => $appointment->id], panel: 'admin')
+            : route('account.consult-hub', $appointment);
     }
 
     /**

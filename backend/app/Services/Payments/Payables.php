@@ -2,10 +2,12 @@
 
 namespace App\Services\Payments;
 
+use App\Models\DoctorMatchRequest;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentIntent;
+use App\Models\Ride;
 use App\Models\RideCharge;
 use App\Models\Subscription;
 use App\Models\User;
@@ -41,7 +43,8 @@ class Payables
 
         return match (true) {
             $model instanceof Subscription => (int) $model->user_id === (int) $user->id,
-            $model instanceof Invoice, $model instanceof Order, $model instanceof RideCharge => $patientId && (int) $model->patient_profile_id === (int) $patientId,
+            $model instanceof Invoice, $model instanceof Order, $model instanceof RideCharge,
+            $model instanceof DoctorMatchRequest, $model instanceof Ride => $patientId && (int) $model->patient_profile_id === (int) $patientId,
             default => false,
         };
     }
@@ -53,6 +56,8 @@ class Payables
             $model instanceof Order => $model->payment_status === 'unpaid' && $model->status === Order::STATUS_PENDING_PAYMENT,
             $model instanceof RideCharge => in_array($model->status, [RideCharge::STATUS_PENDING, RideCharge::STATUS_FAILED], true),
             $model instanceof Subscription => $model->status === Subscription::STATUS_PENDING,
+            $model instanceof DoctorMatchRequest => $model->status === DoctorMatchRequest::SEARCHING && $model->payment_state === 'awaiting',
+            $model instanceof Ride => ! $model->payment_intent_id && ! in_array($model->status, ['completed', 'cancelled'], true),
             default => false,
         };
         if (! $ok) {
@@ -73,6 +78,8 @@ class Payables
             $model instanceof Order => (float) $model->total,
             $model instanceof RideCharge => (float) $model->amount,
             $model instanceof Subscription => (float) $model->amount,
+            $model instanceof DoctorMatchRequest => app(ConsultPaymentService::class)->amountDue($model),
+            $model instanceof Ride => RidePaymentService::holdAmount($model),
             default => 0,
         }, 2);
     }
@@ -83,8 +90,15 @@ class Payables
             $model instanceof Order => 'pharmacy',
             $model instanceof RideCharge => 'ride',
             $model instanceof Subscription => 'subscription',
+            $model instanceof Ride => 'ride',
             default => 'invoice',
         };
+    }
+
+    /** 'hold' = secure funds now, capture later (consults, shuttle); otherwise immediate. */
+    public function captureModeFor(Model $model): string
+    {
+        return $model instanceof DoctorMatchRequest || $model instanceof Ride ? 'hold' : 'immediate';
     }
 
     public function describe(Model $model): string
@@ -94,6 +108,8 @@ class Payables
             $model instanceof Order => 'PromptAid pharmacy order '.$model->order_no,
             $model instanceof RideCharge => 'PromptAid shuttle '.strtolower($model->typeLabel()).' '.$model->getPayableReference(),
             $model instanceof Subscription => 'PromptAid '.($model->plan?->name ?? 'subscription'),
+            $model instanceof DoctorMatchRequest => 'PromptAid consult ('.($model->specialty ?: 'doctor').', '.str_replace('_', ' ', (string) $model->mode).')',
+            $model instanceof Ride => 'PromptAid shuttle trip '.($model->ride_ref ?? ''),
             default => 'PromptAid payment',
         };
     }
@@ -116,6 +132,7 @@ class Payables
             if ($model->status !== Invoice::STATUS_PAID) {
                 $model->update(['status' => Invoice::STATUS_PAID]);
             }
+            app(AppointmentPaymentService::class)->markBookingPaid($model);
         } elseif ($model instanceof Order) {
             $update = ['payment_status' => 'paid'];
             if ($model->status === Order::STATUS_PENDING_PAYMENT) {
@@ -135,6 +152,20 @@ class Payables
             }
         }
         // Subscriptions are handled by SubscriptionService (activation + renewals).
+    }
+
+    /**
+     * A hold was secured (verified webhook / mock). Returns false when the
+     * payable no longer wants it (e.g. consult expired meanwhile) — the
+     * caller then releases the hold straight away.
+     */
+    public function onAuthorized(Model $model, PaymentIntent $intent): bool
+    {
+        return match (true) {
+            $model instanceof DoctorMatchRequest => app(ConsultPaymentService::class)->secured($model, $intent),
+            $model instanceof Ride => app(RidePaymentService::class)->secured($model, $intent),
+            default => true,
+        };
     }
 
     public function markRefunded(Model $model, PaymentIntent $intent, float $amount): void

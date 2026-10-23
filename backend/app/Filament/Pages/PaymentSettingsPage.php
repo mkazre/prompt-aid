@@ -61,7 +61,7 @@ class PaymentSettingsPage extends Page
                 $state[$key] = '';
             } elseif (str_starts_with($key, 'payments_methods_')) {
                 $state[$key] = PS::allowedFor(substr($key, strlen('payments_methods_')));
-            } elseif (in_array($default, ['0', '1'], true) && ! str_contains($key, 'ttl')) {
+            } elseif (in_array($default, ['0', '1'], true) && ! in_array($key, ['payments_intent_ttl_minutes', 'consult_medical_aid_copay', 'callback_missed_fee', 'callback_missed_min_attempts', 'callback_missed_min_minutes'], true)) {
                 $state[$key] = PS::bool($key);
             } else {
                 $state[$key] = PS::str($key);
@@ -139,6 +139,39 @@ class PaymentSettingsPage extends Page
                             Toggle::make('clear_ozow')->label('Remove saved Ozow secrets'),
                         ]),
                         Text::make('Notify URL (sent with each payment): '.$base.'/api/payments/webhooks/ozow. Ozow refunds are done in the Ozow merchant dashboard; then use "Mark refunded" on the payment.'),
+                    ]),
+                    Tab::make('Upfront payments')->schema([
+                        Section::make('On-demand consults (see a doctor now, video, call back)')
+                            ->description('The patient pays before any doctor is alerted. The money is held and only finalised when the consult starts; no match / expiry / doctor no-show or doctor cancel = full automatic refund; patient cancel after accept = cancellation fee kept, rest refunded.')
+                            ->schema([Grid::make(2)->schema([
+                                Toggle::make('consult_upfront_payment')->label('Require payment before connecting'),
+                                TextInput::make('consult_payment_window_minutes')->label('Minutes to complete payment')->numeric()->minValue(2)->maxValue(60)->required(),
+                                Toggle::make('consult_medical_aid_enabled')->label('Offer "bill my medical aid" (patients with a scheme)'),
+                                TextInput::make('consult_medical_aid_copay')->label('Medical-aid co-payment taken upfront (R)')->numeric()->minValue(0)->required()
+                                    ->helperText('Credited on the invoice; the claim covers the rest. A scheme shortfall is shown to the patient minus this co-pay.'),
+                            ])]),
+                        Section::make('Missed call-back')
+                            ->description('When the patient does not answer a call-back: the fee is kept ONLY if the doctor made at least the minimum attempts spread over at least the minimum minutes; otherwise everything is refunded. Capped at the consult price.')
+                            ->schema([Grid::make(3)->schema([
+                                TextInput::make('callback_missed_fee')->label('Missed call-back fee (R)')->numeric()->minValue(0)->required(),
+                                TextInput::make('callback_missed_min_attempts')->label('Minimum call attempts')->numeric()->minValue(1)->maxValue(20)->required(),
+                                TextInput::make('callback_missed_min_minutes')->label('Minimum minutes first → last attempt')->numeric()->minValue(0)->maxValue(120)->required(),
+                            ])]),
+                        Section::make('Booked appointments')
+                            ->description('Default for all doctors; a clinic or doctor can override it on their profile.')
+                            ->schema([Grid::make(2)->schema([
+                                Select::make('appointment_payment_policy')->label('Payment at booking')->options(PS::POLICIES)->required(),
+                                TextInput::make('appointment_deposit_percent')->label('Deposit %')->numeric()->minValue(1)->maxValue(100)->required(),
+                                TextInput::make('appointment_free_cancel_hours')->label('Free cancellation up to (hours before)')->numeric()->minValue(0)->required(),
+                                TextInput::make('appointment_payment_window_minutes')->label('Minutes to pay before the slot is released')->numeric()->minValue(5)->maxValue(1440)->required(),
+                                TextInput::make('appointment_late_cancel_keep_percent')->label('Late cancellation: % of the payment kept')->numeric()->minValue(0)->maxValue(100)->required(),
+                            ])]),
+                        Section::make('Shuttle & pharmacy')->schema([Grid::make(2)->schema([
+                            Toggle::make('ride_upfront_hold')->label('Shuttle: secure the quoted fare upfront'),
+                            TextInput::make('ride_payment_window_minutes')->label('Shuttle: minutes to pay before the request lapses')->numeric()->minValue(2)->maxValue(60)->required(),
+                            TextInput::make('ride_hold_buffer_percent')->label('Extra % held for route changes')->numeric()->minValue(0)->maxValue(100)->required(),
+                            Toggle::make('order_auto_refund_on_cancel')->label('Refund paid pharmacy orders automatically when cancelled'),
+                        ])]),
                     ]),
                     Tab::make('Routing')->schema([
                         Grid::make(2)->schema([

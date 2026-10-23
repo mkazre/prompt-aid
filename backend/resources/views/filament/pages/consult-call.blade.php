@@ -1,8 +1,8 @@
 @php
   $cfg = $this->callData();
   $summaryRows = $this->summaryData();
-  $cssUrl = asset('assets/css/pa-video-call.css').'?v=1';
-  $jsUrl = asset('assets/js/pa-video-call.js').'?v=1';
+  $cssUrl = asset('assets/css/pa-video-call.css').'?v=2';
+  $jsUrl = asset('assets/js/pa-video-call.js').'?v=2';
   $errorText = $this->error;
 @endphp
 <x-filament-panels::page>

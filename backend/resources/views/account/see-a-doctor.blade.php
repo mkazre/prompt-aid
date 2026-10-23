@@ -186,6 +186,6 @@
 @include('payments.sheet')
 <script>window.PromptAidDoctorNow = @json($dnConfig);</script>
 @push('scripts')
-<script src="{{ asset('assets/js/doctor-now.js') }}?v=2"></script>
+<script src="{{ asset('assets/js/doctor-now.js') }}?v=3"></script>
 @endpush
 </x-layout>

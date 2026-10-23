@@ -21,6 +21,7 @@ class DoctorProfile extends Model
     public const OFFLINE = 'offline';
 
     protected $fillable = [
+        'payment_policy', 'deposit_percent',
         'user_id', 'specialization', 'qualification', 'experience_years', 'bio',
         'consultation_fee', 'registration_no', 'signature', 'rating_avg', 'rating_count', 'status',
         'is_accepting_appointments', 'availability', 'current_lat', 'current_lng', 'location_updated_at',

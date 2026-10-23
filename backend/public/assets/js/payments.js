@@ -67,7 +67,7 @@
       plan_id: opts.plan_id,
       amount: opts.amount,
       title: opts.title || 'Pay',
-      service: opts.service || ({ order: 'pharmacy', invoice: 'invoice', ride_charge: 'ride' })[opts.payable_type] || (opts.kind === 'subscribe' ? 'subscription' : 'invoice'),
+      service: opts.service || ({ order: 'pharmacy', invoice: 'invoice', ride_charge: 'ride', ride: 'ride', consult: 'invoice' })[opts.payable_type] || (opts.kind === 'subscribe' ? 'subscription' : 'invoice'),
       onPaid: opts.onPaid,
       reload: opts.reload !== false,
       key: uid(),
@@ -141,7 +141,7 @@
       api('GET', cfg.intentBase + '/' + state.intent.id).then(function (json) {
         if (!state) return;
         var it = json.intent; state.intent = it;
-        if (it.status === 'paid') { state.phase = 'paid'; stopPoll(); result('go', 'Payment successful', it.message); return; }
+        if (it.status === 'paid' || it.status === 'authorized') { state.phase = 'paid'; stopPoll(); result('go', it.status === 'authorized' ? 'Payment secured' : 'Payment successful', it.message); return; }
         if (it.status === 'failed') { stopPoll(); result('stop', 'Payment failed', it.message); return; }
         if (it.status === 'cancelled' && state.phase === 'confirming') { stopPoll(); result('stop', 'Payment cancelled', it.message); return; }
         if (state.phase === 'confirming' && Date.now() - started > 120000) {

@@ -31,6 +31,10 @@ class DoctorProfileForm
                     ->required()
                     ->numeric()
                     ->default(0),
+                Select::make('payment_policy')->label('Payment at booking')
+                    ->options(\App\Support\PaymentSettings::POLICIES)->placeholder('Use the platform default')
+                    ->helperText('Overrides Staff → Payment settings → Upfront payments for this booking.'),
+                TextInput::make('deposit_percent')->label('Deposit % (if deposit)')->numeric()->minValue(1)->maxValue(100),
                 TextInput::make('registration_no'),
                 Select::make('status')
                     ->options(['active' => 'Active', 'inactive' => 'Inactive', 'pending_approval' => 'Pending Approval'])

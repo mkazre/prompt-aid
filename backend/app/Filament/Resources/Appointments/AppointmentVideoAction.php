@@ -17,7 +17,7 @@ class AppointmentVideoAction
     public static function make(): Action
     {
         return Action::make('joinVideo')
-            ->label('Join video')
+            ->label('Open consult (video)')
             ->icon('heroicon-o-video-camera')
             ->color('success')
             ->visible(function (?Appointment $record): bool {
@@ -44,13 +44,14 @@ class AppointmentVideoAction
     public static function callback(): Action
     {
         return Action::make('callPatient')
-            ->label('Call patient')
+            ->label('Open consult (call back)')
             ->icon('heroicon-o-phone')
             ->color('success')
             ->visible(fn (?Appointment $record): bool => $record !== null
                 && $record->isCallback()
                 && in_array($record->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED, Appointment::STATUS_CHECKED_IN], true)
                 && (int) $record->doctor_profile_id === (int) Auth::user()?->doctorProfile?->id)
-            ->url(fn (?Appointment $record) => $record ? \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $record->id], panel: 'admin') : null);
+            // Consult hub: in-app video / voice / chat first, phone + WhatsApp as fallback.
+            ->url(fn (?Appointment $record) => $record ? \App\Filament\Pages\ConsultHub::getUrl(['appointment' => $record->id], panel: 'admin') : null);
     }
 }

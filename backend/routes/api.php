@@ -91,6 +91,7 @@ require __DIR__.'/api_payments.php';
 // --- Authenticated (any role) ---
 Route::middleware('auth:sanctum')->group(function () {
     require __DIR__.'/api_doctor_match.php';
+    require __DIR__.'/api_consult_hub.php';
     require __DIR__.'/api_privacy.php';
     require __DIR__.'/api_commerce.php';
     require __DIR__.'/api_safety.php';

@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PaAvatar } from '../../components/pa';
 import SlotPicker from '../../components/SlotPicker';
 import SuccessModal from '../../components/SuccessModal';
+import { PaymentSheet } from '../../components/payments';
 import { Chip, Fab, PrimaryButton, R, SoftCard, s as ui } from '../../components/settings-ui';
 import { pa, paFonts } from '../../theme';
 import { PaLiveStatus } from '../../components/pa/care-extras';
@@ -42,6 +43,9 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
   const [booking, setBooking] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [confirmed, setConfirmed] = useState<Appointment | null>(null);
+  // Pay-at-booking (full / deposit policy): the booking stays "pending payment" until paid.
+  const [payDue, setPayDue] = useState<{ invoiceId: number; amount: number; invoiceNo?: string; appt: Appointment } | null>(null);
+  const [unpaid, setUnpaid] = useState(false);
   const [favOn, setFavOn] = useState(false);
   const [favAllowed, setFavAllowed] = useState(false);
 
@@ -100,7 +104,13 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
         reason: reason.trim() || undefined,
         ...(mode === 'phone' ? { callback_phone: cbPhone.trim(), callback_channel: cbChannel } : {}),
       });
-      setConfirmed(data.data);
+      const due = data?.payment_due as { payable_id: number; amount: number; invoice_no?: string } | null | undefined;
+      if (due?.payable_id) {
+        setPayDue({ invoiceId: due.payable_id, amount: Number(due.amount), invoiceNo: due.invoice_no, appt: data.data });
+      } else {
+        setUnpaid(false);
+        setConfirmed(data.data);
+      }
       setReason('');
       setSlot(null);
       setReloadKey((k) => k + 1);
@@ -346,10 +356,32 @@ export default function DoctorDetailScreen({ route, navigation }: any) {
         ) : null}
       </View>
 
+      <PaymentSheet
+        visible={!!payDue}
+        payable={payDue ? { type: 'invoice', id: payDue.invoiceId } : undefined}
+        amount={payDue?.amount}
+        title={payDue?.invoiceNo ? `Booking ${payDue.invoiceNo}` : 'Booking payment'}
+        onPaid={() => {
+          const p = payDue;
+          setPayDue(null);
+          setUnpaid(false);
+          if (p) setConfirmed(p.appt);
+        }}
+        onClose={() => {
+          const p = payDue;
+          setPayDue(null);
+          if (p) {
+            setUnpaid(true);
+            setConfirmed(p.appt);
+          }
+        }}
+      />
       <SuccessModal
         visible={!!confirmed}
         title={`${firstName}, we've got you confirmed for your appointment`}
-        message={confirmed ? `The clinic will confirm shortly. Ref ${confirmed.booking_ref}` : undefined}
+        message={confirmed ? (unpaid
+          ? `Your booking is pending payment. Pay from Invoices before the time runs out or the slot is released. Ref ${confirmed.booking_ref}`
+          : `The clinic will confirm shortly. Ref ${confirmed.booking_ref}`) : undefined}
         details={confirmed ? [
           { label: 'Date', value: longDate(parseYmd(confirmed.date)) },
           { label: 'Time', value: time12(confirmed.start_time) },

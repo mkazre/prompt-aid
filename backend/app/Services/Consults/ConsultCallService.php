@@ -245,7 +245,7 @@ class ConsultCallService
      * only refreshes the flag — no second push. Returns false when the
      * appointment can't be joined right now.
      */
-    public function ring(Appointment $appt, bool $force = false): bool
+    public function ring(Appointment $appt, bool $force = false, string $channel = 'video'): bool
     {
         $appt->loadMissing(['patient.user', 'doctor.user']);
         if (! $appt->isVideo() || ! $appt->doctor_profile_id || ! in_array($appt->status, self::ACTIVE, true) || ! $appt->canJoinVideoNow()) {
@@ -255,9 +255,20 @@ class ConsultCallService
         if (! $patientUser) {
             return false;
         }
+        $channel = $channel === 'voice' ? 'voice' : 'video';
+
+        // Consult hub: the ring carries the channel (video | in-app voice).
+        $session = app(ConsultHubService::class)->session($appt);
+        if ($session->ended_at) {
+            return false;
+        }
+        $channelChanged = $session->ring_channel !== null && $session->ring_channel !== $channel;
+        if ($session->ring_channel !== $channel) {
+            $session->forceFill(['ring_channel' => $channel])->save();
+        }
 
         $recent = $appt->call_started_at && $appt->call_started_at->gte(now()->subSeconds(45))
-            && ! $appt->ring_answered_at && ! $appt->ring_declined_at;
+            && ! $appt->ring_answered_at && ! $appt->ring_declined_at && ! $channelChanged;
 
         if (! $recent || $force) {
             $appt->forceFill(['call_started_at' => now(), 'ring_answered_at' => null, 'ring_declined_at' => null])->saveQuietly();
@@ -266,25 +277,29 @@ class ConsultCallService
 
         if (! $recent || $force) {
             $doctorName = $appt->doctor?->user ? 'Dr. '.$appt->doctor->user->name : 'Your doctor';
+            $voice = $channel === 'voice';
             $data = [
                 'type' => 'consult_call',
                 'route' => 'video_call',
                 'appointment_id' => $appt->id,
-                'params' => ['appointment_id' => $appt->id],
+                'params' => ['appointment_id' => $appt->id, 'channel' => $channel],
+                'channel' => $channel,
                 'doctor_name' => $doctorName,
-                'url' => '/account/appointments/'.$appt->id.'/call',
+                'url' => ConsultHubService::patientHubUrl($appt) ? '/account/consults/'.$appt->id.'?join='.$channel : '/account/appointments/'.$appt->id.'/call',
             ];
+            $title = $doctorName.' is calling you'.($voice ? ' (voice)' : ' (video)');
+            $body = $voice ? 'Tap to answer your voice call in the app — it uses data, not airtime.' : 'Tap to join your video consult now.';
             try {
                 if (InAppNotifier::enabled('appointment')) {
                     UserNotification::query()->create([
                         'user_id' => $patientUser->id, 'type' => 'appointment',
-                        'title' => $doctorName.' is calling you', 'body' => 'Tap to join your video consult now.', 'data' => $data,
+                        'title' => $title, 'body' => $body, 'data' => $data,
                     ]);
                 }
             } catch (\Throwable $e) {
                 Log::warning('[ConsultCall] feed row failed: '.$e->getMessage());
             }
-            ExpoPush::toUsers($patientUser->id, $doctorName.' is calling you', 'Tap to join your video consult now.', $data, ProviderAlerts::PUSH_CHANNEL, ProviderAlerts::PUSH_SOUND);
+            ExpoPush::toUsers($patientUser->id, $title, $body, $data, ProviderAlerts::PUSH_CHANNEL, ProviderAlerts::PUSH_SOUND);
         }
 
         return true;
@@ -319,13 +334,18 @@ class ConsultCallService
         $doctor = $appt->doctor;
         $ends = $appt->call_started_at->copy()->addSeconds(self::ringSeconds());
 
+        $channel = app(ConsultHubService::class)->existingSession($appt)?->ring_channel ?: 'video';
+        $hubUrl = ConsultHubService::patientHubUrl($appt);
+
         return [
             'appointment_id' => $appt->id,
             'mode' => 'video',
+            'channel' => $channel,
             'doctor_name' => $doctor?->user ? 'Dr. '.$doctor->user->name : 'Your doctor',
             'doctor_specialization' => $doctor?->specialization,
             'doctor_photo_url' => \App\Support\Widgets\WidgetDataService::mediaUrl($doctor?->user?->avatar),
-            'call_url' => Route::has('account.appointments.call') ? route('account.appointments.call', $appt) : null,
+            'call_url' => Route::has('account.appointments.call') ? route('account.appointments.call', $appt).($channel === 'voice' ? '?audio=1' : '') : null,
+            'hub_url' => $hubUrl ? $hubUrl.'?join='.$channel : null,
             'auto_join_seconds' => self::autoJoinSeconds(),
             'started_at' => $appt->call_started_at->toIso8601String(),
             'seconds_left' => max(0, (int) now()->diffInSeconds($ends, false)),
@@ -512,6 +532,7 @@ class ConsultCallService
             'video_call_url' => $appt->isVideo() && class_exists(\App\Filament\Pages\ConsultCall::class)
                 ? \App\Filament\Pages\ConsultCall::getUrl(['appointment' => $appt->id], panel: 'admin') : null,
             'ringing' => $this->isRinging($appt),
+            'hub_url' => ConsultHubService::doctorHubUrl($appt),
         ];
     }
 
@@ -524,6 +545,7 @@ class ConsultCallService
         $appt->forceFill([
             'called_at' => $appt->called_at ?? now(),
             'call_attempts' => (int) $appt->call_attempts + 1,
+            'last_call_attempt_at' => now(), // missed call-back fee rule (attempt span)
         ])->saveQuietly();
 
         $patientUser = $appt->patient?->user;
@@ -557,6 +579,14 @@ class ConsultCallService
         if ($outcome === 'no_answer') {
             $appt->forceFill($attrs)->saveQuietly();
         } else {
+            // Consult hub record: closes the session and fires ConsultEnded once.
+            try {
+                if ($doctorUser = $doctor->user ?? $appt->doctor?->user) {
+                    app(ConsultHubService::class)->closeFromCallbackOutcome($appt, $doctorUser, $outcome);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('[ConsultCall] hub close failed: '.$e->getMessage());
+            }
             $appt->forceFill($attrs);
             // Status change goes through the model so the observer releases the doctor.
             $appt->status = Appointment::STATUS_COMPLETED;

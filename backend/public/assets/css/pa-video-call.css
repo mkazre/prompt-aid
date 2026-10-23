@@ -110,3 +110,19 @@ html.pa-call-page .pa-call { height: 100vh; height: 100dvh; }
 
 /* Staff (Filament) page. */
 .pa-call--staff { height: calc(100vh - 190px); height: calc(100dvh - 190px); min-height: 460px; border-radius: 16px; }
+
+/* Consult hub: in-app voice call (Jitsi audio-only) — the video stage stays
+   mounted (it carries the audio) but is hidden behind a big avatar card. */
+.pa-call__voice { position: absolute; inset: 0; z-index: 1; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; background: radial-gradient(circle at 50% 38%, #24242a 0, #0b0b0d 70%); }
+.pa-call.is-voice .pa-call__voice { display: flex; }
+.pa-call.is-voice .pa-call__stage iframe { opacity: 0; pointer-events: none; }
+.pa-call.is-voice [data-call-cam] { display: none; }
+.pa-call__avatar { width: 128px; height: 128px; border-radius: 50%; background: #2a2a2e; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 900; overflow: hidden; box-shadow: 0 0 0 10px rgba(52, 194, 122, .16), 0 0 0 22px rgba(52, 194, 122, .07); }
+.pa-call__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pa-call.is-live .pa-call__avatar { box-shadow: 0 0 0 10px rgba(52, 194, 122, .35), 0 0 0 22px rgba(52, 194, 122, .14); }
+.pa-call__voice-name { font-size: 22px; font-weight: 800; margin-top: 14px; }
+.pa-call__voice-sub { font-size: 13px; color: var(--pc-muted); }
+
+/* Consult hub (website patient page + staff hub page). */
+.pa-call--hub { height: 60vh; height: 60dvh; min-height: 380px; border-radius: 16px; }
+@media (max-width: 700px) { .pa-call--hub { height: 56vh; height: 56dvh; min-height: 340px; border-radius: 12px; } }

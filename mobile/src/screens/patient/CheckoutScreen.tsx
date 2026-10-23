@@ -3,7 +3,8 @@ import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-nati
 import * as DocumentPicker from 'expo-document-picker';
 import { api, apiErrorMessage } from '../../api/client';
 import { PaButton, PaEmptyState } from '../../components/pa';
-import { PaPayMethodPicker, PaQtyStepper, PaSpreadRow, PayMethod } from '../../components/pa/patient-commerce-extras';
+import { PaQtyStepper, PaSpreadRow } from '../../components/pa/patient-commerce-extras';
+import { PaymentSheet, getSubscriptionPlans, SubscriptionPlan } from '../../components/payments';
 import { pa, paFonts, paRadius, type } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -14,7 +15,8 @@ const needsPrescriptionMessage = 'Your order was placed. Payment is still pendin
 /**
  * Cart / checkout — matches `checkout.html`, simplified to what the real
  * backend supports: a single-pharmacy cart (`POST /orders/checkout`)
- * followed by paying that order (`POST /orders/{order}/pay`). The
+ * followed by paying that order in the in-app PaymentSheet (PayFast / Paystack /
+ * Ozow inside a WebView sheet, or test mode when no gateway is live). The
  * mockup's multi-line "split payment" (consult + pharmacy + shuttle in one
  * charge) has no backend endpoint — this screen only settles the pharmacy
  * order, matching PharmacyController::checkout / payOrder.
@@ -26,7 +28,10 @@ export default function CheckoutScreen({ navigation }: any) {
   const [prescriptionId, setPrescriptionId] = useState<number | null>(null);
   const [prescriptionName, setPrescriptionName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [method, setMethod] = useState<PayMethod>('card');
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
+  const [payOrder, setPayOrder] = useState<{ id: number; orderNo: string | null; total: number } | null>(null);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [planToBuy, setPlanToBuy] = useState<SubscriptionPlan | null>(null);
   const [placing, setPlacing] = useState(false);
   const [done, setDone] = useState<{ paid: boolean; orderNo: string | null; total: number } | null>(null);
   const [promoInput, setPromoInput] = useState('');
@@ -60,8 +65,60 @@ export default function CheckoutScreen({ navigation }: any) {
     />
   );
 
+  const paymentSheets = (
+    <>
+      <PaymentSheet
+        visible={!!payOrder}
+        payable={payOrder ? { type: 'order', id: payOrder.id } : undefined}
+        amount={payOrder?.total}
+        title={payOrder?.orderNo ? `Order ${payOrder.orderNo}` : 'Pharmacy order'}
+        onPaid={(intent) => {
+          const o = payOrder;
+          setPayOrder(null);
+          setDone({ paid: true, orderNo: o?.orderNo ?? null, total: intent.amount });
+        }}
+        onClose={() => {
+          const o = payOrder;
+          if (o) {
+            setPayOrder(null);
+            setDone((d) => d ?? { paid: false, orderNo: o.orderNo, total: o.total });
+          }
+        }}
+      />
+      <PaymentSheet
+        visible={!!planToBuy}
+        planId={planToBuy?.id}
+        amount={planToBuy?.amount}
+        title={planToBuy?.name}
+        onPaid={() => {
+          setPlanToBuy(null);
+          Alert.alert('Subscribed', 'Your plan is active. Member discounts apply to your next orders.');
+        }}
+        onClose={() => setPlanToBuy(null)}
+      />
+    </>
+  );
+
   const discount = promo ? Math.min(promo.discount, subtotal) : 0;
-  const total = subtotal - discount + (lines.length ? 45 : 0);
+  // Delivery fee comes from the pharmacy (server value), never a hardcoded number.
+  const pharmacyId = lines[0]?.product.pharmacy_id;
+  useEffect(() => {
+    if (!pharmacyId) return;
+    let live = true;
+    setDeliveryFee(null);
+    api
+      .get(`/pharmacies/${pharmacyId}`)
+      .then(({ data }) => live && setDeliveryFee(Number(data?.data?.delivery_fee ?? data?.delivery_fee ?? 0)))
+      .catch(() => live && setDeliveryFee(0));
+    return () => {
+      live = false;
+    };
+  }, [pharmacyId]);
+  useEffect(() => {
+    getSubscriptionPlans('chronic_medication').then(setPlans).catch(() => setPlans([]));
+  }, []);
+
+  const total = subtotal - discount + (lines.length ? deliveryFee ?? 0 : 0);
   const cartKey = lines.map((l) => `${l.product.id}x${l.qty}`).join(',');
 
   async function applyPromo(code: string = promoInput) {
@@ -130,17 +187,16 @@ export default function CheckoutScreen({ navigation }: any) {
       const orderId = data?.data?.id ?? data?.id;
       const orderNo = data?.data?.order_no ?? data?.order_no ?? null;
       const paidTotal = Number(data?.data?.total ?? data?.total ?? total);
-      let paid = false;
-      try {
-        await api.post(`/orders/${orderId}/pay`, { method });
-        paid = true;
-      } catch (payError) {
-        // Order placed but payment failed/deferred (e.g. awaiting script review) — the modal says so.
-      }
+      const payable = (data?.data?.status ?? data?.status) === 'pending_payment';
       clear();
       setPromo(null);
       setPromoInput('');
-      setDone({ paid, orderNo, total: paidTotal });
+      if (payable && orderId) {
+        // Pay inside the app; the server total (incl. member discount) is what gets charged.
+        setPayOrder({ id: Number(orderId), orderNo, total: paidTotal });
+      } else {
+        setDone({ paid: false, orderNo, total: paidTotal });
+      }
     } catch (e) {
       Alert.alert('Checkout failed', apiErrorMessage(e));
     } finally {
@@ -155,6 +211,7 @@ export default function CheckoutScreen({ navigation }: any) {
         <PaEmptyState message="Your basket is empty. Add something from the pharmacy shop first." />
         <PaButton title="Browse pharmacy" onPress={() => navigation.navigate('Shop')} />
         {successModal}
+        {paymentSheets}
       </View>
     );
   }
@@ -176,7 +233,7 @@ export default function CheckoutScreen({ navigation }: any) {
       <View style={styles.summaryBox}>
         <PaSpreadRow label="Subtotal" value={`R ${subtotal.toFixed(2)}`} />
         {discount > 0 && <PaSpreadRow label={`Discount (${promo?.code})`} value={`− R ${discount.toFixed(2)}`} />}
-        <PaSpreadRow label="Delivery" value="R 45.00" />
+        <PaSpreadRow label="Delivery" value={deliveryFee === null ? '…' : `R ${deliveryFee.toFixed(2)}`} />
         <View style={styles.divider} />
         <PaSpreadRow label="You pay" value={`R ${total.toFixed(2)}`} bold />
       </View>
@@ -224,8 +281,7 @@ export default function CheckoutScreen({ navigation }: any) {
         />
       )}
 
-      <Text style={styles.label}>Pay with</Text>
-      <PaPayMethodPicker value={method} onChange={setMethod} />
+      <Text style={styles.payNote}>You'll choose how to pay (card, instant EFT…) in a secure sheet after placing the order.</Text>
 
       <PaButton
         title={`Place order — R ${total.toFixed(2)}`}
@@ -234,6 +290,24 @@ export default function CheckoutScreen({ navigation }: any) {
         disabled={!deliveryAddress}
         style={{ marginTop: 12 }}
       />
+
+      {plans.length > 0 && (
+        <View style={styles.planBox}>
+          <Text style={styles.label}>On chronic medication?</Text>
+          {plans.map((p) => (
+            <View key={p.id} style={styles.planRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.lineName}>{p.name}</Text>
+                <Text style={styles.linePrice}>R {p.amount.toFixed(2)} / {p.frequency_label.toLowerCase()}{p.discount_percent ? ` · ${p.discount_percent}% off orders` : ''}</Text>
+              </View>
+              <PaButton title="Subscribe" variant="ghost" onPress={() => setPlanToBuy(p)} style={{ minWidth: 104 }} />
+            </View>
+          ))}
+        </View>
+      )}
+
+      {successModal}
+      {paymentSheets}
     </ScrollView>
   );
 }
@@ -255,6 +329,9 @@ const styles = StyleSheet.create({
   lineName: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
   linePrice: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: 2 },
   summaryBox: { marginTop: 12, marginBottom: 4 },
+  payNote: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: 18 },
+  planBox: { marginTop: 24, borderTopWidth: 1, borderTopColor: pa.line },
+  planRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   promoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   promoMsg: { fontFamily: paFonts.regular, fontSize: 12, marginTop: 6 },
   divider: { borderTopWidth: 1, borderTopColor: pa.line, marginVertical: 6 },

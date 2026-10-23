@@ -294,7 +294,11 @@ class DoctorMatchService
             ]);
         });
 
-        $this->progress($request);
+        // Upfront payment: the request is only broadcast once the hold is secured
+        // (instantly in test mode; after the verified webhook when a gateway is live).
+        app(\App\Services\Payments\ConsultPaymentService::class)->prepare($request, (bool) ($extra['bill_medical_aid'] ?? false));
+
+        $this->progress($request->fresh());
 
         return $request->fresh();
     }
@@ -346,6 +350,7 @@ class DoctorMatchService
                     'status' => Appointment::STATUS_CANCELLED,
                     'cancel_reason' => 'Cancelled by patient before a doctor accepted',
                 ]);
+                DB::afterCommit(fn () => app(\App\Services\Payments\ConsultPaymentService::class)->releaseFor($locked, 'Cancelled before a doctor accepted'));
             });
 
             $request->refresh();
@@ -400,6 +405,14 @@ class DoctorMatchService
             } catch (\Throwable $e) {
                 Log::warning('[DoctorMatch] invoice adjust failed: '.$e->getMessage());
             }
+        }
+
+        // Upfront hold: patient cancel keeps only the fee; doctor/admin cancel releases everything.
+        try {
+            $consultPay = app(\App\Services\Payments\ConsultPaymentService::class);
+            $byPatient ? $consultPay->captureFee($request->fresh(), $fee) : $consultPay->releaseFor($request->fresh(), 'Cancelled by the practice');
+        } catch (\Throwable $e) {
+            Log::warning('[DoctorMatch] upfront payment settle failed: '.$e->getMessage());
         }
 
         $doctorUser = $request->doctor?->user;
@@ -573,6 +586,16 @@ class DoctorMatchService
                 return $events;
             }
 
+            if ($req->payment_state === \App\Services\Payments\ConsultPaymentService::AWAITING) {
+                // Not paid yet: no doctor is alerted. Unpaid requests lapse after the payment window.
+                if ($req->expires_at && $req->expires_at->isPast()) {
+                    $this->expireLocked($req, 'payment_not_completed');
+                    $events[] = ['expired', $req];
+                }
+
+                return $events;
+            }
+
             if (DispatchSettings::mode('doctor_now') === 'manual') {
                 if ($req->expires_at && $req->expires_at->isPast()) {
                     $this->expireLocked($req, 'timed_out');
@@ -687,6 +710,8 @@ class DoctorMatchService
     {
         $this->closeLiveOffers($req);
         $req->update(['status' => DoctorMatchRequest::EXPIRED, 'outcome_reason' => $reason]);
+        // Nobody accepted: give the upfront payment back in full (after the row lock is released).
+        DB::afterCommit(fn () => app(\App\Services\Payments\ConsultPaymentService::class)->releaseFor($req, 'No doctor accepted ('.$reason.')'));
         $req->appointment?->update([
             'status' => Appointment::STATUS_CANCELLED,
             'cancel_reason' => $reason === 'timed_out'
@@ -1065,6 +1090,9 @@ class DoctorMatchService
         if ($invoice->status === Invoice::STATUS_PAID) {
             throw new DoctorMatchException('This consult is already paid.', 409);
         }
+        if ($request->payment_state === \App\Services\Payments\ConsultPaymentService::SECURED) {
+            throw new DoctorMatchException('This consult was paid upfront — you are charged when it starts.', 409);
+        }
 
         $result = $this->gateway->charge($invoice, $method);
         if (! empty($result['pending'])) {
@@ -1226,11 +1254,15 @@ class DoctorMatchService
             'call_url' => $appt && $request->status === DoctorMatchRequest::MATCHED && $appt->isVideo() && \Illuminate\Support\Facades\Route::has('account.appointments.call')
                 ? route('account.appointments.call', $appt) : null,
             'ring' => $appt && $request->status === DoctorMatchRequest::MATCHED ? $calls->ringPayload($appt) : null,
+            // Consult hub (video / voice / chat, phone + WhatsApp fallback) — where the patient goes once matched.
+            'hub_url' => $appt && $request->status === DoctorMatchRequest::MATCHED && \App\Services\Consults\ConsultHubService::supports($appt)
+                ? \App\Services\Consults\ConsultHubService::patientHubUrl($appt) : null,
             'auto_join_seconds' => ConsultCallService::autoJoinSeconds(),
             'callback' => $appt ? $calls->callbackPayload($appt) : null,
             'triage' => $request->triage_submission_id ? (fn ($t) => $t ? ['reference' => $t['reference'], 'level' => $t['level'], 'level_label' => $t['level_label']] : null)($calls->triageSummary($request->triageSubmission)) : null,
             'dispatch_phone' => $dispatch?->phone,
             'dispatch_tel' => $dispatch?->tel_url,
+            'payment' => app(\App\Services\Payments\ConsultPaymentService::class)->payload($request),
             'invoice' => $invoice ? [
                 'id' => $invoice->id,
                 'invoice_no' => $invoice->invoice_no,
@@ -1335,6 +1367,7 @@ class DoctorMatchService
             'callback' => $appt ? app(ConsultCallService::class)->callbackPayload($appt, true) : null,
             'card_url' => $appt && $req->mode === Appointment::MODE_CALLBACK && class_exists(\App\Filament\Pages\CallbackConsult::class)
                 ? \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $appt->id], panel: 'admin') : null,
+            'hub_url' => $appt && \App\Services\Consults\ConsultHubService::supports($appt) ? \App\Services\Consults\ConsultHubService::doctorHubUrl($appt) : null,
         ];
     }
 
@@ -1408,8 +1441,8 @@ class DoctorMatchService
 
         if ($doctorUser) {
             $cardUrl = match ($req->mode) {
-                Appointment::MODE_CALLBACK => \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
-                Appointment::MODE_VIDEO => \App\Filament\Pages\ConsultCall::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
+                // Consult hub: video / voice / chat + phone / WhatsApp fallback.
+                Appointment::MODE_CALLBACK, Appointment::MODE_VIDEO => \App\Filament\Pages\ConsultHub::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
                 default => url('/staff/live-consults'),
             };
             StaffNotifier::alert(

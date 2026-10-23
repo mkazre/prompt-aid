@@ -104,6 +104,14 @@
     show('dn-closed', !!p && (p.status === 'expired' || p.status === 'cancelled'));
     if (!p) { loadQuote(); return; }
 
+    // Upfront payment: doctors are only alerted once the payment is secured.
+    if (p.status === 'searching' && p.payment && p.payment.required && window.PromptAidPay && state.payOpenedFor !== p.id) {
+      state.payOpenedFor = p.id;
+      window.PromptAidPay.open({
+        payable_type: 'consult', payable_id: p.id, amount: p.payment.amount, service: 'invoice',
+        title: 'Pay to connect with a doctor', onPaid: function () { poll(); }, reload: false
+      });
+    }
     if (p.status === 'searching') { renderSearching(p); schedule(3000); }
     else if (p.status === 'matched') {
       renderMatched(p);
@@ -147,6 +155,14 @@
   }
 
   function renderMatched(p) {
+    // Consult hub: once a doctor accepts a video / call-back consult, go straight to the
+    // connection options (video, in-app voice, chat; phone / WhatsApp fallback). Only once
+    // per consult per tab, so coming back here shows the card with an "Open consult" button.
+    if (p.hub_url && (p.mode === 'video' || p.mode === 'callback') && (p.appointment_status === 'pending' || p.appointment_status === 'confirmed' || p.appointment_status === 'checked_in')) {
+      var hubKey = 'pa-hub-opened-' + p.appointment_id, seenHub = null;
+      try { seenHub = window.sessionStorage.getItem(hubKey); window.sessionStorage.setItem(hubKey, '1'); } catch (e) { /* private mode */ }
+      if (!seenHub) { window.location.replace(p.hub_url); return; }
+    }
     var d = p.doctor || {};
     var photo = $('dn-m-photo');
     photo.innerHTML = d.photo_url ? '<img src="' + esc(d.photo_url) + '" alt="">' : esc(initials(d.name));
@@ -183,6 +199,7 @@
     } else {
       where = '<div class="pa-note">The doctor will message you with directions to their rooms.</div>';
     }
+    if (p.hub_url && (p.mode === 'video' || p.mode === 'callback')) actions = '<a class="pa-btn" href="' + esc(p.hub_url) + '">Open consult: video, voice &amp; chat</a>' + actions.replace('class="pa-btn"', 'class="pa-btn-ghost"');
     actions += '<button class="pa-btn-ghost" type="button" data-dn="message">Message doctor</button>';
     if (p.can_cancel) actions += '<button class="pa-btn-ghost" type="button" data-dn="cancel">Cancel consult</button>';
     $('dn-m-where').innerHTML = where;
@@ -193,7 +210,7 @@
     if (p.invoice) {
       var paid = p.invoice.status === 'paid';
       bill = '<div class="pa-dn-price"><div><div class="pa-label" style="margin:0">Consultation · ' + esc(p.invoice.invoice_no) + '</div><div class="v" style="font-size:22px">' + money(p.invoice.total) + '</div></div>' +
-        '<div>' + (paid ? '<span class="pa-badge is-go">Paid</span>' : '<button class="pa-btn-quiet pa-btn-sm" type="button" data-dn="pay">Pay now</button>') + '</div></div>';
+        '<div>' + (paid ? '<span class="pa-badge is-go">Paid</span>' : (p.payment && p.payment.state === 'secured') ? '<span class="pa-badge is-go">Paid upfront</span>' : '<button class="pa-btn-quiet pa-btn-sm" type="button" data-dn="pay">Pay now</button>') + '</div></div>';
       if (p.can_cancel) {
         bill += '<p class="pa-muted" style="font-size:12px;margin:8px 0 0">' + (p.cancel_fee_now > 0
           ? 'Cancelling now costs ' + money(p.cancel_fee_now) + ' (the doctor has set time aside for you).'

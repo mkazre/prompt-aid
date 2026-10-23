@@ -87,7 +87,8 @@ class PaymentService
                 'amount' => $this->payables->amountFor($payable),
                 'currency' => 'ZAR',
                 'gateway' => $gateway->key(),
-                'channel' => $p->channel === 'app' ? 'app' : 'web',
+                'channel' => in_array($p->channel, ['app', 'server'], true) ? $p->channel : 'web',
+                'capture_mode' => $this->payables->captureModeFor($payable),
                 'status' => PaymentIntent::STATUS_PENDING,
                 'description' => mb_substr($p->description, 0, 191),
                 'idempotency_key' => $p->idempotencyKey,
@@ -143,12 +144,16 @@ class PaymentService
             'payable_type' => $intent->payableAlias(),
             'payable_id' => $intent->payable_id,
             'paid_at' => $intent->paid_at?->toIso8601String(),
+            'capture_mode' => $intent->capture_mode,
+            'secured' => in_array($intent->status, [PaymentIntent::STATUS_PAID, PaymentIntent::STATUS_AUTHORIZED], true),
             'message' => match ($intent->status) {
                 PaymentIntent::STATUS_PAID => 'Payment received. Thank you!',
                 PaymentIntent::STATUS_FAILED => $intent->failure_reason ?: 'The payment did not go through.',
                 PaymentIntent::STATUS_CANCELLED => 'The payment was cancelled.',
                 PaymentIntent::STATUS_PROCESSING => 'Confirming your payment with the bank…',
                 PaymentIntent::STATUS_REFUNDED => 'This payment was refunded.',
+                PaymentIntent::STATUS_AUTHORIZED => 'Payment secured. You are only charged once the service starts.',
+                PaymentIntent::STATUS_RELEASED => 'The held amount was released back to you.',
                 default => 'Waiting for payment…',
             },
         ];
@@ -210,7 +215,8 @@ class PaymentService
      */
     public function apply(PaymentIntent $intent, string $status, ?string $gatewayRef = null, ?float $amount = null, ?string $token = null, array $payload = []): string
     {
-        return DB::transaction(function () use ($intent, $status, $gatewayRef, $amount, $token, $payload) {
+        $after = [];
+        $outcome = DB::transaction(function () use ($intent, $status, $gatewayRef, $amount, $token, $payload, &$after) {
             /** @var PaymentIntent $intent */
             $intent = PaymentIntent::query()->lockForUpdate()->findOrFail($intent->id);
             $payable = $intent->payable;
@@ -224,8 +230,8 @@ class PaymentService
 
                     return 'already_paid';
                 }
-                if ($intent->status === PaymentIntent::STATUS_REFUNDED) {
-                    return 'already_refunded';
+                if (in_array($intent->status, [PaymentIntent::STATUS_REFUNDED, PaymentIntent::STATUS_AUTHORIZED, PaymentIntent::STATUS_RELEASED], true)) {
+                    return 'already_'.$intent->status;
                 }
                 if ($amount !== null && abs($amount - (float) $intent->amount) > 0.01) {
                     $intent->update([
@@ -237,13 +243,35 @@ class PaymentService
                     return 'amount_mismatch';
                 }
 
+                if ($intent->capture_mode === 'hold') {
+                    // Funds secured upfront; captured later (consult started / trip completed).
+                    $intent->update([
+                        'status' => PaymentIntent::STATUS_AUTHORIZED,
+                        'gateway_ref' => $gatewayRef ? mb_substr($gatewayRef, 0, 120) : $intent->gateway_ref,
+                        'gateway_token' => $token ?: $intent->gateway_token,
+                        'authorized_at' => now(),
+                        'failure_reason' => null,
+                    ]);
+                    $after[] = function () use ($intent, $payable) {
+                        $wanted = $payable && $this->payables->onAuthorized($payable, $intent->fresh());
+                        if (! $wanted) {
+                            $this->release($intent->fresh(), 'No longer needed when the payment arrived');
+                        }
+                    };
+
+                    return 'authorized';
+                }
+
                 $intent->update([
                     'status' => PaymentIntent::STATUS_PAID,
                     'gateway_ref' => $gatewayRef ? mb_substr($gatewayRef, 0, 120) : $intent->gateway_ref,
                     'gateway_token' => $token ?: $intent->gateway_token,
                     'paid_at' => now(),
+                    'captured_at' => now(),
+                    'captured_amount' => $intent->amount,
                     'failure_reason' => null,
                 ]);
+                $after[] = fn () => $this->fireCaptured($intent->fresh(), (float) $intent->amount);
 
                 if ($payable) {
                     if ($payable instanceof Subscription) {
@@ -297,6 +325,16 @@ class PaymentService
 
             return 'ignored';
         });
+
+        foreach ($after as $fn) {
+            try {
+                $fn();
+            } catch (\Throwable $e) {
+                Log::error('[Payments] post-payment hook failed: '.$e->getMessage(), ['intent' => $intent->uuid]);
+            }
+        }
+
+        return $outcome;
     }
 
     /** Test-mode completion; refused unless the mock gateway is the active one. */
@@ -379,8 +417,118 @@ class PaymentService
         if ($intent->payable) {
             $this->payables->markRefunded($intent->payable, $intent, $refunded);
         }
+        $this->fireRefunded($intent->fresh(), $amount, $reason, $manual);
 
         return ['success' => true, 'message' => ($manual ? 'Marked as refunded: R' : 'Refunded R').number_format($amount, 2).'.'];
+    }
+
+    // ------------------------------------------------------------------
+    // Holds: capture / release
+    // ------------------------------------------------------------------
+
+    /**
+     * Capture an authorised hold. $amount < held → the remainder goes back to
+     * the customer straight away (gateway refund). Returns the amount captured.
+     * Gateway reality: none of PayFast / Paystack (standard ZA merchants) / Ozow
+     * offer a card pre-auth we can rely on, so a "hold" COLLECTS the money
+     * upfront; "capture" finalises it and "release" refunds it in full.
+     */
+    public function capture(PaymentIntent $intent, ?float $amount = null, string $reason = 'Service delivered'): float
+    {
+        $intent = $intent->fresh();
+        if ($intent->status !== PaymentIntent::STATUS_AUTHORIZED) {
+            return 0.0;
+        }
+        $held = (float) $intent->amount;
+        $amount = round(max(0, min($amount ?? $held, $held)), 2);
+        if ($amount <= 0) {
+            $this->release($intent, $reason);
+
+            return 0.0;
+        }
+        $remainder = round($held - $amount, 2);
+        $refundOk = true;
+        if ($remainder > 0) {
+            $refundOk = $this->gatewayRefund($intent, $remainder, 'Unused part of the upfront amount')['success'];
+        }
+
+        $intent->update([
+            'status' => PaymentIntent::STATUS_PAID,
+            'captured_amount' => $amount,
+            'captured_at' => now(),
+            'paid_at' => now(),
+            'refunded_amount' => $remainder > 0 && $refundOk ? $remainder : (float) $intent->refunded_amount,
+            'refunded_at' => $remainder > 0 && $refundOk ? now() : $intent->refunded_at,
+            'failure_reason' => $remainder > 0 && ! $refundOk ? 'Refund of R'.number_format($remainder, 2).' still owed — refund it in the gateway dashboard, then use "Mark refunded".' : null,
+            'metadata' => array_merge($intent->metadata ?? [], ['capture' => ['amount' => $amount, 'reason' => $reason, 'at' => now()->toIso8601String()]]),
+        ]);
+        $this->fireCaptured($intent->fresh(), $amount);
+        if ($remainder > 0 && $refundOk) {
+            $this->fireRefunded($intent->fresh(), $remainder, 'Unused part of the upfront amount');
+        }
+
+        return $amount;
+    }
+
+    /** Give a hold back in full (no match, doctor no-show, free cancellation…). */
+    public function release(PaymentIntent $intent, string $reason = 'Released'): bool
+    {
+        $intent = $intent->fresh();
+        if (in_array($intent->status, [PaymentIntent::STATUS_PENDING, PaymentIntent::STATUS_PROCESSING], true)) {
+            // Nothing taken yet: just close it (a late webhook will auto-release).
+            $intent->update(['status' => PaymentIntent::STATUS_CANCELLED, 'failure_reason' => mb_substr($reason, 0, 255)]);
+
+            return true;
+        }
+        if ($intent->status !== PaymentIntent::STATUS_AUTHORIZED) {
+            return false;
+        }
+        $r = $this->gatewayRefund($intent, (float) $intent->amount, $reason);
+        $intent->update([
+            'status' => PaymentIntent::STATUS_RELEASED,
+            'released_at' => now(),
+            'refunded_amount' => $r['success'] ? (float) $intent->amount : (float) $intent->refunded_amount,
+            'refunded_at' => $r['success'] ? now() : null,
+            'failure_reason' => $r['success'] ? mb_substr($reason, 0, 255) : 'RELEASE NEEDS MANUAL REFUND: '.mb_substr($r['message'], 0, 200),
+        ]);
+        if ($r['success']) {
+            $this->fireRefunded($intent->fresh(), (float) $intent->amount, $reason);
+        } else {
+            Log::error('[Payments] hold release refund failed — manual refund needed', ['intent' => $intent->uuid, 'message' => $r['message']]);
+        }
+
+        return $r['success'];
+    }
+
+    /** @return array{success: bool, message: string} */
+    protected function gatewayRefund(PaymentIntent $intent, float $amount, string $reason): array
+    {
+        $driver = $this->gateways->get($intent->gateway);
+        if (! $driver) {
+            return ['success' => false, 'message' => 'Gateway unavailable'];
+        }
+        try {
+            $r = $driver->refund($intent, $amount, $reason);
+        } catch (\Throwable $e) {
+            $r = ['success' => false, 'message' => $e->getMessage()];
+        }
+        PaymentEvent::query()->create([
+            'payment_intent_id' => $intent->id, 'gateway' => $intent->gateway, 'event_type' => 'refund_request',
+            'reference' => $intent->reference, 'verified' => true, 'verification_note' => mb_substr('Outbound refund R'.number_format($amount, 2).' — '.$reason, 0, 255),
+            'outcome' => ! empty($r['success']) ? 'ok' : 'error', 'payload' => ['message' => $r['message'] ?? ''],
+        ]);
+
+        return ['success' => ! empty($r['success']), 'message' => (string) ($r['message'] ?? '')];
+    }
+
+    public function fireCaptured(PaymentIntent $intent, float $amount): void
+    {
+        event(new \App\Events\PaymentCaptured($intent, $amount, $intent->payableAlias(), $intent->payable_id ? (int) $intent->payable_id : null, $intent->gateway, $intent->gateway_ref));
+    }
+
+    public function fireRefunded(PaymentIntent $intent, float $amount, string $reason = 'Refund', bool $manual = false): void
+    {
+        event(new \App\Events\PaymentRefunded($intent, $amount, $intent->payableAlias(), $intent->payable_id ? (int) $intent->payable_id : null, $intent->gateway, $reason, $manual));
     }
 
     /** Cron-optional sweep: re-check stale pending intents, expire very old ones. */

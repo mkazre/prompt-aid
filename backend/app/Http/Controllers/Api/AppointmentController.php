@@ -91,7 +91,14 @@ class AppointmentController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
-        return new AppointmentResource($appointment->load(['doctor.user', 'clinic', 'service']));
+        $due = app(\App\Services\Payments\AppointmentPaymentService::class)->bookingInvoice($appointment);
+
+        return (new AppointmentResource($appointment->load(['doctor.user', 'clinic', 'service'])))->additional([
+            // Pay-at-booking policy: open the in-app PaymentSheet for this invoice.
+            'payment_due' => $due && $due->status !== \App\Models\Invoice::STATUS_PAID
+                ? ['payable_type' => 'invoice', 'payable_id' => $due->id, 'amount' => (float) $due->total, 'invoice_no' => $due->invoice_no]
+                : null,
+        ]);
     }
 
     public function cancel(Request $request, int $id)

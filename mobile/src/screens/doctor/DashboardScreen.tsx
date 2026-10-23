@@ -66,7 +66,7 @@ export default function DoctorDashboardScreen() {
 
   function openAppointment(appointment: Appointment) {
     if (appointment.is_callback || appointment.mode === 'callback') {
-      (navigation as any).navigate('ConsultCard', { appointmentId: appointment.id }); // root stack screen
+      (navigation as any).navigate('ConsultHub', { appointmentId: appointment.id }); // root stack screen: consult hub (in-app first, phone fallback)
     } else if (appointment.is_video || appointment.mode === 'video' || appointment.visit_type === 'telemed') {
       navigation.navigate('ConsultRoom', { appointment });
     } else {

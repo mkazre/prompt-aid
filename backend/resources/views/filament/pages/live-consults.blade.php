@@ -144,10 +144,13 @@
                                 <div style="font-size:12px;opacity:.6">Accepted {{ \Illuminate\Support\Carbon::parse($consult['matched_at'])->diffForHumans() }}</div>
                             </div>
                             <div style="display:flex;gap:8px;flex-wrap:wrap">
-                                @if ($s['joinUrl'])
+                                @if (! empty($consult['hub_url']))
+                                    <x-filament::button tag="a" :href="$consult['hub_url']" color="success" icon="heroicon-o-chat-bubble-left-right">Open consult</x-filament::button>
+                                @endif
+                                @if ($s['joinUrl'] && empty($consult['hub_url']))
                                     <x-filament::button tag="a" :href="$s['joinUrl']" color="success" icon="heroicon-o-video-camera">Join video</x-filament::button>
                                 @endif
-                                @if (! empty($consult['card_url']))
+                                @if (! empty($consult['card_url']) && empty($consult['hub_url']))
                                     <x-filament::button tag="a" :href="$consult['card_url']" color="success" icon="heroicon-o-phone">Call the patient</x-filament::button>
                                 @endif
                                 <x-filament::button color="primary" icon="heroicon-o-check-badge" wire:click="complete({{ (int) $consult['appointment_id'] }})" wire:confirm="Mark this consult as completed? You'll be available for new requests.">Complete</x-filament::button>

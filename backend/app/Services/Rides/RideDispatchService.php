@@ -151,6 +151,8 @@ class RideDispatchService
             $autoAssign = false; // admin assigns from Live requests / Live Dispatch
         }
         $searchNow = $autoAssign && (! $scheduled || $scheduled->lte(now()->addMinutes(max(0, ShuttleSettings::int('shuttle_scheduled_dispatch_lead_minutes')))));
+        // Upfront payment (live gateway): the trip waits for the hold before any driver sees it.
+        $awaitPay = app(\App\Services\Payments\RidePaymentService::class)->requiresUpfront();
 
         $ride = Ride::query()->create([
             'patient_profile_id' => $patient->id,
@@ -175,8 +177,9 @@ class RideDispatchService
             'route_duration_min' => $route['duration_min'],
             'route_geometry' => $route['geometry'],
             'scheduled_for' => $scheduled,
-            'dispatch_state' => $searchNow ? Ride::DISPATCH_SEARCHING : Ride::DISPATCH_QUEUE,
-            'dispatch_started_at' => $searchNow ? now() : null,
+            'dispatch_state' => $awaitPay ? Ride::DISPATCH_AWAITING_PAYMENT : ($searchNow ? Ride::DISPATCH_SEARCHING : Ride::DISPATCH_QUEUE),
+            'dispatch_after_payment' => $awaitPay ? ($searchNow ? Ride::DISPATCH_SEARCHING : Ride::DISPATCH_QUEUE) : null,
+            'dispatch_started_at' => $searchNow && ! $awaitPay ? now() : null,
             'dispatch_attempts' => 0,
             'dispatch_mode' => $mode,
             'radius_km' => $radiusKm !== null ? DispatchSettings::clampRadius($radiusKm) : null,
@@ -190,7 +193,7 @@ class RideDispatchService
         }
         $this->fireStatus($ride, null, Ride::STATUS_REQUESTED, 'patient');
 
-        if ($searchNow) {
+        if ($searchNow && ! $awaitPay) {
             $this->advance($ride);
         }
 

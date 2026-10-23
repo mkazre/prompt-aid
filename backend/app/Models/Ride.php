@@ -50,6 +50,7 @@ class Ride extends Model
     public const CANCELLED_BY_SYSTEM = 'system';
 
     protected $fillable = [
+        'dispatch_after_payment',
         'ride_ref', 'patient_profile_id', 'driver_profile_id', 'appointment_id', 'vehicle_type',
         'pickup_address', 'pickup_lat', 'pickup_lng', 'dropoff_address', 'dropoff_lat', 'dropoff_lng',
         'status', 'distance_km', 'eta_minutes', 'fare_estimate', 'fare_final', 'cancel_reason',
@@ -66,6 +67,9 @@ class Ride extends Model
     ];
 
     /** Dispatch states (rides.dispatch_state) while status = requested. */
+    /** Waiting for the upfront ride payment — never offered to drivers in this state. */
+    public const DISPATCH_AWAITING_PAYMENT = 'awaiting_payment';
+
     public const DISPATCH_SEARCHING = 'searching';
 
     public const DISPATCH_QUEUE = 'queue';

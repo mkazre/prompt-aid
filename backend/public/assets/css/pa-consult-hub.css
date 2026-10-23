@@ -1,0 +1,97 @@
+/* Consult hub (website patient page + staff hub page). Own stylesheet — the
+   Filament CSS is prebuilt/purged, so nothing here relies on its utilities.
+   Layout: header / [connect column | chat column]; stacks under 960px. */
+.pa-hub {
+  --hub-bg: #fff;
+  --hub-soft: #f3f1ec;
+  --hub-line: #e5e5ea;
+  --hub-fg: #101012;
+  --hub-muted: #6b675f;
+  --hub-red: #d0211c;
+  --hub-green: #1e8e3e;
+  --hub-wa: #1fa855;
+  color: var(--hub-fg);
+  font-family: inherit;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.dark .pa-hub { --hub-bg: #18181b; --hub-soft: #27272a; --hub-line: #3f3f46; --hub-fg: #f4f4f5; --hub-muted: #a1a1aa; }
+.pa-hub *, .pa-hub *::before, .pa-hub *::after { box-sizing: border-box; }
+.pa-hub [hidden] { display: none !important; }
+
+.pa-hub__head { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; justify-content: space-between; background: var(--hub-bg); border: 1px solid var(--hub-line); border-radius: 16px; padding: 14px 16px; }
+.pa-hub__who { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.pa-hub__photo { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 50%; background: var(--hub-soft); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; overflow: hidden; }
+.pa-hub__photo img { width: 100%; height: 100%; object-fit: cover; }
+.pa-hub__name { font-size: 20px; font-weight: 900; line-height: 1.2; overflow-wrap: anywhere; }
+.pa-hub__sub { font-size: 13px; color: var(--hub-muted); }
+.pa-hub__state { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.pa-hub__status { font-size: 14px; font-weight: 700; background: var(--hub-soft); border-radius: 999px; padding: 6px 12px; overflow-wrap: anywhere; }
+.pa-hub[data-live="1"] .pa-hub__status { background: rgba(30, 142, 62, .12); color: var(--hub-green); }
+.pa-hub[data-open="0"] .pa-hub__status { background: var(--hub-soft); color: var(--hub-muted); }
+.pa-hub__timer { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 15px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--hub-line); }
+
+.pa-hub__grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+@media (max-width: 960px) { .pa-hub__grid { grid-template-columns: minmax(0, 1fr); } }
+.pa-hub__main, .pa-hub__side { background: var(--hub-bg); border: 1px solid var(--hub-line); border-radius: 16px; padding: 14px; min-width: 0; }
+
+.pa-hub__channels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+@media (max-width: 420px) { .pa-hub__channels { gap: 6px; } }
+.pa-hub__ch { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 76px; padding: 10px 6px; border-radius: 14px; border: 2px solid var(--hub-line); background: var(--hub-bg); color: var(--hub-fg); font: inherit; cursor: pointer; text-align: center; }
+.pa-hub__ch svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pa-hub__ch strong { display: block; font-size: 14px; line-height: 1.2; }
+.pa-hub__ch small { display: block; font-size: 11px; color: var(--hub-muted); line-height: 1.2; }
+.pa-hub__ch.is-current { border-color: var(--hub-green); background: rgba(30, 142, 62, .08); }
+.pa-hub__ch[data-hub-ch="video"] { border-color: var(--hub-green); }
+.pa-hub__ch:disabled { opacity: .45; cursor: not-allowed; }
+.pa-hub__ch:focus-visible, .pa-hub__btn:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+
+.pa-hub__note { margin: 0 0 12px; font-size: 14px; color: var(--hub-muted); }
+.pa-hub__ring { display: grid; gap: 6px; margin-bottom: 12px; padding: 14px; border-radius: 14px; background: rgba(30, 142, 62, .1); border: 1px solid rgba(30, 142, 62, .35); }
+.pa-hub__ring strong { font-size: 16px; }
+
+.pa-hub__call { min-width: 0; }
+.pa-hub__nocall { display: flex; align-items: center; justify-content: center; min-height: 180px; padding: 20px; border-radius: 16px; background: var(--hub-soft); text-align: center; }
+.pa-hub__nocall p { margin: 0; max-width: 420px; color: var(--hub-muted); font-size: 15px; }
+
+.pa-hub__row { display: flex; gap: 10px; flex-wrap: wrap; }
+.pa-hub__btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0; font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; text-decoration: none; color: #fff; background: #101012; }
+.pa-hub__btn--go { background: var(--hub-green); }
+.pa-hub__btn--wa { background: var(--hub-wa); }
+.pa-hub__btn--end { background: var(--hub-red); }
+.pa-hub__btn--ghost { background: var(--hub-soft); color: var(--hub-fg); }
+.pa-hub__btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.pa-hub__fallback { margin-top: 14px; border-top: 1px solid var(--hub-line); padding-top: 12px; }
+.pa-hub__fallback summary { cursor: pointer; font-weight: 800; font-size: 14px; min-height: 32px; display: flex; align-items: center; }
+.pa-hub__muted { color: var(--hub-muted); font-size: 13px; margin: 8px 0; }
+.pa-hub__muted a { color: inherit; }
+.pa-hub__label { display: block; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--hub-muted); margin: 8px 0 4px; }
+.pa-hub__input { width: 100%; max-width: 100%; border: 1px solid var(--hub-line); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 15px; background: var(--hub-bg); color: var(--hub-fg); }
+.pa-hub__end { display: grid; gap: 8px; margin-top: 14px; border-top: 1px solid var(--hub-line); padding-top: 12px; }
+
+.pa-hub__tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.pa-hub__tabs button, .pa-hub__tabs span { flex: 1 1 auto; min-height: 38px; border: 0; border-radius: 10px; background: transparent; color: var(--hub-muted); font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0 8px; }
+.pa-hub__tabs .is-active { background: var(--hub-soft); color: var(--hub-fg); }
+
+.pa-hub__chat { display: flex; flex-direction: column; min-height: 0; }
+.pa-hub__msgs { height: 46vh; min-height: 240px; max-height: 520px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 2px 8px; overscroll-behavior: contain; }
+@media (max-width: 960px) { .pa-hub__msgs { height: 40vh; } }
+.pa-hub__msg { max-width: 85%; padding: 8px 12px; border-radius: 14px; background: var(--hub-soft); font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+.pa-hub__msg.is-mine { align-self: flex-end; background: #101012; color: #fff; }
+.dark .pa-hub__msg.is-mine { background: #3f3f46; }
+.pa-hub__msg time { display: block; font-size: 11px; opacity: .65; margin-top: 3px; }
+.pa-hub__msg img { display: block; max-width: 220px; max-height: 220px; border-radius: 10px; margin-top: 4px; }
+.pa-hub__msg a { color: inherit; font-weight: 700; }
+.pa-hub__msg.is-failed { outline: 2px solid var(--hub-red); }
+.pa-hub__compose { display: flex; gap: 8px; align-items: flex-end; border-top: 1px solid var(--hub-line); padding-top: 10px; }
+.pa-hub__compose textarea { flex: 1 1 auto; min-width: 0; min-height: 44px; max-height: 140px; resize: vertical; border: 1px solid var(--hub-line); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 15px; background: var(--hub-bg); color: var(--hub-fg); }
+.pa-hub__attach, .pa-hub__send { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 0; background: var(--hub-soft); color: var(--hub-fg); }
+.pa-hub__send { background: var(--hub-green); color: #fff; }
+.pa-hub__attach svg, .pa-hub__send svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pa-hub__filechip { font-size: 12px; color: var(--hub-muted); margin-top: 6px; overflow-wrap: anywhere; }
+
+.pa-hub__summary dl { margin: 0; display: grid; gap: 8px; font-size: 14px; }
+.pa-hub__summary dt { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--hub-muted); }
+.pa-hub__summary dd { margin: 2px 0 0; overflow-wrap: anywhere; }

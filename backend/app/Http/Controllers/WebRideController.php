@@ -86,6 +86,11 @@ class WebRideController extends Controller
             $ride->update(['wait_and_return' => true]);
         }
 
+        if (app(\App\Services\Payments\RidePaymentService::class)->awaiting($ride)) {
+            // Pay first (payment sheet opens on the tracking page); drivers are alerted once it is secured.
+            return redirect()->to(route('rides.track', $ride).'?pay=ride:'.$ride->id)->with('success', 'Ride booked at R '.number_format((float) $ride->quoted_fare, 2).'. Complete the payment to send it to drivers.');
+        }
+
         return redirect()->route('rides.track', $ride)->with('success', 'Ride confirmed at R '.number_format((float) $ride->quoted_fare, 2).'. We are matching you with a nearby driver.');
     }
 

@@ -41,11 +41,9 @@ export default function ProviderDispatchHost({
     setTimeout(() => {
       const next = res.next;
       if (card.service === 'shuttle') navigate('Main', { screen: 'Drive', params: { screen: 'Trip' } });
-      // Video: straight into the in-app call (the patient's phone is ringing). Call back: the call card.
-      else if (role === 'doctor' && card.service === 'doctor_now' && next?.appointment_id && next?.mode === 'video')
-        navigate('VideoCall', { appointmentId: next.appointment_id, name: next.patient_name ?? card.patient_first_name ?? 'Patient' });
-      else if (role === 'doctor' && card.service === 'doctor_now' && next?.appointment_id && next?.mode === 'callback')
-        navigate('ConsultCard', { appointmentId: next.appointment_id });
+      // Video / call back: the consult hub (Start video / voice, chat, phone + WhatsApp fallback). The patient's phone is already ringing for video.
+      else if (role === 'doctor' && card.service === 'doctor_now' && next?.appointment_id && (next?.mode === 'video' || next?.mode === 'callback'))
+        navigate('ConsultHub', { appointmentId: next.appointment_id, autoStart: next.mode === 'video' ? 'video' : undefined });
       else if (role === 'doctor') navigate('Main', { screen: 'DoctorDashboard', params: { screen: 'DoctorDashboardHome' } });
       else if (role === 'pharmacy_admin') navigate('Main', { screen: card.service === 'script_review' ? 'Scripts' : 'Orders' });
       else if (role === 'third_party') navigate('Main', { screen: 'Requests' });

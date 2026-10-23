@@ -6,6 +6,7 @@ import { useAlerts } from '../services/alerts';
 import ProviderDispatchHost from '../components/ProviderDispatchHost';
 import PatientCallHost from '../components/PatientCallHost';
 import ConsultCardScreen from '../screens/comms/ConsultCardScreen';
+import ConsultHubScreen from '../screens/comms/ConsultHubScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -75,6 +76,12 @@ function SignedInStack({ Tabs }: { Tabs: React.ComponentType<any> }) {
         options={{ headerShown: true, title: 'Login & security', headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerShadowVisible: false }}
       />
             <AppStack.Screen name="VideoCall" component={VideoCallScreen} options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
+      {/* Consult hub (both sides): video / in-app voice / chat, phone + WhatsApp fallback. */}
+      <AppStack.Screen
+        name="ConsultHub"
+        component={ConsultHubScreen}
+        options={{ headerShown: true, title: 'Consult', headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerShadowVisible: false }}
+      />
       {/* Doctor's call-back consult card (orange triage call back / booked call back). */}
       <AppStack.Screen
         name="ConsultCard"
@@ -104,7 +111,13 @@ export default function RootNavigator() {
     // "Dr X is calling you — tap to join": straight into the in-app video call.
     const callId = Number(data?.appointment_id ?? data?.params?.appointment_id);
     if (data?.type === 'consult_call' && callId) {
-      (navRef.navigate as (n: string, p?: object) => void).call(navRef, 'VideoCall', { appointmentId: callId, name: data?.doctor_name });
+      const voice = (data?.channel ?? data?.params?.channel) === 'voice';
+      (navRef.navigate as (n: string, p?: object) => void).call(navRef, 'VideoCall', { appointmentId: callId, name: data?.doctor_name, audioOnly: voice });
+      return;
+    }
+    // Consult hub updates (patient asked for a call back, consult ended, …).
+    if ((data?.route === 'consult_hub' || data?.type === 'consult_hub') && callId) {
+      (navRef.navigate as (n: string, p?: object) => void).call(navRef, 'ConsultHub', { appointmentId: callId });
       return;
     }
     // On-demand request updates (matched, call back accepted, no doctor) open the request screen.

@@ -70,7 +70,8 @@ export default function ConsultRoomScreen() {
   }, [appointment.date, appointment.start_time, appointment.end_time, appointment.status, now]);
 
   function join(audioOnly = false) {
-    navigation.navigate('VideoCall', { appointmentId: appointment.id, audioOnly, name: counterpartName });
+    // Through the consult hub (one consult record + timer; doctor's Start rings the patient with the channel).
+    navigation.navigate('ConsultHub', { appointmentId: appointment.id, autoStart: audioOnly ? 'voice' : 'video' });
   }
 
   const dateLabel = appointment.date ? new Date(`${appointment.date}T12:00:00+02:00`).toLocaleDateString('en-ZA', { weekday: 'short', day: '2-digit', month: 'short' }) : '—';

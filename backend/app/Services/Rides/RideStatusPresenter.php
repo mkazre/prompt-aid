@@ -148,6 +148,7 @@ class RideStatusPresenter
                 'timeout_at' => $timeoutAt?->toIso8601String(),
                 'scheduled_for' => $ride->scheduled_for?->toIso8601String(),
                 'mode' => $ride->dispatch_mode,
+                'payment' => app(\App\Services\Payments\RidePaymentService::class)->payload($ride),
                 // "Searching N drivers within X km" (live offers right now / everyone offered in this search).
                 'drivers_notified' => $ride->status === Ride::STATUS_REQUESTED ? $ride->offers()->where('status', \App\Models\RideOffer::PENDING)->where('expires_at', '>', now())->count() : 0,
                 'drivers_offered' => $ride->status === Ride::STATUS_REQUESTED && $ride->dispatch_started_at ? $ride->offers()->where('offered_at', '>=', $ride->dispatch_started_at)->count() : 0,
@@ -213,6 +214,7 @@ class RideStatusPresenter
     {
         if ($ride->status === Ride::STATUS_REQUESTED) {
             return match ($ride->dispatch_state) {
+                Ride::DISPATCH_AWAITING_PAYMENT => 'Waiting for payment',
                 Ride::DISPATCH_NO_DRIVERS => 'No drivers available',
                 Ride::DISPATCH_QUEUE => $ride->scheduled_for && $ride->scheduled_for->isFuture() ? 'Scheduled' : 'Waiting for a driver',
                 default => 'Finding your driver',

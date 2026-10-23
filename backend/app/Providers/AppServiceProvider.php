@@ -58,6 +58,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Support\SupportStream::boot();
         // Payments: re-check stale pending intents server-to-server (webhook safety net).
         \App\Support\Tick::register('payments.reconcile', 300, fn () => app(\App\Services\Payments\PaymentService::class)->reconcileStale());
+        // Payments: upfront holds (consults / rides), booking payments, refunds on cancellation, consult events.
+        \App\Services\Payments\PaymentHooks::register();
     }
 
     /**

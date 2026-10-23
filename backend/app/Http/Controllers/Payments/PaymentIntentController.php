@@ -47,7 +47,7 @@ class PaymentIntentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'payable_type' => ['required', 'in:invoice,order,ride_charge'],
+            'payable_type' => ['required', 'in:invoice,order,ride_charge,consult,ride'],
             'payable_id' => ['required', 'integer', 'min:1'],
             'gateway' => ['nullable', 'string', 'in:payfast,paystack,ozow,mock'],
             'idempotency_key' => ['nullable', 'string', 'max:120'],

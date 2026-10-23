@@ -55,7 +55,7 @@ class VideoConsultController extends Controller
         try {
             $calls = app(\App\Services\Consults\ConsultCallService::class);
             if ($this->video->isModerator($appt, $user)) {
-                $calls->ring($appt);
+                $calls->ring($appt, false, $request->boolean('audio') ? 'voice' : 'video');
             } else {
                 $calls->answer($appt, $user);
             }

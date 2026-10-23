@@ -216,6 +216,33 @@ class OzowGateway implements CheckoutGatewayInterface
 
     public function refund(PaymentIntent $intent, float $amount, string $reason = 'Refund'): array
     {
+        // Ozow refund API (needs refunds enabled on the merchant profile + API key):
+        // token = POST /token (client_credentials, client_id = site code, client_secret = API key, scope = refund),
+        // then POST /secure/refunds/submitrefundrequest. Falls back to "refund in the dashboard".
+        if (PaymentSettings::hasSecret('ozow_api_key') && $intent->gateway_ref) {
+            try {
+                $tok = Http::asForm()->acceptJson()->timeout(20)->post(self::API.'/token', [
+                    'grant_type' => 'client_credentials',
+                    'scope' => 'refund',
+                    'client_id' => PaymentSettings::str('ozow_site_code'),
+                    'client_secret' => PaymentSettings::secret('ozow_api_key'),
+                ])->json('access_token');
+                if ($tok) {
+                    $res = Http::withToken((string) $tok)->acceptJson()->timeout(25)->post(self::API.'/secure/refunds/submitrefundrequest', [
+                        'transactionId' => $intent->gateway_ref,
+                        'amount' => round($amount, 2),
+                        'refundReason' => mb_substr($reason, 0, 100),
+                        'notifyUrl' => url('/api/payments/webhooks/ozow'),
+                    ]);
+                    if ($res->successful() && ! $res->json('errorMessage')) {
+                        return ['success' => true, 'message' => 'Refund submitted to Ozow.', 'reference' => (string) ($res->json('refundId') ?? '')];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::info('[Ozow] refund API failed: '.$e->getMessage());
+            }
+        }
+
         return [
             'success' => false,
             'message' => 'Ozow refunds are processed from the Ozow merchant dashboard (transaction '.($intent->gateway_ref ?: $intent->reference).'). Use "Mark refunded" here once done.',

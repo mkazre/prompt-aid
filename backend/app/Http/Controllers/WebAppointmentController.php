@@ -36,7 +36,7 @@ class WebAppointmentController extends Controller
         }
 
         try {
-            $booking->book(
+            $appointment = $booking->book(
                 $patient,
                 $doctor,
                 $data['clinic_id'],
@@ -49,6 +49,13 @@ class WebAppointmentController extends Controller
             );
         } catch (\RuntimeException $e) {
             return back()->withErrors(['start_time' => $e->getMessage()]);
+        }
+
+        // Pay-at-booking policy (full / deposit): straight to the payment sheet.
+        $due = app(\App\Services\Payments\AppointmentPaymentService::class)->bookingInvoice($appointment);
+        if ($due && $due->status !== \App\Models\Invoice::STATUS_PAID) {
+            return redirect()->to(route('account.invoices').'?pay=invoice:'.$due->id)
+                ->with('success', 'Appointment booked — please complete the booking payment.');
         }
 
         return redirect()->route('dashboard')->with('success', 'Appointment booked! It is now pending confirmation.');

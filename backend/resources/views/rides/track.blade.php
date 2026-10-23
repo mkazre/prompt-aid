@@ -31,6 +31,16 @@
     <div class="pa-sh-panel">
       <div class="pa-sh-test" id="sh-test" hidden>TEST simulation running — the car is simulated</div>
 
+      @php $ridePay = app(\App\Services\Payments\RidePaymentService::class)->payload($ride); @endphp
+      @if ($ridePay['required'])
+        {{-- Uber-style: drivers only see the trip once this is paid (held; final fare captured at drop-off). --}}
+        <div class="pa-sh-card" id="sh-pay">
+          <h2 style="font-size:20px;margin:0 0 6px">Waiting for payment</h2>
+          <p class="pa-sh-sub" style="margin:0 0 12px">Secure R{{ number_format($ridePay['amount'], 2) }} to send your trip to drivers. You are only charged the final fare; the rest is refunded.</p>
+          <button type="button" class="pa-btn pa-btn-block" data-pa-pay="ride" data-id="{{ $ride->id }}" data-amount="{{ $ridePay['amount'] }}" data-title="Shuttle {{ $ride->ride_ref }}">Pay to find a driver</button>
+        </div>
+      @endif
+
       {{-- Status --}}
       <div class="pa-sh-card">
         <div class="pa-sh-status">
@@ -204,4 +214,5 @@
 <script src="{{ asset('assets/js/shuttle-map.js') }}?v=2"></script>
 <script>window.PA_TRIP = @json($tripCfg);</script>
 <script src="{{ asset('assets/js/shuttle-track.js') }}?v=2"></script>
+@include('payments.sheet')
 </x-layout>

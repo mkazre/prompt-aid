@@ -18,6 +18,8 @@ class AppointmentResource extends JsonResource
             'end_time' => $this->end_time,
             'visit_type' => $this->visit_type,
             'status' => $this->status,
+            // Pay-at-booking: required = open the PaymentSheet for this invoice (slot released if unpaid in time).
+            'payment' => app(\App\Services\Payments\AppointmentPaymentService::class)->payload($this->resource),
             'mode' => $this->mode,
             'meet_url' => $this->meet_url,
             // In-app video: the join URL itself only comes from
