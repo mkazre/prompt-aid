@@ -42,9 +42,12 @@ class PharmacyForm
                 TextInput::make('lng')
                     ->numeric(),
                 TextInput::make('commission_rate')
-                    ->required()
+                    ->label('Commission rate (legacy)')
                     ->numeric()
-                    ->default(10),
+                    ->default(10)
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->helperText('No longer used. Platform commission now comes from Staff → Finance → Commission & fees (use "Commission override" at the top of this page for a negotiated rate).'),
                 TextInput::make('delivery_fee')
                     ->required()
                     ->numeric()

@@ -13,6 +13,7 @@ class EditDriverProfile extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Actions\CommissionOverrideAction::make('driver'),
             DeleteAction::make(),
         ];
     }

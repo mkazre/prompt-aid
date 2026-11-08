@@ -90,7 +90,13 @@ class OrderService
             $memberDiscount = $memberPct > 0 ? round(max(0, $subtotal - $discount) * min($memberPct, 100) / 100, 2) : 0.0;
 
             $total = round($subtotal - $discount - $memberDiscount + $deliveryFee, 2);
-            $commission = round($subtotal * ((float) $pharmacy->commission_rate / 100), 2);
+            // Platform commission from Staff → Finance → Commission & fees (pharmacy override, else global).
+            try {
+                $commission = \App\Support\Money::toFloat(app(\App\Services\Finance\CommissionResolver::class)
+                    ->commissionOn('pharmacy', ['pharmacy' => $pharmacy->id], \App\Support\Money::cents((string) $subtotal)));
+            } catch (\Throwable) {
+                $commission = round($subtotal * ((float) $pharmacy->commission_rate / 100), 2); // finance tables not migrated yet
+            }
 
             $order = Order::query()->create([
                 'patient_profile_id' => $patient->id,

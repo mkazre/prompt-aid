@@ -71,6 +71,13 @@ class SiteContent
             'label' => 'Chat with us on WhatsApp',
             'message' => 'Hi PromptAid, I need some help with ',
         ],
+        // App download badges in the website footer. A badge only shows when its link is set.
+        'app_downloads' => [
+            'heading' => 'Get the app',
+            'android_url' => '',
+            'ios_url' => '',
+            'android_is_apk' => false,
+        ],
         'status' => [
             'green' => ['label' => 'Available in 30 min', 'description' => 'Open to see you immediately — within 30 minutes.'],
             'orange' => ['label' => 'Available today', 'description' => 'Available to see you today, at a booked slot in the queue.'],

@@ -159,6 +159,26 @@ class SiteContentSettings extends Page
                                         Textarea::make('whatsapp_button.message')->label('Prefilled message')->rows(2)->maxLength(500),
                                     ])->columns(2),
                             ]),
+                        Tab::make('App downloads')
+                            ->schema([
+                                Section::make('App download badges (website footer)')
+                                    ->description('Each badge only appears in the footer once its link is filled in. Leave a link empty to hide that badge; leave both empty to hide the whole block.')
+                                    ->schema([
+                                        TextInput::make('app_downloads.heading')->label('Heading')->maxLength(60)->columnSpanFull(),
+                                        TextInput::make('app_downloads.android_url')
+                                            ->label('Android link (Google Play or direct APK)')
+                                            ->placeholder('https://play.google.com/store/apps/details?id=health.promptaid.app  or  https://promptaid.co.za/downloads/promptaid.apk')
+                                            ->url()->maxLength(500),
+                                        TextInput::make('app_downloads.ios_url')
+                                            ->label('iPhone link (App Store)')
+                                            ->placeholder('https://apps.apple.com/…')
+                                            ->url()->maxLength(500),
+                                        \Filament\Forms\Components\Toggle::make('app_downloads.android_is_apk')
+                                            ->label('The Android link is a direct APK download (not Google Play)')
+                                            ->helperText('Shows a "Download for Android" badge instead of the Google Play badge, and a short install note. Turn this off once the app is live on Google Play and you paste the Play Store link.')
+                                            ->columnSpanFull(),
+                                    ])->columns(2),
+                            ]),
                         Tab::make('Practitioner status')
                             ->schema($statuses),
                         Tab::make('Find care')

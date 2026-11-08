@@ -36,6 +36,12 @@ class ClinicForm
                             ->options(['active' => 'Active', 'inactive' => 'Inactive', 'pending' => 'Pending'])
                             ->required()
                             ->default('pending'),
+                        Select::make('payout_to')
+                            ->label('Consult & appointment payouts go to')
+                            ->options(['doctor' => 'Each doctor (own bank account)', 'clinic' => 'The clinic (one bank account)'])
+                            ->default('doctor')
+                            ->required()
+                            ->helperText('Who receives the earnings for doctors booked through this clinic. Applies to payments captured from now on.'),
                         TextInput::make('phone')->tel(),
                         TextInput::make('email')->email(),
                         Textarea::make('description')->columnSpanFull(),

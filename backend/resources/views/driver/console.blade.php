@@ -31,7 +31,7 @@
   </div>
 
   {{-- NOW is the switch above; LATER / TOMORROW windows and your max pickup distance here. --}}
-  <div style="display:flex;justify-content:flex-end;margin:-4px 0 8px">@include('dispatch.availability-toggle')</div>
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:-4px 0 8px"><a href="{{ route('driver.earnings') }}" class="pa-btn-ghost pa-btn-sm" style="margin-right:auto">Earnings</a>@include('dispatch.availability-toggle')</div>
 
   <div id="drv-alert" class="pa-note-stop" hidden style="margin-bottom:10px"></div>
   <div id="drv-geo" class="pa-sh-sub" style="margin:0 0 8px">Location sharing is off.</div>
@@ -121,6 +121,8 @@
     <div class="pa-label" style="margin-top:14px">Open requests</div>
     <div id="drv-queue"></div>
   </div>
+
+  @include('driver.partials.stats')
 </div>
 
 <div class="pa-sh-modal" id="drv-cancel-modal" hidden role="dialog" aria-modal="true" aria-labelledby="drv-cancel-title">

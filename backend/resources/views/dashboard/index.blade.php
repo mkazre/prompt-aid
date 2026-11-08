@@ -7,6 +7,8 @@
     <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="pa-btn-ghost" href="{{ route('account.profile') }}">Profile</a><a class="pa-btn" href="{{ route('doctors.index') }}">Book care</a></div>
   </div>
 
+  @include('dashboard.partials.active-hero')
+
   @if (\App\Support\DoctorNowSettings::bool('doctor_now_enabled') && \App\Support\Features::on('doctor_now'))
     <div class="pa-dn-cta">
       <div><h3>Need a doctor right now?</h3><p>Get matched with the next available doctor — video in minutes, or at rooms near you.</p></div>

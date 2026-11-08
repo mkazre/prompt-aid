@@ -94,6 +94,12 @@ class Permissions
         'dsr-requests' => 'Privacy',
         'legal-documents' => 'Privacy',
         'security-incidents' => 'Privacy',
+
+        // Finance: commission rules, ledger, payouts, provider bank details (super_admin-only resources).
+        'commission-rules' => 'Finance',
+        'ledger-entries' => 'Finance',
+        'payout-batches' => 'Finance',
+        'payout-accounts' => 'Finance',
     ];
 
     /**
@@ -125,6 +131,8 @@ class Permissions
         'dispatch-settings.manage' => ['group' => 'System', 'label' => 'Dispatch settings (broadcast / sequential / manual per service, timeouts, radius, auto-close)'],
         'live-requests.view' => ['group' => 'Overview', 'label' => 'Live requests (all services: assign, reassign, cancel)'],
         'payment-settings.manage' => ['group' => 'System', 'label' => 'Payment settings (PayFast / Paystack / Ozow credentials, routing) — super admin only'],
+        'finance-overview.view' => ['group' => 'Finance', 'label' => 'Finance overview (platform revenue, outstanding provider balances) — super admin only'],
+        'finance-settings.manage' => ['group' => 'Finance', 'label' => 'Finance settings (minimum payout, hold period, weekly batch) — super admin only'],
     ];
 
     /**

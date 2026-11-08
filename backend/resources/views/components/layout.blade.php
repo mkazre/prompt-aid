@@ -124,6 +124,7 @@
     <img src="{{ $logoUrl }}" alt="Prompt Aid" />
     <p style="font-size:14px;color:var(--pa-muted);max-width:300px">Doctors, pharmacies, labs and specialists — with a medical shuttle to get you there and home.</p>
     <div style="font-size:13px;color:var(--pa-muted)">{{ \App\Models\Setting::get('support_phone', '0800 776 678') }} · {{ \App\Models\Setting::get('support_email', 'help@promptaid.health') }}</div>
+    @include('partials.app-download-badges')
   </div>
   <div>
     <div class="ft">Patients</div>

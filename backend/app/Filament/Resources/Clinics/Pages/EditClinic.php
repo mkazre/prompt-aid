@@ -13,6 +13,7 @@ class EditClinic extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Actions\CommissionOverrideAction::make('clinic'),
             DeleteAction::make(),
         ];
     }

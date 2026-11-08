@@ -96,6 +96,8 @@ Route::middleware('auth:sanctum')->group(function () {
     require __DIR__.'/api_commerce.php';
     require __DIR__.'/api_safety.php';
     require __DIR__.'/api_dispatch.php';
+    require __DIR__.'/api_finance.php';
+    require __DIR__.'/api_dashboards.php';
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/profile', [ProfileController::class, 'update']);

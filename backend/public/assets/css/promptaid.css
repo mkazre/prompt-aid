@@ -863,3 +863,15 @@ a.paw-row:hover{text-decoration:none;background:var(--pa-surface-2)}
 .pa-plan .pa-btn{margin-top:auto;justify-content:center}
 @media (max-width:560px){.pa-pay{padding:0;align-items:flex-end}.pa-pay-box{max-width:none;max-height:96vh}.pa-pay-frame{height:72vh}}
 /* ============================ END PAYMENTS ============================ */
+
+/* ===== APP DOWNLOAD BADGES (footer) ===== */
+.pa-appdl{margin-top:22px}
+.pa-appdl .ft{margin-bottom:10px}
+.pa-appdl-row{display:flex;flex-wrap:wrap;gap:10px}
+.pa-appdl-badge{display:inline-flex;align-items:center;gap:10px;background:#111;color:#fff !important;border-radius:10px;padding:8px 16px 8px 12px;min-height:46px;text-decoration:none;border:1px solid #111;transition:transform .15s ease,background .15s ease}
+.pa-appdl-badge:hover{background:#2a2a2a;transform:translateY(-1px)}
+.pa-appdl-badge svg{width:24px;height:24px;flex:0 0 24px}
+.pa-appdl-badge span{display:flex;flex-direction:column;line-height:1.1;font-size:16px;font-weight:700;letter-spacing:.01em}
+.pa-appdl-badge small{font-size:10px;font-weight:500;letter-spacing:.04em;opacity:.85}
+.pa-appdl-note{font-size:12px;color:var(--pa-muted);margin:8px 0 0;max-width:300px}
+/* ===== /APP DOWNLOAD BADGES ===== */

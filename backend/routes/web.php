@@ -207,6 +207,8 @@ require __DIR__.'/web_video.php';
 require __DIR__.'/web_consult_hub.php';
 require __DIR__.'/web_payments.php';
 require __DIR__.'/web_safety.php';
+require __DIR__.'/web_finance.php';
+require __DIR__.'/web_dashboards.php';
 
 // Page builder catch-all — must stay last. Never matches a path starting
 // with a reserved segment (auth, dashboard, checkout, rides, the Filament

@@ -44,6 +44,7 @@ class VendorPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('15s')
             ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => '<link rel="stylesheet" href="'.asset('assets/css/filament-theme.css').'">')
             ->renderHook(PanelsRenderHook::BODY_END, fn (): string => view('filament.notification-sound')->render())
+            ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => '<link rel="stylesheet" href="'.asset('assets/css/dashboards.css').'?v=1">')
             ->colors([
                 'primary' => Color::hex('#D0211C'),
                 'secondary' => Color::hex('#101012'),
@@ -60,7 +61,8 @@ class VendorPanelProvider extends PanelProvider
                 OrderResource::class,
             ])
             ->pages([
-                Dashboard::class,
+                \App\Filament\Dashboard\RoleDashboard::class,
+                \App\Filament\Pages\MyEarnings::class,
             ])
             ->widgets([
                 WelcomeBannerWidget::class,

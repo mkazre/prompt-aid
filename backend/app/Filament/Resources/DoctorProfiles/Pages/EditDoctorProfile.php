@@ -13,6 +13,7 @@ class EditDoctorProfile extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Actions\CommissionOverrideAction::make('doctor'),
             DeleteAction::make(),
         ];
     }
