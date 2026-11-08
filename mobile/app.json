@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Prompt Aid",
-    "slug": "prompt-aid",
+    "slug": "promptsaid",
     "scheme": "promptaid",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -79,14 +79,17 @@
         {
           "color": "#D0211C",
           "defaultChannel": "alerts",
-          "sounds": ["./assets/sounds/request_alert.wav", "./assets/sounds/notify.wav"]
+          "sounds": [
+            "./assets/sounds/request_alert.wav",
+            "./assets/sounds/notify.wav"
+          ]
         }
       ]
     ],
-    "owner": "khuphukiles-team",
+    "owner": "promptaidzas-team",
     "extra": {
       "eas": {
-        "projectId": "a85aea25-5865-4630-9d0b-53427f90a6e8"
+        "projectId": "a51ae5e2-ab74-4eac-8ee6-a2183c3f0a9f"
       }
     }
   }
