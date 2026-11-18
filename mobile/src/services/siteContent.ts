@@ -155,6 +155,11 @@ export function useSiteContent(): SiteContent {
   return content;
 }
 
+/** Last loaded site content (defaults before the first load) — for helpers outside React. */
+export function getSiteContentSnapshot(): SiteContent {
+  return cache ?? DEFAULT_SITE_CONTENT;
+}
+
 export function telUrl(phone: string) {
   return 'tel:' + phone.replace(/[^0-9+]/g, '');
 }

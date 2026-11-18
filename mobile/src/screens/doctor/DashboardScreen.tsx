@@ -102,6 +102,22 @@ export default function DoctorDashboardScreen() {
 
       <AnnouncementBanner refreshKey={refreshKey} />
 
+      {user?.doctor_profile && !user.doctor_profile.whatsapp_number ? (
+        <Pressable
+          onPress={() => (navigation as any).getParent?.()?.navigate('DoctorSettings', { screen: 'DoctorEditProfile' })}
+          style={styles.waNudge}
+          accessibilityRole="button"
+          accessibilityLabel="Add your consult WhatsApp number"
+        >
+          <Feather name="message-circle" size={18} color="#7A4B00" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.waNudgeTitle}>Add your WhatsApp number</Text>
+            <Text style={styles.waNudgeText}>Patients can choose a WhatsApp call after you accept an on-demand consult — only when your profile has a consult WhatsApp number.</Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#7A4B00" />
+        </Pressable>
+      ) : null}
+
       <WidgetHost screen="home" refreshKey={refreshKey} onLoaded={setWidgetKeys} style={{ marginBottom: 16 }} />
 
       <Pressable onPress={() => setLateOpen(true)} style={styles.lateBtn} accessibilityRole="button" accessibilityLabel="Running late: notify today's patients">
@@ -161,6 +177,9 @@ const styles = StyleSheet.create({
   greeting: { fontFamily: paFonts.regular, fontSize: 14, color: pa.muted },
   name: { ...type.h2, color: pa.ink, marginTop: 2 },
   lateBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pa.beaconWash, borderWidth: 1, borderColor: pa.beaconLine, borderRadius: 2, padding: 14, marginBottom: 16 },
+  waNudge: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFF7E8', borderWidth: 1, borderColor: '#F5C77E', borderRadius: 10, padding: 14, marginBottom: 16 },
+  waNudgeTitle: { fontFamily: paFonts.bold, fontSize: 14, color: '#7A4B00' },
+  waNudgeText: { fontFamily: paFonts.regular, fontSize: 12, color: '#7A4B00', lineHeight: 17 },
   lateTitle: { fontFamily: paFonts.black, fontSize: 14, color: pa.ink },
   lateSub: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: 2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 14, paddingTop: 2 },

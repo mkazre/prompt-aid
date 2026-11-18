@@ -42,7 +42,19 @@ class DoctorNowController extends Controller
             ? ['lat' => (float) $patient->lat, 'lng' => (float) $patient->lng, 'label' => (string) ($patient->address ?: 'Saved address')]
             : null;
 
+        // Patient request scenario for the triage level the patient came from (?level=orange&auto=1).
+        $level = (string) $request->query('level', '');
+        $engine = app(\App\Services\Triage\ScenarioEngine::class);
+        $plan = \App\Services\Triage\ScenarioEngine::isLevel($level) ? $engine->plan($level) : null;
+        if ($plan && ! $plan['has_consult']) {
+            $plan = null;
+        }
+
         return view('account.see-a-doctor', [
+            'scenarioLevel' => $plan ? $level : null,
+            'scenarioPlan' => $plan,
+            // Tapping the colour starts the request straight away (no channel question first).
+            'autoStart' => $plan && ($plan['channel_timing'] ?? 'none') !== 'before' && $request->boolean('auto') && ! $current,
             'enabled' => DoctorNowSettings::bool('doctor_now_enabled'),
             'specialties' => $specialties,
             'online' => $online,
@@ -68,10 +80,12 @@ class DoctorNowController extends Controller
     {
         $data = $request->validate([
             'specialty' => ['nullable', 'string', 'max:255'],
-            'mode' => ['required', 'in:video,in_person,callback'],
+            'mode' => ['required', 'in:video,in_person,callback,any'],
         ]);
+        // "any" (channel chosen after accept) is priced as a remote video consult.
+        $mode = $data['mode'] === DoctorMatchService::MODE_ANY ? \App\Models\Appointment::MODE_VIDEO : $data['mode'];
 
-        return response()->json(['data' => $this->pricing->quote(($data['specialty'] ?? '') ?: (string) DoctorMatchService::defaultSpecialty(), $data['mode'])]);
+        return response()->json(['data' => $this->pricing->quote(($data['specialty'] ?? '') ?: (string) DoctorMatchService::defaultSpecialty(), $mode)]);
     }
 
     public function store(Request $request)
@@ -82,7 +96,10 @@ class DoctorNowController extends Controller
         $data = $request->validate([
             // Specialty defaults to GP / general (orange triage "speak to a doctor now").
             'specialty' => ['nullable', 'string', 'max:255'],
-            'mode' => ['required', 'in:video,in_person,callback'],
+            // "any" = find a doctor first; the patient request scenario decides when / how the channel is chosen.
+            'mode' => ['required', 'in:video,in_person,callback,any'],
+            'level' => ['nullable', 'in:red,orange,yellow,green'],
+            'channel' => ['nullable', 'in:video,voice,whatsapp,phone,chat'],
             'lat' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-90,90'],
             'lng' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-180,180'],
             'radius_km' => ['nullable', 'numeric', 'min:1', 'max:500'],
@@ -94,7 +111,7 @@ class DoctorNowController extends Controller
         ]);
 
         try {
-            $match = $this->match->start($patient, $data['specialty'] ?? null, $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : $patient->search_radius_km, \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note', 'triage_reference', 'bill_medical_aid']));
+            $match = $this->match->start($patient, $data['specialty'] ?? null, $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : null, \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note', 'triage_reference', 'bill_medical_aid', 'channel']) + ['scenario_level' => $data['level'] ?? null, 'default_radius_km' => $patient->search_radius_km]);
         } catch (DoctorMatchException $e) {
             $open = $this->match->openRequestFor($patient);
 

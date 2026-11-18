@@ -44,7 +44,8 @@ class RoleDashboard extends Dashboard
         return match (Auth::user()?->role) {
             User::ROLE_SUPER_ADMIN => [CommandCentreWidget::class, ActivityChartWidget::class, TopDoctorsWidget::class],
             User::ROLE_CLINIC_ADMIN => [ClinicBoardWidget::class, ActivityChartWidget::class, TopDoctorsWidget::class],
-            User::ROLE_DOCTOR => [DoctorDeskWidget::class, ActivityChartWidget::class, UpcomingAppointmentsWidget::class],
+            // Nudge (only shows without a consult WhatsApp number) above the doctor's desk.
+            User::ROLE_DOCTOR => [\App\Filament\Widgets\DoctorWhatsappNudgeWidget::class, DoctorDeskWidget::class, ActivityChartWidget::class, UpcomingAppointmentsWidget::class],
             User::ROLE_PHARMACY_ADMIN => [PharmacyBoardWidget::class, ActivityChartWidget::class],
             User::ROLE_THIRD_PARTY => [PartnerBoardWidget::class, ActivityChartWidget::class],
             default => [],

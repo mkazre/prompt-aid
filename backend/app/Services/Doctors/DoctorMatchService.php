@@ -48,6 +48,15 @@ class DoctorMatchService
     // date/start/end are stamped to "now" for this many minutes.
     protected const DEFAULT_DURATION_MINUTES = 30;
 
+    /**
+     * POST mode "any": find a doctor first; the channel (video / in-app voice /
+     * WhatsApp / …) is chosen AFTER a doctor accepted, or started
+     * automatically — per the patient request scenario (ScenarioEngine). The
+     * appointment itself is a remote (video) consult so the consult hub,
+     * pricing and payments work unchanged.
+     */
+    public const MODE_ANY = 'any';
+
     public function __construct(
         protected GeocodingInterface $geo,
         protected NotificationDispatcherInterface $notifier,
@@ -208,7 +217,64 @@ class DoctorMatchService
             throw new DoctorMatchException('On-demand consultations are switched off right now. Please book a time slot instead.', 409);
         }
 
+        // Patient request scenario (Staff → Triage → Patient request scenarios): the triage
+        // level decides the specialty, dispatch overrides and when the channel is chosen.
+        $level = \App\Services\Triage\ScenarioEngine::isLevel($extra['scenario_level'] ?? null) ? (string) $extra['scenario_level'] : null;
+        if ($mode === self::MODE_ANY && $level === null) {
+            $level = 'orange';
+        }
+        $snap = null;
+        if ($level !== null) {
+            try {
+                $snap = app(\App\Services\Triage\ScenarioEngine::class)->snapshot($level);
+            } catch (\Throwable $e) {
+                Log::warning('[DoctorMatch] scenario snapshot failed: '.$e->getMessage());
+            }
+        }
+        $chosen = null;
+        $chosenBy = null;
+        $preferred = is_string($extra['channel'] ?? null) ? $extra['channel'] : null;
+        if ($mode === self::MODE_ANY) {
+            $timing = $snap['channel_timing'] ?? 'after';
+            if ($timing === 'before') {
+                throw new DoctorMatchException('Choose how the doctor should reach you first.', 422);
+            }
+            if ($timing === 'auto' && ! empty($snap['auto_channel'])) {
+                $chosen = (string) $snap['auto_channel'];
+                $chosenBy = 'auto';
+            }
+            $enabled = self::enabledModes();
+            if (in_array(Appointment::MODE_VIDEO, $enabled, true)) {
+                $mode = Appointment::MODE_VIDEO;
+            } elseif (in_array(Appointment::MODE_CALLBACK, $enabled, true)) {
+                // Video switched off: a call-back consult (phone / WhatsApp) to the profile number.
+                $mode = Appointment::MODE_CALLBACK;
+                $extra['callback_channel'] ??= in_array($chosen, ['phone', 'whatsapp'], true) ? $chosen : 'either';
+            } else {
+                throw new DoctorMatchException('Remote consults are not available right now. Please book a time slot instead.', 409);
+            }
+        } elseif ($preferred !== null) {
+            // Channel picked up front ("choose_channel" before "broadcast_to_doctors"): voice = a video consult rung as voice.
+            if ($mode === Appointment::MODE_VIDEO && in_array($preferred, ['video', 'voice'], true)) {
+                $chosen = $preferred;
+                $chosenBy = 'patient';
+            } elseif ($mode === Appointment::MODE_CALLBACK && in_array($preferred, ['phone', 'whatsapp'], true)) {
+                $chosen = $preferred;
+                $chosenBy = 'patient';
+                $extra['callback_channel'] ??= $preferred;
+            }
+        }
+        if ($snap && empty($snap['allow_medical_aid'] ?? true)) {
+            $extra['bill_medical_aid'] = false;
+        }
+        if ($radiusKm === null) {
+            $radiusKm = isset($snap['radius_km']) ? (float) $snap['radius_km'] : (isset($extra['default_radius_km']) ? (float) $extra['default_radius_km'] : null);
+        }
+
         $specialty = trim((string) $specialty);
+        if ($specialty === '' && ! empty($snap['specialty'] ?? null)) {
+            $specialty = (string) $snap['specialty'];
+        }
         if ($specialty === '') {
             $specialty = (string) self::defaultSpecialty();
         }
@@ -250,7 +316,7 @@ class DoctorMatchService
         $quote = $this->pricing->quote($specialty, $mode);
         $now = now();
 
-        $request = DB::transaction(function () use ($patient, $specialty, $mode, $lat, $lng, $quote, $now, $radiusKm, $callbackPhone, $channel, $note, $triage) {
+        $request = DB::transaction(function () use ($patient, $specialty, $mode, $lat, $lng, $quote, $now, $radiusKm, $callbackPhone, $channel, $note, $triage, $level, $snap, $chosen, $chosenBy) {
             $appointment = Appointment::query()->create([
                 'patient_profile_id' => $patient->id,
                 // Appointment dates/times are South African clinic time (see Appointment::CLINIC_TIMEZONE).
@@ -288,9 +354,16 @@ class DoctorMatchService
                 'price' => $quote['price'],
                 'price_breakdown' => $quote,
                 'attempts' => 0,
-                'expires_at' => $now->clone()->addMinutes(max(1, DoctorNowSettings::int('doctor_now_request_timeout_minutes'))),
+                'expires_at' => $now->clone()->addMinutes(self::requestTimeoutMinutes($snap)),
                 'radius_km' => $radiusKm !== null && $mode === Appointment::MODE_IN_PERSON ? DispatchSettings::clampRadius($radiusKm) : null,
                 'triage_submission_id' => $triage?->id,
+                'scenario_level' => $level,
+                'scenario_version' => isset($snap['version']) ? (int) $snap['version'] : null,
+                'scenario' => $snap,
+                'channel_pending' => false,
+                'chosen_channel' => $chosen,
+                'channel_chosen_at' => $chosen ? $now : null,
+                'channel_chosen_by' => $chosenBy,
             ]);
         });
 
@@ -596,7 +669,8 @@ class DoctorMatchService
                 return $events;
             }
 
-            if (DispatchSettings::mode('doctor_now') === 'manual') {
+            $dispatchMode = $this->dispatchModeFor($req);
+            if ($dispatchMode === 'manual') {
                 if ($req->expires_at && $req->expires_at->isPast()) {
                     $this->expireLocked($req, 'timed_out');
                     $events[] = ['expired', $req];
@@ -605,7 +679,7 @@ class DoctorMatchService
                 return $events; // an admin assigns from Live requests
             }
 
-            if (DispatchSettings::mode('doctor_now') === 'broadcast') {
+            if ($dispatchMode === 'broadcast') {
                 // Uber-style: every qualifying online doctor gets the offer at once.
                 DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->where('status', DoctorMatchOffer::OFFERED)
                     ->where('expires_at', '<=', now())->update(['status' => DoctorMatchOffer::EXPIRED, 'responded_at' => now(), 'updated_at' => now()]);
@@ -615,7 +689,7 @@ class DoctorMatchService
 
                     return $events;
                 }
-                $timeout = max(10, DoctorNowSettings::int('doctor_now_offer_timeout_seconds'));
+                $timeout = $this->offerTimeoutFor($req);
                 $candidates = $this->pickCandidates($req, true)->take(60);
                 if ($candidates->isEmpty() && (int) $req->attempts > 0
                     && ! DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->where('status', DoctorMatchOffer::OFFERED)->exists()) {
@@ -676,7 +750,7 @@ class DoctorMatchService
                 return $events; // keep searching until a doctor comes online or time runs out
             }
 
-            $timeout = max(10, DoctorNowSettings::int('doctor_now_offer_timeout_seconds'));
+            $timeout = $this->offerTimeoutFor($req);
             $offer = DoctorMatchOffer::query()->create([
                 'doctor_match_request_id' => $req->id,
                 'appointment_id' => $req->appointment_id,
@@ -704,6 +778,41 @@ class DoctorMatchService
                 Log::warning('[DoctorMatch] notify failed: '.$e->getMessage());
             }
         }
+    }
+
+    /** Dispatch mode for this request: the scenario's override, else Staff → Dispatch settings. */
+    public function dispatchModeFor(DoctorMatchRequest $req): string
+    {
+        $m = $req->scenario['dispatch_mode'] ?? null;
+
+        return in_array($m, ['broadcast', 'sequential', 'manual'], true) ? $m : DispatchSettings::mode('doctor_now');
+    }
+
+    /** Seconds each doctor has to accept (scenario override, else On-demand doctors setting). */
+    public function offerTimeoutFor(DoctorMatchRequest $req): int
+    {
+        $s = $req->scenario['offer_timeout_seconds'] ?? null;
+
+        return max(10, $s ? (int) $s : DoctorNowSettings::int('doctor_now_offer_timeout_seconds'));
+    }
+
+    /**
+     * How long the search runs (scenario "maximum wait", else On-demand doctors setting).
+     *
+     * @param  DoctorMatchRequest|array<string, mixed>|null  $scenario
+     */
+    public static function requestTimeoutMinutes(DoctorMatchRequest|array|null $scenario): int
+    {
+        $snap = $scenario instanceof DoctorMatchRequest ? (array) $scenario->scenario : (array) $scenario;
+        $m = $snap['max_wait_minutes'] ?? null;
+
+        return max(1, $m ? (int) $m : DoctorNowSettings::int('doctor_now_request_timeout_minutes'));
+    }
+
+    /** True when this request lets the patient choose video / voice / WhatsApp after a doctor accepts. */
+    public static function choosesAfterAccept(DoctorMatchRequest $req): bool
+    {
+        return ($req->scenario['channel_timing'] ?? null) === 'after';
     }
 
     protected function expireLocked(DoctorMatchRequest $req, string $reason): void
@@ -959,6 +1068,8 @@ class DoctorMatchService
                 'doctor_profile_id' => $doctor->id,
                 'clinic_id' => $clinic?->id,
                 'invoice_id' => $invoice->id,
+                // Scenario "choose the channel after a doctor accepts": the patient picks next.
+                'channel_pending' => self::choosesAfterAccept($req) && ! $req->chosen_channel,
             ]);
 
             $doctor->update(['availability' => DoctorProfile::BUSY]);
@@ -994,8 +1105,18 @@ class DoctorMatchService
             Log::warning('[DoctorMatch] notify matched failed: '.$e->getMessage());
         }
 
-        // Video: the patient's screen rings straight away ("Dr X is ready — joining…").
-        if ($result->mode === Appointment::MODE_VIDEO && $result->appointment) {
+        $result = $result->fresh();
+        if ($result->channel_pending) {
+            // The patient chooses video / voice / WhatsApp now (consult hub); nobody is rung yet.
+        } elseif ($result->chosen_channel && $result->appointment && $result->mode !== Appointment::MODE_CALLBACK) {
+            // Channel picked up front (voice) or started automatically by the scenario.
+            try {
+                app(\App\Services\Consults\ConsultHubService::class)->applyChannel($result->appointment, $result, (string) $result->chosen_channel, $result->channel_chosen_by === 'patient' ? 'preselected' : 'auto');
+            } catch (\Throwable $e) {
+                Log::warning('[DoctorMatch] start channel failed: '.$e->getMessage());
+            }
+        } elseif ($result->mode === Appointment::MODE_VIDEO && $result->appointment) {
+            // Video: the patient's screen rings straight away ("Dr X is ready — joining…").
             try {
                 app(ConsultCallService::class)->ring($result->appointment->fresh());
             } catch (\Throwable $e) {
@@ -1242,7 +1363,7 @@ class DoctorMatchService
             // "Sent to N available doctors — the first to accept takes your consult."
             'alerted_doctors' => $request->status === DoctorMatchRequest::SEARCHING ? DoctorMatchOffer::query()
                 ->where('doctor_match_request_id', $request->id)->where('status', DoctorMatchOffer::OFFERED)->where('expires_at', '>', now())->count() : 0,
-            'broadcast' => DispatchSettings::mode('doctor_now') === 'broadcast',
+            'broadcast' => $this->dispatchModeFor($request) === 'broadcast',
             'eta_seconds' => $request->status === DoctorMatchRequest::SEARCHING && $online > 0 ? $this->typicalSecondsToAccept($request->specialty, $request->mode) : null,
             'matched_at' => $request->matched_at?->toIso8601String(),
             'doctor' => $doctorData,
@@ -1274,7 +1395,69 @@ class DoctorMatchService
             'cancel_fee' => (float) $request->cancel_fee,
             'waitlisted' => in_array($request->status, [DoctorMatchRequest::SEARCHING, DoctorMatchRequest::EXPIRED], true) && $this->isWaitlisted($request),
             'book_url' => \Illuminate\Support\Facades\Route::has('doctors.index') ? route('doctors.index', ['specialization' => $request->specialty]) : null,
+        ] + $this->scenarioPayload($request);
+    }
+
+    /**
+     * Patient request scenario additions (additive keys — older clients ignore them):
+     * channel choice after accept, the "nobody accepted" fallback and the
+     * scenario's alternative steps.
+     *
+     * @return array<string, mixed>
+     */
+    protected function scenarioPayload(DoctorMatchRequest $request): array
+    {
+        $appt = $request->appointment;
+        $snap = (array) $request->scenario;
+        $choice = null;
+        if ($appt && $request->status === DoctorMatchRequest::MATCHED) {
+            try {
+                $choice = app(\App\Services\Consults\ConsultHubService::class)->channelChoice($appt, 'patient', $request);
+            } catch (\Throwable $e) {
+                Log::warning('[DoctorMatch] channel choice payload failed: '.$e->getMessage());
+            }
+        }
+        $closed = in_array($request->status, [DoctorMatchRequest::EXPIRED, DoctorMatchRequest::CANCELLED], true);
+        $alternatives = [];
+        if ($closed && $request->scenario_level) {
+            try {
+                $alternatives = app(\App\Services\Triage\ScenarioEngine::class)->alternatives((string) $request->scenario_level);
+            } catch (\Throwable) {
+                $alternatives = [];
+            }
+        }
+
+        return [
+            'scenario' => $request->scenario_level ? [
+                'level' => $request->scenario_level,
+                'version' => $request->scenario_version,
+                'channel_timing' => $snap['channel_timing'] ?? null,
+            ] : null,
+            'channel_choice' => $choice,
+            'chosen_channel' => $request->chosen_channel,
+            'fallback' => $request->status === DoctorMatchRequest::EXPIRED ? $this->fallbackPayload($request) : null,
+            'alternatives' => $alternatives,
         ];
+    }
+
+    /** What to offer when nobody accepted (scenario "fallback"). @return array<string, mixed> */
+    protected function fallbackPayload(DoctorMatchRequest $request): array
+    {
+        $kind = (string) (((array) $request->scenario)['fallback'] ?? 'retry');
+        try {
+            $ec = \App\Models\EmergencyContact::primary();
+        } catch (\Throwable) {
+            $ec = null;
+        }
+
+        return match ($kind) {
+            'widen_radius' => ['action' => 'retry', 'kind' => $kind, 'label' => 'Try again with a wider search',
+                'radius_km' => $request->mode === Appointment::MODE_IN_PERSON ? min(DispatchSettings::maxRadius(), max(5.0, (float) ($request->radius_km ?: DoctorNowSettings::float('doctor_now_inperson_radius_km')) * 2)) : null],
+            'show_emergency' => ['action' => 'call', 'kind' => $kind, 'label' => 'Call '.($ec?->phone ?? 'emergency services'), 'tel' => $ec?->tel_url, 'phone' => $ec?->phone],
+            'book_next_slot' => ['action' => 'book', 'kind' => $kind, 'label' => 'Book the next available slot',
+                'url' => \Illuminate\Support\Facades\Route::has('doctors.index') ? route('doctors.index', ['specialization' => $request->specialty]) : null],
+            default => ['action' => 'retry', 'kind' => 'retry', 'label' => 'Try again'],
+        };
     }
 
     public function outcomeMessage(DoctorMatchRequest $request): ?string
@@ -1331,7 +1514,8 @@ class DoctorMatchService
             'request_id' => $offer->doctor_match_request_id,
             'appointment_id' => $offer->appointment_id,
             'mode' => $req?->mode,
-            'mode_label' => self::modeLabel($req?->mode),
+            'mode_label' => $req ? self::modeLabelFor($req) : self::modeLabel(null),
+            'channel_after_accept' => $req ? self::choosesAfterAccept($req) : false,
             'specialty' => $req?->specialty,
             'patient_first_name' => trim(strtok($patientName, ' ') ?: $patientName),
             'lines' => $req ? $this->offerLines($req) : [],
@@ -1363,12 +1547,29 @@ class DoctorMatchService
             'matched_at' => $req->matched_at?->toIso8601String(),
             'can_join_video' => (bool) $appt?->canJoinVideoNow(),
             'price' => (float) $req->price,
-            'mode_label' => self::modeLabel($req->mode),
+            'mode_label' => self::modeLabelFor($req),
+            'channel_pending' => (bool) $req->channel_pending,
+            'chosen_channel' => $req->chosen_channel,
             'callback' => $appt ? app(ConsultCallService::class)->callbackPayload($appt, true) : null,
             'card_url' => $appt && $req->mode === Appointment::MODE_CALLBACK && class_exists(\App\Filament\Pages\CallbackConsult::class)
                 ? \App\Filament\Pages\CallbackConsult::getUrl(['appointment' => $appt->id], panel: 'admin') : null,
             'hub_url' => $appt && \App\Services\Consults\ConsultHubService::supports($appt) ? \App\Services\Consults\ConsultHubService::doctorHubUrl($appt) : null,
         ];
+    }
+
+    /** "Patient chooses video / voice / WhatsApp" for channel-after-accept requests, else the mode label. */
+    public static function modeLabelFor(DoctorMatchRequest $req): string
+    {
+        if (self::choosesAfterAccept($req) && ! $req->chosen_channel) {
+            $chs = array_map(fn ($c) => \App\Services\Triage\ScenarioEngine::CHANNELS[$c] ?? $c, (array) ($req->scenario['channels'] ?? []));
+
+            return 'Remote consult (patient chooses: '.($chs ? implode(' / ', $chs) : 'video / voice / WhatsApp').')';
+        }
+        if ($req->chosen_channel && $req->mode !== Appointment::MODE_IN_PERSON) {
+            return \App\Services\Triage\ScenarioEngine::CHANNELS[$req->chosen_channel] ?? self::modeLabel($req->mode);
+        }
+
+        return self::modeLabel($req->mode);
     }
 
     public static function modeLabel(?string $mode): string
@@ -1406,12 +1607,14 @@ class DoctorMatchService
         }
         $req = $offer->matchRequest;
         $req->loadMissing('triageSubmission');
-        $secs = max(10, DoctorNowSettings::int('doctor_now_offer_timeout_seconds'));
-        $level = $req->triageSubmission?->level;
+        $secs = $this->offerTimeoutFor($req);
+        $level = $req->triageSubmission?->level ?? $req->scenario_level;
         $prefix = $level ? strtoupper($level).' · ' : '';
-        $title = $req->mode === Appointment::MODE_CALLBACK
+        $title = self::choosesAfterAccept($req)
+            ? $prefix.'Patient needs a doctor NOW'
+            : ($req->mode === Appointment::MODE_CALLBACK
             ? $prefix.'Patient asks a doctor to call back NOW'
-            : ($req->mode === Appointment::MODE_VIDEO ? $prefix.'Patient needs a video consult NOW' : 'See a patient now - '.$req->specialty);
+            : ($req->mode === Appointment::MODE_VIDEO ? $prefix.'Patient needs a video consult NOW' : 'See a patient now - '.$req->specialty));
         $lines = $this->offerLines($req);
         $body = trim(implode(' · ', array_slice($lines, 0, 3)).' Accept within '.$secs.'s — first doctor to accept takes it.');
 
@@ -1428,8 +1631,16 @@ class DoctorMatchService
         $patientUser = $req->patient?->user;
         $doctorUser = $req->doctor?->user;
 
+        if ($patientUser && $req->channel_pending) {
+            // Scenario: the patient chooses the channel now that a doctor accepted.
+            $chs = array_map(fn ($c) => mb_strtolower(\App\Services\Triage\ScenarioEngine::CHANNELS[$c] ?? $c), (array) ($req->scenario['channels'] ?? ['video', 'voice', 'whatsapp']));
+            $this->notifier->push($patientUser, 'Dr. '.$doctorName.' accepted', 'Choose how to talk: '.\App\Services\Triage\ScenarioEngine::humanList($chs, 'or').'.', [
+                'type' => 'appointment',
+                'data' => ['route' => 'consult_hub', 'appointment_id' => $req->appointment_id, 'params' => ['appointment_id' => $req->appointment_id, 'request_id' => $req->id], 'url' => '/account/consults/'.$req->appointment_id],
+            ]);
+        }
         // Video: ConsultCallService::ring() sends the "Dr X is calling you" push right after this.
-        if ($patientUser && $req->mode !== Appointment::MODE_VIDEO) {
+        if ($patientUser && $req->mode !== Appointment::MODE_VIDEO && ! $req->channel_pending) {
             $how = $req->mode === Appointment::MODE_CALLBACK
                 ? ($this->outcomeMessage($req) ?? 'The doctor will call you shortly.').' Keep your phone close.'
                 : 'Head to the practice — directions are on your request page.';
@@ -1448,7 +1659,9 @@ class DoctorMatchService
             StaffNotifier::alert(
                 $doctorUser,
                 'On-demand consult confirmed',
-                "{$patientUser?->name} — ".mb_strtolower(self::modeLabel($req->mode)).'. Open it to start.',
+                $req->channel_pending
+                    ? "{$patientUser?->name} — waiting for the patient to choose ".mb_strtolower(\App\Services\Triage\ScenarioEngine::humanList(array_map(fn ($c) => \App\Services\Triage\ScenarioEngine::CHANNELS[$c] ?? $c, (array) ($req->scenario['channels'] ?? [])), 'or')).'. Open the consult.'
+                    : "{$patientUser?->name} — ".mb_strtolower(self::modeLabelFor($req)).'. Open it to start.',
                 icon: 'heroicon-o-bolt',
                 color: 'success',
                 url: $cardUrl,

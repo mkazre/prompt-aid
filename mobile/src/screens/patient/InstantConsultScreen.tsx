@@ -9,8 +9,12 @@ import { telUrl, useSiteContent, whatsappUrl } from '../../services/siteContent'
 import { useAuth } from '../../context/AuthContext';
 import { CallbackChannel, CallbackInfo, displayPhone, RingPayload } from '../../services/consults';
 import { showIncomingCall } from '../../components/PatientCallHost';
+import PaymentSheet from '../../components/payments/PaymentSheet';
+import { getScenario, goToTarget, ScenarioPlan, ScenarioStep } from '../../services/scenarios';
+import type { ChannelChoice } from '../../services/consults';
+import type { TriageLevel } from '../../services/triage';
 
-type Mode = 'video' | 'callback' | 'in_person';
+type Mode = 'video' | 'callback' | 'in_person' | 'voice';
 
 /** Shape of DoctorMatchService::patientPayload() (GET /doctor-match/current). */
 interface MatchPayload {
@@ -39,6 +43,13 @@ interface MatchPayload {
   appointment_status?: string | null;
   dispatch_phone?: string | null;
   dispatch_tel?: string | null;
+  /** Patient request scenario additions (absent on older servers). */
+  payment?: { required: boolean; state: string; amount: number } | null;
+  scenario?: { level: TriageLevel; version: number | null; channel_timing: string | null } | null;
+  channel_choice?: ChannelChoice | null;
+  chosen_channel?: string | null;
+  fallback?: { action: 'retry' | 'call' | 'book'; label: string; tel?: string | null; url?: string | null; radius_km?: number | null } | null;
+  alternatives?: ScenarioStep[];
 }
 
 /**
@@ -66,13 +77,30 @@ export default function InstantConsultScreen({ navigation, route }: any) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triageReference: string | undefined = route?.params?.triageReference;
   const hubOpened = useRef<Record<number, true>>({});
+  // Patient request scenario (Staff → Triage): orange default = find the doctor first,
+  // the patient picks video / voice / WhatsApp only after a doctor accepted.
+  const level: TriageLevel | undefined = route?.params?.level;
+  const [plan, setPlan] = useState<ScenarioPlan | null>(null);
+  const [planLoaded, setPlanLoaded] = useState(!level);
+  const loadedOnce = useRef(false);
+  const autoDone = useRef(false);
+  const [payFor, setPayFor] = useState<MatchPayload | null>(null);
+  const payShown = useRef<Record<number, true>>({});
+  const findFirst = !!plan && plan.has_consult && plan.channel_timing !== 'before';
+  const preChannels = plan && plan.channel_timing === 'before' ? plan.channels : null;
 
   const refresh = useCallback(async () => {
     try {
       const { data } = await api.get('/doctor-match/current');
       const m: MatchPayload | null = data.data ?? null;
       setMatch(m);
+      loadedOnce.current = true;
       if (m?.ring) showIncomingCall(m.ring);
+      // Upfront payment: doctors are only alerted once it is paid.
+      if (m && m.status === 'searching' && m.payment?.required && !payShown.current[m.id]) {
+        payShown.current[m.id] = true;
+        setPayFor(m);
+      }
       // Doctor accepted: straight to the connection options (once per consult).
       if (m && m.status === 'matched' && m.hub_url && (m.mode === 'video' || m.mode === 'callback') && !hubOpened.current[m.appointment_id]) {
         hubOpened.current[m.appointment_id] = true;
@@ -98,6 +126,40 @@ export default function InstantConsultScreen({ navigation, route }: any) {
   useEffect(() => {
     if (route?.params?.mode === 'callback' || route?.params?.mode === 'video') setMode(route.params.mode);
   }, [route?.params?.mode]);
+
+  useEffect(() => {
+    if (!level) return;
+    let alive = true;
+    getScenario(level).then((sc) => {
+      if (!alive) return;
+      const p = sc?.plan?.has_consult ? sc.plan : null;
+      setPlan(p);
+      if (p?.specialty) setSpecialty(p.specialty);
+      if (p && p.channel_timing === 'before') {
+        const ch = p.channels;
+        setMode(ch.includes('video') ? 'video' : ch.includes('voice') ? 'voice' : 'callback');
+        if (ch.includes('whatsapp') && !ch.includes('phone')) setChannel('whatsapp');
+        if (ch.includes('phone') && !ch.includes('whatsapp')) setChannel('phone');
+      }
+      setPlanLoaded(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [level]);
+
+  // Tapping the colour starts the request straight away (no channel question first).
+  useEffect(() => {
+    if (!route?.params?.auto || autoDone.current || !planLoaded || !findFirst || !loadedOnce.current) return;
+    if (match && (match.status === 'searching' || match.status === 'matched')) {
+      autoDone.current = true;
+      return;
+    }
+    autoDone.current = true;
+    navigation.setParams?.({ auto: undefined });
+    submit({ mode: 'any', level, ...(triageReference ? { triage_reference: triageReference } : {}), ...(plan?.specialty ? { specialty: plan.specialty } : {}) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route?.params?.auto, planLoaded, findFirst, match]);
 
   // Faster while searching / waiting for the doctor to ring; slower otherwise.
   useFocusEffect(
@@ -132,7 +194,13 @@ export default function InstantConsultScreen({ navigation, route }: any) {
   }
 
   async function send() {
-    const body: Record<string, unknown> = { mode };
+    if (findFirst) {
+      submit({ mode: 'any', level, ...(triageReference ? { triage_reference: triageReference } : {}), ...(specialty ? { specialty } : {}) });
+      return;
+    }
+    const body: Record<string, unknown> = { mode: mode === 'voice' ? 'video' : mode };
+    if (mode === 'voice') body.channel = 'voice';
+    if (level) body.level = level;
     if (specialty) body.specialty = specialty;
     if (triageReference) body.triage_reference = triageReference;
     if (mode === 'callback') {
@@ -181,7 +249,8 @@ export default function InstantConsultScreen({ navigation, route }: any) {
   }
 
   const active = match && (match.status === 'searching' || match.status === 'matched');
-  const modeLabel = (m: Mode) => (m === 'video' ? 'Video consult' : m === 'callback' ? 'Call back' : 'In person');
+  const modeLabel = (m: Mode, p?: MatchPayload | null) =>
+    p?.scenario?.channel_timing === 'after' && !p.chosen_channel ? 'You choose video, voice or WhatsApp once a doctor accepts' : m === 'video' ? 'Video consult' : m === 'voice' ? 'Voice call' : m === 'callback' ? 'Call back' : 'In person';
   const dispatchPhone = match?.dispatch_phone || emergency.dispatch_phone;
 
   function searchingLine(m: MatchPayload) {
@@ -193,6 +262,10 @@ export default function InstantConsultScreen({ navigation, route }: any) {
 
   function matchedBody(m: MatchPayload) {
     const dr = m.doctor?.name ?? 'Your doctor';
+    if (m.channel_choice?.pending) {
+      return `${dr} accepted. Choose how you would like to talk: ${m.channel_choice.options.map((o) => o.label.toLowerCase()).join(', ')}.`;
+    }
+    if (m.channel_choice?.chosen === 'whatsapp') return `WhatsApp ${dr} — tap “Open WhatsApp”. Your consult starts when the doctor confirms you are connected.`;
     if (m.mode === 'callback' && m.callback) {
       const cb = m.callback;
       if (cb.outcome === 'no_answer') return `${dr} tried to call you. Keep your phone close — they will try again on ${cb.phone_display ?? 'your number'}.`;
@@ -224,7 +297,7 @@ export default function InstantConsultScreen({ navigation, route }: any) {
           <Text style={styles.cardTitle}>{match.mode === 'callback' ? 'Finding a doctor to call you…' : 'Finding your doctor…'}</Text>
           <Text style={styles.body}>{searchingLine(match)}</Text>
           <Text style={styles.muted}>
-            {match.specialty} · {modeLabel(match.mode)}
+            {match.specialty} · {modeLabel(match.mode, match)}
             {match.seconds_left ? ` · ${Math.ceil(match.seconds_left / 60)} min left` : ''}
           </Text>
           {match.can_cancel ? <PaButton title="Cancel request" variant="ghost" onPress={cancel} loading={cancelling} style={{ marginTop: 12 }} /> : null}
@@ -237,7 +310,7 @@ export default function InstantConsultScreen({ navigation, route }: any) {
           <Text style={[styles.body, { marginTop: 8 }]}>{matchedBody(match)}</Text>
           {match.hub_url && (match.mode === 'video' || match.mode === 'callback') ? (
             <PaButton
-              title="Open consult: video, voice & chat"
+              title={match.channel_choice?.pending ? 'Choose how to talk to the doctor' : 'Open consult: video, voice & chat'}
               onPress={() => navigation.navigate('ConsultHub', { appointmentId: match.appointment_id })}
               style={{ marginTop: 12 }}
             />
@@ -247,6 +320,9 @@ export default function InstantConsultScreen({ navigation, route }: any) {
               onPress={() => navigation.navigate('VideoCall', { appointmentId: match.appointment_id, name: match.doctor?.name })}
               style={{ marginTop: 12 }}
             />
+          ) : null}
+          {match.channel_choice?.chosen === 'whatsapp' && match.channel_choice.whatsapp_url ? (
+            <PaButton title="Open WhatsApp" onPress={() => Linking.openURL(match.channel_choice!.whatsapp_url!)} style={{ marginTop: 8, backgroundColor: '#1FA855' }} />
           ) : null}
           {match.mode === 'in_person' && match.clinic?.directions_url ? (
             <PaButton title="Directions" variant="ghost" onPress={() => Linking.openURL(match.clinic!.directions_url!)} style={{ marginTop: 8 }} />
@@ -260,9 +336,26 @@ export default function InstantConsultScreen({ navigation, route }: any) {
             <PaCard style={{ marginBottom: 14 }}>
               <Text style={styles.cardTitle}>{match.status === 'expired' ? 'No doctor available right now' : 'Request cancelled'}</Text>
               <Text style={styles.muted}>{match.outcome_message}</Text>
+              {match.status === 'expired' && match.fallback?.action === 'call' && match.fallback.tel ? (
+                <PaButton title={match.fallback.label} onPress={() => Linking.openURL(match.fallback!.tel!)} style={{ marginTop: 12, backgroundColor: pa.signal }} />
+              ) : null}
+              {match.status === 'expired' && match.fallback?.action === 'book' ? (
+                <PaButton title={match.fallback.label} onPress={() => (navigation.getParent?.() ?? navigation).navigate('Care', { screen: 'FindCare', params: { group: 'gp' } })} style={{ marginTop: 12 }} />
+              ) : null}
               {match.status === 'expired' ? (
                 <>
-                  <PaButton title="Try again" onPress={() => (lastBody.current ? submit(lastBody.current) : send())} loading={sending} style={{ marginTop: 12 }} />
+                  <PaButton
+                    title={match.fallback?.action === 'retry' ? match.fallback.label : 'Try again'}
+                    variant={match.fallback && match.fallback.action !== 'retry' ? 'ghost' : undefined}
+                    onPress={() => {
+                      const b = lastBody.current ? { ...lastBody.current } : null;
+                      if (b && match.fallback?.radius_km && b.mode === 'in_person') b.radius_km = match.fallback.radius_km;
+                      if (b) submit(b);
+                      else send();
+                    }}
+                    loading={sending}
+                    style={{ marginTop: 12 }}
+                  />
                   <PaButton
                     title={`Call dispatch · ${dispatchPhone}`}
                     variant="ghost"
@@ -271,6 +364,17 @@ export default function InstantConsultScreen({ navigation, route }: any) {
                   />
                 </>
               ) : null}
+              {(match.alternatives ?? []).map((s) => (
+                <PaButton
+                  key={s.id}
+                  title={s.settings?.label || s.label}
+                  variant="ghost"
+                  onPress={() => {
+                    if (!goToTarget(navigation, s.app)) if (s.url) Linking.openURL(s.url);
+                  }}
+                  style={{ marginTop: 8 }}
+                />
+              ))}
               <Pressable onPress={() => Linking.openURL(whatsappUrl(emergency.whatsapp_number))} style={styles.wa}>
                 <Text style={styles.waText}>💬  {emergency.ask_doctor_label}</Text>
               </Pressable>
@@ -279,20 +383,44 @@ export default function InstantConsultScreen({ navigation, route }: any) {
 
           {triageReference ? <Text style={[styles.muted, { marginBottom: 10 }]}>Linked to your triage result {triageReference} — the doctor sees your answers.</Text> : null}
 
+          {findFirst ? (
+            <PaCard style={{ marginBottom: 14 }}>
+              <Text style={styles.cardTitle}>{sending ? 'Requesting a doctor…' : 'We alert every available doctor at once'}</Text>
+              <Text style={styles.body}>
+                The first doctor to accept takes your consult. Then you choose how to talk
+                {plan?.channels?.length ? `: ${plan.channels.map((c) => ({ video: 'video call', voice: 'in-app voice call', whatsapp: 'WhatsApp call', phone: 'phone call-back', chat: 'chat' } as Record<string, string>)[c] ?? c).join(', ')}` : ''}.
+              </Text>
+              {plan?.payment_note ? <Text style={styles.muted}>{plan.payment_note}</Text> : null}
+            </PaCard>
+          ) : null}
+          {findFirst ? null : (<>
           <PaSectionLabel style={{ marginBottom: 8 }}>How should the doctor reach you?</PaSectionLabel>
+          {!preChannels || preChannels.includes('video') ? (
           <Pressable onPress={() => setMode('video')} style={[styles.option, mode === 'video' && styles.optionOn]} accessibilityRole="radio" accessibilityState={{ selected: mode === 'video' }}>
             <Text style={[styles.optionTitle, mode === 'video' && { color: '#fff' }]}>📹  Video consult now</Text>
             <Text style={[styles.optionText, mode === 'video' && { color: '#E8E6E1' }]}>The doctor appears on your screen in minutes — your phone rings and joins automatically.</Text>
           </Pressable>
+          ) : null}
+          {preChannels?.includes('voice') ? (
+            <Pressable onPress={() => setMode('voice')} style={[styles.option, mode === 'voice' && styles.optionOn]} accessibilityRole="radio" accessibilityState={{ selected: mode === 'voice' }}>
+              <Text style={[styles.optionTitle, mode === 'voice' && { color: '#fff' }]}>🎙  In-app voice call</Text>
+              <Text style={[styles.optionText, mode === 'voice' && { color: '#E8E6E1' }]}>Audio only in the app — uses data, not airtime.</Text>
+            </Pressable>
+          ) : null}
+          {!preChannels || preChannels.includes('phone') || preChannels.includes('whatsapp') ? (
           <Pressable onPress={() => setMode('callback')} style={[styles.option, mode === 'callback' && styles.optionOn]} accessibilityRole="radio" accessibilityState={{ selected: mode === 'callback' }}>
             <Text style={[styles.optionTitle, mode === 'callback' && { color: '#fff' }]}>📞  Request a call back</Text>
             <Text style={[styles.optionText, mode === 'callback' && { color: '#E8E6E1' }]}>A doctor phones you (or WhatsApp-calls you) shortly.</Text>
           </Pressable>
+          ) : null}
+          {!preChannels ? (
           <Pressable onPress={() => setMode('in_person')} style={styles.inPerson}>
             <Text style={[styles.muted, mode === 'in_person' && { color: pa.ink, fontFamily: paFonts.bold }]}>
               {mode === 'in_person' ? '● ' : '○ '}I'd rather go to a doctor's rooms near me (in person)
             </Text>
           </Pressable>
+          ) : null}
+          </>)}
 
           {mode === 'callback' ? (
             <PaCard style={{ marginBottom: 14 }}>
@@ -330,10 +458,27 @@ export default function InstantConsultScreen({ navigation, route }: any) {
             </>
           ) : null}
 
-          <PaButton title={mode === 'video' ? 'Start video consult now' : mode === 'callback' ? 'Request a call back' : 'Request a doctor now'} onPress={send} loading={sending} />
+          <PaButton
+            title={findFirst ? plan?.button_label || 'Request a doctor now' : mode === 'video' ? 'Start video consult now' : mode === 'voice' ? 'Start voice call now' : mode === 'callback' ? 'Request a call back' : 'Request a doctor now'}
+            onPress={send}
+            loading={sending}
+          />
           <Text style={[styles.muted, { marginTop: 8, textAlign: 'center' }]}>You're only billed once a doctor accepts. Free to cancel until then.</Text>
         </>
       )}
+      {payFor ? (
+        <PaymentSheet
+          visible
+          payable={{ type: 'consult', id: payFor.id }}
+          amount={payFor.payment?.amount ?? payFor.price}
+          title="Pay to connect with a doctor"
+          onPaid={() => {
+            setPayFor(null);
+            refresh();
+          }}
+          onClose={() => setPayFor(null)}
+        />
+      ) : null}
     </ScrollView>
   );
 }

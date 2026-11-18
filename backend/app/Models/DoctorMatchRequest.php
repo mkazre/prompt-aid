@@ -27,6 +27,9 @@ class DoctorMatchRequest extends Model
         'outcome_reason', 'base_fee', 'multiplier', 'price', 'price_breakdown', 'attempts',
         'expires_at', 'matched_at', 'doctor_profile_id', 'clinic_id', 'invoice_id',
         'cancelled_at', 'cancel_fee', 'radius_km', 'triage_submission_id',
+        // Patient request scenario (ScenarioEngine) + "choose the channel after a doctor accepts".
+        'scenario_level', 'scenario_version', 'scenario', 'channel_pending', 'chosen_channel',
+        'channel_chosen_at', 'channel_chosen_by',
     ];
 
     protected function casts(): array
@@ -43,6 +46,10 @@ class DoctorMatchRequest extends Model
             'expires_at' => 'datetime',
             'matched_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'scenario' => 'array',
+            'scenario_version' => 'integer',
+            'channel_pending' => 'boolean',
+            'channel_chosen_at' => 'datetime',
         ];
     }
 

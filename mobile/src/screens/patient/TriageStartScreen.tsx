@@ -37,7 +37,9 @@ export type TriageStackParamList = {
     observations: import('../../services/triage').Observations;
   };
   /** Orange → "speak to a doctor now" (Home stack). */
-  InstantConsult: { mode?: 'video' | 'callback' | 'in_person'; triageReference?: string } | undefined;
+  InstantConsult: { mode?: 'video' | 'callback' | 'in_person'; triageReference?: string; level?: import('../../services/triage').TriageLevel; auto?: boolean } | undefined;
+  /** Patient request scenario for a colour (Staff → Triage → Patient request scenarios). */
+  TriageScenario: { level: import('../../services/triage').TriageLevel; triageReference?: string };
 };
 
 type Props = NativeStackScreenProps<TriageStackParamList, 'TriageStart'>;

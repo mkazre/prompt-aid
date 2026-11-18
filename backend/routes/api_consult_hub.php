@@ -21,5 +21,7 @@ Route::prefix('consult-hub/{appointment}')->whereNumber('appointment')->group(fu
         Route::post('/connected', [ConsultHubController::class, 'connected']);
         Route::post('/end', [ConsultHubController::class, 'end']);
         Route::post('/request-callback', [ConsultHubController::class, 'requestCallback']);
+        // Patient request scenario: channel chosen after the doctor accepted.
+        Route::post('/choose', [ConsultHubController::class, 'choose']);
     });
 });

@@ -23,6 +23,7 @@ class DoctorProfileResource extends JsonResource
             'distance_km' => $this->when($this->resource->getAttribute('distance_km') !== null, fn () => (float) $this->resource->getAttribute('distance_km')),
             'specialization' => $this->specialization,
             'qualification' => $this->qualification,
+            'whatsapp_number' => $this->whatsapp_number,
             'experience_years' => $this->experience_years,
             'bio' => $this->bio,
             'consultation_fee' => (float) $this->consultation_fee,

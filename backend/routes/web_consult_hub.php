@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/connected', [ConsultHubController::class, 'connected'])->name('connected');
             Route::post('/end', [ConsultHubController::class, 'end'])->name('end');
             Route::post('/request-callback', [ConsultHubController::class, 'requestCallback'])->name('request-callback');
+            Route::post('/choose', [ConsultHubController::class, 'choose'])->name('choose');
         });
     });
 });

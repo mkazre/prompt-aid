@@ -194,6 +194,7 @@ class ConsultHubService
     {
         $role = $this->authorize($appt, $user);
         $appt->loadMissing(['patient.user', 'doctor.user']);
+        $this->maybeAutoPick($appt);
         $s = $this->existingSession($appt) ?? $this->session($appt);
         $now = now();
         $open = $this->isOpen($appt, $s);
@@ -237,7 +238,10 @@ class ConsultHubService
 
         $connectedSeconds = $this->liveSeconds($s, $now);
 
-        $statusText = $this->statusText($role, $appt, $s, $open, $ringing, $ringChannel, $liveCall, $doctorName, $patientName, $callback);
+        $matchReq = $this->matchRequest($appt);
+        $choice = $matchReq ? $this->channelChoice($appt, $role, $matchReq) : null;
+        $statusText = $this->choiceStatusText($role, $choice, $s, $open, $liveCall, $doctorName, $patientName)
+            ?? $this->statusText($role, $appt, $s, $open, $ringing, $ringChannel, $liveCall, $doctorName, $patientName, $callback);
 
         $out = [
             'appointment_id' => $appt->id,
@@ -286,6 +290,8 @@ class ConsultHubService
             ],
             'callback_requested' => $callbackRequested,
             'callback' => $callback,
+            // Patient request scenario: "Dr X accepted — choose video / voice / WhatsApp" (null when not used).
+            'channel_choice' => $choice,
             'urls' => [
                 'hub' => $role === 'doctor' ? self::doctorHubUrl($appt) : self::patientHubUrl($appt),
                 'request' => $role === 'patient' && Route::has('account.doctor-now') && DoctorMatchRequest::query()->where('appointment_id', $appt->id)->exists()
@@ -406,7 +412,7 @@ class ConsultHubService
      * incoming call with the channel); a call-back consult becomes a video
      * consult first (the patient's number is still there as fallback).
      */
-    public function startCall(Appointment $appt, User $doctorUser, string $channel): Appointment
+    public function startCall(Appointment $appt, User $doctorUser, string $channel, bool $override = false): Appointment
     {
         $this->requireDoctor($appt, $doctorUser);
         if (! in_array($channel, self::CALL_CHANNELS, true)) {
@@ -415,6 +421,14 @@ class ConsultHubService
         $s = $this->session($appt);
         if (! $this->isOpen($appt, $s)) {
             throw new DoctorMatchException('This consult has ended.', 409);
+        }
+        $req = $this->matchRequest($appt);
+        if ($req && $req->channel_pending) {
+            if (! $override) {
+                // Older doctor app builds auto-start video on accept: wait for the patient's choice instead.
+                throw new DoctorMatchException('Waiting for the patient to choose video, voice or WhatsApp. Tap "Start anyway" to call them now.', 409);
+            }
+            $this->resolvePending($req, $channel, 'doctor');
         }
         if ($appt->isCallback()) {
             $appt->mode = Appointment::MODE_VIDEO;
@@ -447,6 +461,11 @@ class ConsultHubService
             throw new DoctorMatchException('Unknown channel.', 422);
         }
         $this->session($appt);
+        if ($in && $role === 'patient' && ($req = $this->matchRequest($appt)) && $req->channel_pending) {
+            // The patient went straight into the call (e.g. an older app build's Video button): that is their choice.
+            $this->resolvePending($req, $channel, 'patient');
+            $this->alertDoctorOfChoice($appt->fresh(['patient.user', 'doctor.user']), $channel);
+        }
         $connectedChannel = null;
 
         $s = DB::transaction(function () use ($appt, $role, $channel, $in, &$connectedChannel) {
@@ -511,6 +530,9 @@ class ConsultHubService
         if (! $this->isOpen($appt)) {
             throw new DoctorMatchException('This consult has ended.', 409);
         }
+        if (($req = $this->matchRequest($appt)) && $req->channel_pending) {
+            $this->resolvePending($req, $via, 'doctor');
+        }
         if ($appt->isCallback()) {
             return $this->calls->markCalling($appt, $doctorUser->doctorProfile, $via);
         }
@@ -530,6 +552,9 @@ class ConsultHubService
         $s = $this->session($appt);
         if (! $this->isOpen($appt, $s)) {
             throw new DoctorMatchException('This consult has ended.', 409);
+        }
+        if (($req = $this->matchRequest($appt)) && $req->channel_pending) {
+            $this->resolvePending($req, $via, 'doctor');
         }
 
         $s = DB::transaction(function () use ($appt, $via) {
@@ -869,6 +894,297 @@ class ConsultHubService
             'ended_at' => $seg['ended_at'] ?? null,
             'seconds' => $this->segmentSeconds($seg, $now),
         ], $s->channels ?? []));
+    }
+
+    // ------------------------------------------------------------------
+    // Channel choice after accept (patient request scenarios)
+    // ------------------------------------------------------------------
+
+    public function matchRequest(Appointment $appt): ?DoctorMatchRequest
+    {
+        return DoctorMatchRequest::query()->where('appointment_id', $appt->id)->latest('id')->first();
+    }
+
+    /** E.164 digits of the doctor's consult WhatsApp number (doctor profile), if any. */
+    public static function doctorWhatsapp(Appointment $appt): ?string
+    {
+        $raw = $appt->doctor?->whatsapp_number;
+
+        return $raw ? ConsultCallService::normalisePhone($raw) : null;
+    }
+
+    /** wa.me link to the doctor with a prefilled message naming the consult. */
+    public static function doctorWhatsappUrl(Appointment $appt): ?string
+    {
+        $digits = self::doctorWhatsapp($appt);
+        if (! $digits) {
+            return null;
+        }
+        $patient = trim((string) ($appt->patient?->user?->name ?? ''));
+        $doctor = $appt->doctor?->user ? 'Dr. '.$appt->doctor->user->name : 'Doctor';
+        $text = 'Hi '.$doctor.', this is '.($patient !== '' ? $patient : 'your patient').' — Prompt Aid consult '.($appt->booking_ref ?: '#'.$appt->id).'. I would like a WhatsApp call, please.';
+
+        return 'https://wa.me/'.$digits.'?text='.rawurlencode($text);
+    }
+
+    /**
+     * Channels the patient may pick for this consult: the scenario's list,
+     * minus what can't work here — video / voice need an in-app room,
+     * WhatsApp needs the doctor's consult WhatsApp number (hidden otherwise),
+     * a phone call-back needs a patient number (asked for when missing).
+     *
+     * @return array<int, array{value: string, label: string, hint: string}>
+     */
+    public function choiceOptions(Appointment $appt, DoctorMatchRequest $req): array
+    {
+        $chs = (array) (($req->scenario['channels'] ?? null) ?: ['video', 'voice', 'whatsapp']);
+        $docWa = self::doctorWhatsapp($appt);
+        $hints = [
+            'video' => 'Face to face in the app — uses data',
+            'voice' => 'Audio only in the app — uses data, not airtime',
+            'whatsapp' => 'Message or call the doctor on WhatsApp',
+            'phone' => 'The doctor phones your number',
+            'chat' => 'Type and send photos in the app',
+        ];
+        $out = [];
+        foreach ($chs as $c) {
+            if (! isset(\App\Services\Triage\ScenarioEngine::CHANNELS[$c])) {
+                continue;
+            }
+            if (in_array($c, self::CALL_CHANNELS, true) && ! $appt->isVideo()) {
+                continue;
+            }
+            if ($c === 'whatsapp' && ! $docWa) {
+                continue;
+            }
+            $out[] = ['value' => $c, 'label' => \App\Services\Triage\ScenarioEngine::CHANNELS[$c], 'hint' => $hints[$c] ?? ''];
+        }
+        if (! $out) {
+            $out[] = ['value' => 'chat', 'label' => \App\Services\Triage\ScenarioEngine::CHANNELS['chat'], 'hint' => $hints['chat']];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Payload block for both sides (null when this consult does not use a
+     * channel choice).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function channelChoice(Appointment $appt, string $role, ?DoctorMatchRequest $req = null): ?array
+    {
+        $req ??= $this->matchRequest($appt);
+        if (! $req || (! $req->channel_pending && ! \App\Services\Doctors\DoctorMatchService::choosesAfterAccept($req) && $req->channel_chosen_by !== 'auto')) {
+            return null;
+        }
+        $appt->loadMissing(['patient.user', 'doctor.user']);
+        $options = $this->choiceOptions($appt, $req);
+        $values = array_column($options, 'value');
+        $default = (string) ($req->scenario['default_channel'] ?? 'video');
+        if (! in_array($default, $values, true)) {
+            $default = $values[0] ?? 'video';
+        }
+        $doctorName = $appt->doctor?->user ? 'Dr. '.$appt->doctor->user->name : 'Your doctor';
+        $chosen = $req->chosen_channel;
+        $autoPick = (int) ($req->scenario['auto_pick_after_seconds'] ?? 0);
+        $digits = $this->calls->callbackDigits($appt) ?? ConsultCallService::normalisePhone($appt->patient?->user?->phone);
+
+        $out = [
+            'pending' => (bool) $req->channel_pending,
+            'title' => str_replace('your doctor', $doctorName, (string) (($req->scenario['choice_title'] ?? null) ?: 'How would you like to talk to your doctor?')),
+            'options' => $options,
+            'default' => $default,
+            'chosen' => $chosen,
+            'chosen_label' => $chosen ? (\App\Services\Triage\ScenarioEngine::CHANNELS[$chosen] ?? $chosen) : null,
+            'chosen_by' => $req->channel_chosen_by,
+            'chosen_at' => $req->channel_chosen_at?->toIso8601String(),
+            'auto_pick_at' => $req->channel_pending && $autoPick > 0 && $req->matched_at ? $req->matched_at->copy()->addSeconds($autoPick)->toIso8601String() : null,
+        ];
+        if ($role === 'patient') {
+            $out['phone_display'] = ConsultCallService::displayPhone($digits);
+            // The doctor's WhatsApp link only once WhatsApp is (or can be) the patient's choice.
+            $out['whatsapp_url'] = in_array('whatsapp', $values, true) || $chosen === 'whatsapp' ? self::doctorWhatsappUrl($appt) : null;
+            $out['choose_url'] = Route::has('consult-hub.choose') ? route('consult-hub.choose', $appt->id) : null;
+        } else {
+            $out['patient_phone'] = $digits ? '+'.$digits : null;
+            $out['patient_phone_display'] = ConsultCallService::displayPhone($digits);
+            $out['tel_url'] = ConsultCallService::telUrl($digits);
+        }
+
+        return $out;
+    }
+
+    protected function choiceStatusText(string $role, ?array $choice, ConsultSession $s, bool $open, bool $liveCall, string $doctorName, string $patientName): ?string
+    {
+        if (! $choice || ! $open || $liveCall || $s->connected_at) {
+            return null;
+        }
+        $first = trim(strtok($patientName, ' ') ?: $patientName);
+        $labels = \App\Services\Triage\ScenarioEngine::humanList(array_map(fn ($o) => mb_strtolower($o['label']), $choice['options']), 'or');
+        if ($choice['pending']) {
+            return $role === 'patient'
+                ? $doctorName.' accepted · choose how you would like to talk'
+                : 'Waiting for '.$first.' to choose: '.$labels;
+        }
+
+        return match ($choice['chosen']) {
+            'whatsapp' => $role === 'patient'
+                ? 'Contact '.$doctorName.' on WhatsApp — tap “Open WhatsApp”'
+                : $first.' is contacting you on WhatsApp'.(! empty($choice['patient_phone_display']) ? ' ('.$choice['patient_phone_display'].')' : '').' — tap “Patient connected (WhatsApp)” once you are talking',
+            'phone' => $role === 'patient'
+                ? $doctorName.' will phone you'.(! empty($choice['phone_display']) ? ' on '.$choice['phone_display'] : '')
+                : $first.' asked you to phone them'.(! empty($choice['patient_phone_display']) ? ' on '.$choice['patient_phone_display'] : ''),
+            'chat' => $role === 'patient' ? 'Chat with '.$doctorName.' below' : $first.' chose chat — send the first message',
+            'video', 'voice' => $role === 'patient'
+                ? 'Waiting for '.$doctorName.' to join the '.($choice['chosen'] === 'voice' ? 'voice' : 'video').' call…'
+                : $first.' chose a '.($choice['chosen'] === 'voice' ? 'voice' : 'video').' call — join now',
+            default => null,
+        };
+    }
+
+    /**
+     * Patient: picks the channel after the doctor accepted. Idempotent for
+     * the same choice; a different choice once one is made → 409 (switch
+     * from the hub's own buttons instead).
+     */
+    public function chooseChannel(Appointment $appt, User $patientUser, string $channel, ?string $phone = null): Appointment
+    {
+        if ($this->authorize($appt, $patientUser) !== 'patient') {
+            throw new DoctorMatchException('Only the patient chooses the channel.', 403);
+        }
+        if (! $this->isOpen($appt)) {
+            throw new DoctorMatchException('This consult has ended.', 409);
+        }
+        $req = $this->matchRequest($appt);
+        if (! $req) {
+            throw new DoctorMatchException('This consult has no channel to choose.', 422);
+        }
+        $appt->loadMissing(['patient.user', 'doctor.user']);
+        if (! in_array($channel, array_column($this->choiceOptions($appt, $req), 'value'), true)) {
+            throw new DoctorMatchException($channel === 'whatsapp' ? 'WhatsApp is not available for this doctor. Please choose another option.' : 'That option is not available for this consult.', 422);
+        }
+        if (! $req->channel_pending) {
+            if ($req->chosen_channel === $channel) {
+                return $appt->fresh(['patient.user', 'doctor.user']);
+            }
+            throw new DoctorMatchException('You already chose '.mb_strtolower(\App\Services\Triage\ScenarioEngine::CHANNELS[$req->chosen_channel] ?? 'a channel').'. Use the buttons on the consult screen to switch.', 409);
+        }
+        if ($channel === 'phone') {
+            $digits = ConsultCallService::normalisePhone($phone) ?? $this->calls->callbackDigits($appt) ?? ConsultCallService::normalisePhone($patientUser->phone);
+            if (! $digits) {
+                throw new DoctorMatchException('Enter the number the doctor should call.', 422);
+            }
+            $phone = $digits;
+        }
+        if (! $this->resolvePending($req, $channel, 'patient')) {
+            // Lost a race (doctor started / auto-pick): report what was chosen.
+            $req->refresh();
+            if ($req->chosen_channel !== $channel) {
+                throw new DoctorMatchException('The consult already started by '.mb_strtolower(\App\Services\Triage\ScenarioEngine::CHANNELS[$req->chosen_channel] ?? 'another channel').'.', 409);
+            }
+
+            return $appt->fresh(['patient.user', 'doctor.user']);
+        }
+        $this->applyChannel($appt->fresh(['patient.user', 'doctor.user']), $req->fresh(), $channel, 'patient', $phone);
+
+        return $appt->fresh(['patient.user', 'doctor.user']);
+    }
+
+    /** Close the pending choice exactly once (conditional UPDATE). */
+    public function resolvePending(DoctorMatchRequest $req, string $channel, string $by): bool
+    {
+        $n = DoctorMatchRequest::query()->whereKey($req->id)->where('channel_pending', true)->update([
+            'channel_pending' => false,
+            'chosen_channel' => $channel,
+            'channel_chosen_at' => now(),
+            'channel_chosen_by' => $by,
+            'updated_at' => now(),
+        ]);
+
+        return $n === 1;
+    }
+
+    /**
+     * Effects of a chosen channel. Patient chose video / voice → they join
+     * the room themselves and the doctor is told to join; chosen by the
+     * scenario / auto-pick → the patient's screen rings (auto-joins).
+     * WhatsApp → the patient opens wa.me/<doctor>; the doctor is told the
+     * patient is contacting them and marks "Patient connected (WhatsApp)".
+     * Phone → the doctor is asked to phone the patient. Chat → doctor alerted.
+     */
+    public function applyChannel(Appointment $appt, DoctorMatchRequest $req, string $channel, string $by, ?string $phone = null): void
+    {
+        $appt->loadMissing(['patient.user', 'doctor.user']);
+        $s = $this->session($appt);
+        if (in_array($channel, self::CALL_CHANNELS, true)) {
+            if (! $s->opened_at) {
+                $s->forceFill(['opened_at' => now()])->save();
+            }
+            if ($by !== 'patient') {
+                $this->calls->ring($appt, true, $channel);
+            }
+        } elseif ($channel === 'phone') {
+            $attrs = ['callback_channel' => 'phone'];
+            if ($phone) {
+                $attrs['callback_phone'] = ConsultCallService::normalisePhone($phone) ?? $phone;
+            }
+            $appt->forceFill($attrs)->saveQuietly();
+        } elseif ($channel === 'whatsapp') {
+            $appt->forceFill(['callback_channel' => 'whatsapp'])->saveQuietly();
+        } elseif ($channel === 'chat' && ! $s->opened_at) {
+            $s->forceFill(['opened_at' => now()])->save();
+        }
+        $this->alertDoctorOfChoice($appt->fresh(['patient.user', 'doctor.user']), $channel);
+    }
+
+    protected function alertDoctorOfChoice(Appointment $appt, string $channel): void
+    {
+        $doctorUser = $appt->doctor?->user;
+        if (! $doctorUser) {
+            return;
+        }
+        $name = $appt->patient?->user?->name ?? 'Your patient';
+        $digits = $this->calls->callbackDigits($appt) ?? ConsultCallService::normalisePhone($appt->patient?->user?->phone);
+        [$title, $body] = match ($channel) {
+            'video' => [$name.' chose a video call', 'Join the video call now — the patient is waiting in the consult hub.'],
+            'voice' => [$name.' chose an in-app voice call', 'Join the voice call now — the patient is waiting in the consult hub.'],
+            'whatsapp' => [$name.' is contacting you on WhatsApp', 'Answer their WhatsApp message / call'.($digits ? ' ('.ConsultCallService::displayPhone($digits).')' : '').', then tap “Patient connected (WhatsApp)” in the consult hub.'],
+            'phone' => [$name.' asks you to phone them', 'Call '.(ConsultCallService::displayPhone($digits) ?? 'the patient').' now — the Call button is in the consult hub.'],
+            default => [$name.' chose chat', 'Send the first message in the consult hub.'],
+        };
+        $url = self::doctorHubUrl($appt);
+        $join = in_array($channel, self::CALL_CHANNELS, true) && $url ? $url.'?join='.$channel : $url;
+        try {
+            app(InAppNotifier::class)->send($doctorUser, 'appointment', $title, $body, ['type' => 'consult_hub', 'route' => 'consult_hub', 'appointment_id' => $appt->id, 'channel' => $channel, 'params' => ['appointment_id' => $appt->id, 'channel' => $channel], 'url' => $join]);
+            StaffNotifier::alert($doctorUser, $title, $body, icon: 'heroicon-o-video-camera', color: 'success', url: $join, actionLabel: 'Open consult');
+        } catch (Throwable $e) {
+            Log::warning('[ConsultHub] choice alert failed: '.$e->getMessage());
+        }
+    }
+
+    /** Scenario "pick the default automatically after N s" — runs lazily on every hub / request poll. */
+    public function maybeAutoPick(Appointment $appt): void
+    {
+        $req = $this->matchRequest($appt);
+        if (! $req || ! $req->channel_pending || ! $req->matched_at) {
+            return;
+        }
+        $secs = (int) ($req->scenario['auto_pick_after_seconds'] ?? 0);
+        if ($secs <= 0 || $req->matched_at->copy()->addSeconds($secs)->isFuture() || ! $this->isOpen($appt)) {
+            return;
+        }
+        $appt->loadMissing(['patient.user', 'doctor.user']);
+        $values = array_column($this->choiceOptions($appt, $req), 'value');
+        $default = (string) ($req->scenario['default_channel'] ?? 'video');
+        $channel = in_array($default, $values, true) ? $default : ($values[0] ?? 'video');
+        if ($this->resolvePending($req, $channel, 'auto')) {
+            try {
+                $this->applyChannel($appt, $req->fresh(), $channel, 'auto');
+            } catch (Throwable $e) {
+                Log::warning('[ConsultHub] auto-pick failed: '.$e->getMessage());
+            }
+        }
     }
 
     protected function notifyPatient(Appointment $appt, string $title, string $body, array $extra = []): void

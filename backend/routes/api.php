@@ -28,6 +28,8 @@ Route::middleware('throttle:90,1')->get('/search', \App\Http\Controllers\Api\Sea
 Route::get('/app-pages/{key}', [\App\Http\Controllers\Api\AccountController::class, 'page'])->where('key', 'terms|about|privacy');
 
 Route::post('/triage/submit', [TriageSubmissionController::class, 'store']);
+// Patient request scenario for a triage level: ordered steps + resolved numbers / links (app + web share one resolver).
+Route::middleware('throttle:120,1')->get('/triage/scenario/{level}', [\App\Http\Controllers\TriageScenarioController::class, 'show'])->where('level', 'red|orange|yellow|green');
 Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
 Route::get('/map-config', \App\Http\Controllers\Api\MapConfigController::class);
 Route::get('/app-links', fn () => response()->json(['data' => \App\Support\SiteLinks::forJs()]));

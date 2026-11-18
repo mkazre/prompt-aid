@@ -5,6 +5,8 @@ import { api } from '../../api/client';
 import { pa, paFonts, type } from '../../theme';
 import { PaButton, PaCard } from '../../components/pa';
 import { PaVerdictBanner } from '../../components/pa/triage-extras';
+import { ScenarioStepsView } from '../../components/pa/scenario-steps';
+import { getScenario, Scenario } from '../../services/scenarios';
 import { assess, TriageLevel } from '../../services/triage';
 import { useEmergencyContacts } from '../../services/emergencyContacts';
 import type { TriageStackParamList } from './TriageStartScreen';
@@ -82,6 +84,8 @@ export default function TriageResultScreen({ navigation, route }: Props) {
   const { selfReported, ageBand, pregnant, symptoms, discriminators, observations } = route.params;
   const { primary } = useEmergencyContacts();
   const [serverRef, setServerRef] = useState<string | null>(null);
+  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const [scenarioTried, setScenarioTried] = useState(false);
 
   const result = useMemo(
     () => assess({ selfReported, ageBand, pregnant, symptoms, discriminators, observations }),
@@ -103,6 +107,19 @@ export default function TriageResultScreen({ navigation, route }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result.level]);
 
+  // Patient request scenario for this colour (Staff → Triage → Patient request scenarios).
+  useEffect(() => {
+    let alive = true;
+    getScenario(result.level).then((sc) => {
+      if (!alive) return;
+      setScenario(sc);
+      setScenarioTried(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [result.level]);
+
   const advice = adviceFor(primary.phone)[result.level];
 
   return (
@@ -119,7 +136,11 @@ export default function TriageResultScreen({ navigation, route }: Props) {
           <PaButton title={`Call an ambulance now · ${primary.phone}`} onPress={() => Linking.openURL(primary.tel_url)} style={{ marginBottom: 16, backgroundColor: pa.signal }} />
         ) : null}
 
-        {result.level === 'orange' ? (
+        {scenario ? (
+          <View style={{ marginBottom: 16 }}>
+            <ScenarioStepsView scenario={scenario} navigation={navigation} triageReference={serverRef ?? undefined} />
+          </View>
+        ) : scenarioTried && result.level === 'orange' ? (
           <PaCard style={{ marginBottom: 16, borderWidth: 2, borderColor: pa.sats.orange }}>
             <Text style={styles.cardHead}>Speak to a doctor now</Text>
             <Text style={[styles.adviceLine, { marginTop: 6, marginBottom: 12 }]}>

@@ -56,6 +56,9 @@ Route::get('/emergency', [StaticPageController::class, 'emergency'])->name('emer
 Route::get('/emergency-results', [EmergencyResultsController::class, 'show'])->name('emergency.results');
 Route::post('/emergency/submit', [\App\Http\Controllers\TriageSubmissionController::class, 'store'])->name('emergency.submit');
 Route::post('/emergency/alert-contact', [EmergencyResultsController::class, 'alertContact'])->name('emergency.alert-contact');
+// Patient request scenarios (Staff → Triage → Patient request scenarios): what each colour does.
+Route::middleware('throttle:120,1')->get('/emergency/scenario/{level}.json', [\App\Http\Controllers\TriageScenarioController::class, 'show'])->where('level', 'red|orange|yellow|green')->name('emergency.scenario.json');
+Route::get('/emergency/scenario/{level}', [\App\Http\Controllers\TriageScenarioController::class, 'page'])->where('level', 'red|orange|yellow|green')->name('emergency.scenario');
 Route::get('/topic-of-the-month', [\App\Http\Controllers\HealthTopicController::class, 'current'])->name('topic.show');
 Route::get('/topics/{topic}', [\App\Http\Controllers\HealthTopicController::class, 'show'])->name('topic.view');
 Route::get('/testimonials/submit', [\App\Http\Controllers\HealthTopicController::class, 'createTestimonial'])->name('testimonials.create');

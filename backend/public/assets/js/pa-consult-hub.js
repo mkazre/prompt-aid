@@ -94,6 +94,88 @@
         return;
       }
       if (!isDoctor) handleRing(s.ring);
+      renderChoice(s);
+    }
+
+    // ------------------------------------------------------------ channel choice (patient request scenario)
+    var choiceBox = $('[data-hub-choice]'), choiceBusy = false, choiceJoined = {};
+    var CH_ICON = { video: '📹', voice: '🎙', whatsapp: '💬', phone: '📞', chat: '✉️' };
+    function renderChoice(s) {
+      var c = s && s.choice_hidden ? null : s && s.channel_choice;
+      if (!choiceBox) return;
+      if (!c || !s.is_open || (s.consult && s.consult.connected_at)) { choiceBox.hidden = true; return; }
+      var title = $('[data-hub-choice-title]'), line = $('[data-hub-choice-line]'), opts = $('[data-hub-choice-options]');
+      var phoneBox = $('[data-hub-choice-phone]');
+      if (!isDoctor && c.pending) {
+        choiceBox.hidden = false;
+        title.textContent = c.title || 'How would you like to talk to your doctor?';
+        line.textContent = (s.doctor && s.doctor.name ? s.doctor.name + ' accepted your request. ' : '') + 'Choose one — you can switch later.';
+        if (!opts.__built) {
+          opts.__built = true;
+          opts.innerHTML = (c.options || []).map(function (o) {
+            return '<button type="button" class="pa-hub__btn ' + (o.value === c.default ? 'pa-hub__btn--go' : (o.value === 'whatsapp' ? 'pa-hub__btn--wa' : 'pa-hub__btn--ghost')) + '" data-hub-choose="' + o.value + '" title="' + (o.hint || '') + '">' + (CH_ICON[o.value] || '') + ' ' + o.label + '</button>';
+          }).join('');
+          Array.prototype.forEach.call(opts.querySelectorAll('[data-hub-choose]'), function (b) {
+            b.addEventListener('click', function () { choose(b.getAttribute('data-hub-choose'), b); });
+          });
+        }
+        if (phoneBox) {
+          var pin = phoneBox.querySelector('input');
+          if (pin && !pin.value && c.phone_display) pin.value = c.phone_display;
+          phoneBox.hidden = !(c.options || []).some(function (o) { return o.value === 'phone'; });
+        }
+        return;
+      }
+      if (!isDoctor && c.chosen === 'whatsapp' && c.whatsapp_url) {
+        choiceBox.hidden = false;
+        title.textContent = 'WhatsApp with ' + ((s.doctor && s.doctor.name) || 'your doctor');
+        line.textContent = 'Open WhatsApp and send the message — then call or chat with the doctor there. Come back here if you need video or voice.';
+        opts.__built = false;
+        opts.innerHTML = '<a class="pa-hub__btn pa-hub__btn--wa" href="' + c.whatsapp_url + '" target="_blank" rel="noopener">💬 Open WhatsApp</a>';
+        if (phoneBox) phoneBox.hidden = true;
+        return;
+      }
+      if (isDoctor && c.pending) {
+        choiceBox.hidden = false;
+        title.textContent = 'Waiting for the patient to choose';
+        line.textContent = 'They can pick: ' + (c.options || []).map(function (o) { return o.label.toLowerCase(); }).join(', ') + '. You will be alerted as soon as they choose' + (c.auto_pick_at ? ' (or ' + (c.options[0] ? 'the default' : '') + ' starts automatically at ' + clock(c.auto_pick_at) + ')' : '') + '.';
+        opts.innerHTML = '';
+        return;
+      }
+      if (isDoctor && (c.chosen === 'video' || c.chosen === 'voice') && !inCall) {
+        var key = c.chosen + '@' + c.chosen_at;
+        choiceBox.hidden = false;
+        title.textContent = 'The patient chose a ' + (c.chosen === 'voice' ? 'voice' : 'video') + ' call';
+        line.textContent = 'Join now — they are waiting in the call.';
+        opts.innerHTML = '<button type="button" class="pa-hub__btn pa-hub__btn--go" data-hub-choice-join>Join ' + (c.chosen === 'voice' ? 'voice' : 'video') + ' call</button>';
+        opts.querySelector('[data-hub-choice-join]').onclick = function () { choiceJoined[key] = 1; choiceBox.hidden = true; startCall(c.chosen); };
+        return;
+      }
+      if (isDoctor && (c.chosen === 'whatsapp' || c.chosen === 'phone')) {
+        choiceBox.hidden = false;
+        title.textContent = c.chosen === 'whatsapp' ? 'The patient is contacting you on WhatsApp' : 'The patient asked you to phone them';
+        line.textContent = (c.patient_phone_display ? 'Their number: ' + c.patient_phone_display + '. ' : '') + 'Tap “Patient connected” below once you are talking — that starts the consult.';
+        opts.innerHTML = '';
+        var fb = $('[data-hub-fallback]'); if (fb) fb.open = true;
+        return;
+      }
+      choiceBox.hidden = true;
+    }
+    function choose(channel, btn) {
+      if (choiceBusy || !C.chooseUrl) return;
+      var body = { channel: channel };
+      var pin = $('#pa-hub-choice-phone');
+      if (channel === 'phone' && pin && pin.value.trim()) body.phone = pin.value.trim();
+      choiceBusy = true; if (btn) btn.disabled = true; note('');
+      req('POST', C.chooseUrl, body)
+        .then(function (j) {
+          render(j.data);
+          if (channel === 'video' || channel === 'voice') startCall(channel);
+          else if (channel === 'chat') focusChat();
+          else if (channel === 'whatsapp' && j.data && j.data.channel_choice && j.data.channel_choice.whatsapp_url) window.open(j.data.channel_choice.whatsapp_url, '_blank', 'noopener');
+        })
+        .catch(function (err) { note(err.message); if (btn) btn.disabled = false; })
+        .then(function () { choiceBusy = false; });
     }
 
     function tickTimer() {
@@ -189,7 +271,9 @@
         if (chan === 'chat') { focusChat(); return; }
         if (isDoctor) {
           b.disabled = true;
-          req('POST', C.startUrl, { channel: chan })
+          var pending = state.channel_choice && state.channel_choice.pending;
+          if (pending && !window.confirm('The patient has not chosen yet. Start a ' + (chan === 'voice' ? 'voice' : 'video') + ' call anyway?')) { b.disabled = false; return; }
+          req('POST', C.startUrl, { channel: chan, override: pending ? 1 : 0 })
             .then(function (j) { render(j.data); startCall(chan); })
             .catch(function (err) { note(err.message); })
             .then(function () { b.disabled = false; });

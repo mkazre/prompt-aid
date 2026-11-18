@@ -109,7 +109,8 @@ class ConsultPaymentService
         $req->forceFill([
             'payment_state' => self::SECURED,
             'payment_intent_id' => $intent->id,
-            'expires_at' => now()->addMinutes(max(1, DoctorNowSettings::int('doctor_now_request_timeout_minutes'))),
+            // Search window starts once paid (scenario "maximum wait", else On-demand doctors setting).
+            'expires_at' => now()->addMinutes(DoctorMatchService::requestTimeoutMinutes($req)),
         ])->save();
 
         if (! $this->preparing) {

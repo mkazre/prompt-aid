@@ -1,7 +1,7 @@
 @php
   $hubData = $this->hubData();
   $videoJsUrl = asset('assets/js/pa-video-call.js').'?v=2';
-  $hubJsUrl = asset('assets/js/pa-consult-hub.js').'?v=1';
+  $hubJsUrl = asset('assets/js/pa-consult-hub.js').'?v=2';
 @endphp
 <x-filament-panels::page>
   <div wire:ignore>

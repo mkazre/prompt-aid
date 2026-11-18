@@ -91,10 +91,12 @@ class ConsultHubController extends Controller
 
     public function start(Request $request, int $appointment): JsonResponse
     {
-        $channel = $request->validate(['channel' => ['nullable', 'in:video,voice']])['channel'] ?? 'video';
+        $v = $request->validate(['channel' => ['nullable', 'in:video,voice'], 'override' => ['nullable', 'boolean']]);
+        $channel = $v['channel'] ?? 'video';
 
-        return $this->guard(function () use ($request, $appointment, $channel) {
-            $appt = $this->hub->startCall(ConsultHubService::find($appointment), $request->user(), $channel);
+        return $this->guard(function () use ($request, $appointment, $channel, $v) {
+            // override: "Start anyway" while the patient is still choosing a channel.
+            $appt = $this->hub->startCall(ConsultHubService::find($appointment), $request->user(), $channel, (bool) ($v['override'] ?? false));
 
             return ['data' => $this->hub->payload($appt, $request->user()), 'rang' => $channel];
         });
@@ -135,6 +137,21 @@ class ConsultHubController extends Controller
             $this->hub->end($appt, $request->user(), $v['outcome'], $v['notes'] ?? null);
 
             return ['data' => $this->hub->payload($appt->fresh(['patient.user', 'doctor.user']), $request->user())];
+        });
+    }
+
+    /** Patient: chooses video / voice / WhatsApp / phone / chat after the doctor accepted (patient request scenario). */
+    public function choose(Request $request, int $appointment): JsonResponse
+    {
+        $v = $request->validate([
+            'channel' => ['required', 'in:video,voice,whatsapp,phone,chat'],
+            'phone' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        return $this->guard(function () use ($request, $appointment, $v) {
+            $appt = $this->hub->chooseChannel(ConsultHubService::find($appointment), $request->user(), $v['channel'], $v['phone'] ?? null);
+
+            return ['data' => $this->hub->payload($appt, $request->user())];
         });
     }
 
@@ -247,6 +264,7 @@ class ConsultHubController extends Controller
             'connectedUrl' => $base.'/connected',
             'endUrl' => $base.'/end',
             'callbackUrl' => $base.'/request-callback',
+            'chooseUrl' => $base.'/choose',
             'chatUrl' => $base.'/chat',
             'answerUrl' => url('/account/consults/'.$appt->id.'/ring/answer'),
             'declineUrl' => url('/account/consults/'.$appt->id.'/ring/decline'),

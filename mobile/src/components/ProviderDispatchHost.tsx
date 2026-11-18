@@ -43,7 +43,8 @@ export default function ProviderDispatchHost({
       if (card.service === 'shuttle') navigate('Main', { screen: 'Drive', params: { screen: 'Trip' } });
       // Video / call back: the consult hub (Start video / voice, chat, phone + WhatsApp fallback). The patient's phone is already ringing for video.
       else if (role === 'doctor' && card.service === 'doctor_now' && next?.appointment_id && (next?.mode === 'video' || next?.mode === 'callback'))
-        navigate('ConsultHub', { appointmentId: next.appointment_id, autoStart: next.mode === 'video' ? 'video' : undefined });
+        // Patient request scenario: while the patient picks video / voice / WhatsApp, wait in the hub (no auto-start).
+        navigate('ConsultHub', { appointmentId: next.appointment_id, autoStart: next.mode === 'video' && !next.channel_pending ? 'video' : undefined });
       else if (role === 'doctor') navigate('Main', { screen: 'DoctorDashboard', params: { screen: 'DoctorDashboardHome' } });
       else if (role === 'pharmacy_admin') navigate('Main', { screen: card.service === 'script_review' ? 'Scripts' : 'Orders' });
       else if (role === 'third_party') navigate('Main', { screen: 'Requests' });

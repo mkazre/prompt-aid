@@ -2,7 +2,7 @@
 @php
   $hubAppointmentId = (int) $appointment->id;
   $videoJsUrl = asset('assets/js/pa-video-call.js').'?v=2';
-  $hubJsUrl = asset('assets/js/pa-consult-hub.js').'?v=1';
+  $hubJsUrl = asset('assets/js/pa-consult-hub.js').'?v=2';
 @endphp
 {{-- This page answers its own rings (pa-consult-ring.js skips this appointment). --}}
 <script>window.PA_HUB_APPT = {{ $hubAppointmentId }};</script>

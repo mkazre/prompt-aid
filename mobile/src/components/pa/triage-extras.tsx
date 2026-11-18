@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { pa, paFonts, paRadius, type } from '../../theme';
 import type { TriageLevel } from '../../services/triage';
 import { featureOn, telUrl, useSiteContent, whatsappUrl } from '../../services/siteContent';
+import { prefetchScenarios } from '../../services/scenarios';
 
 /**
  * Extra components for the patient triage flow, built on top of the shared
@@ -35,15 +36,30 @@ export function TriagePromptModal({
   visible,
   onDismiss,
   onAction,
+  onLevel,
 }: {
   visible: boolean;
   onDismiss: () => void;
   onAction: (action: EmergencyScaleAction) => void;
+  /**
+   * Patient request scenarios: the colour's admin-defined flow (dial, start the
+   * doctor request, or the scenario screen). Without it the built-in actions run.
+   */
+  onLevel?: (level: TriageLevel) => void;
 }) {
   const content = useSiteContent();
   const { emergency } = content;
 
+  useEffect(() => {
+    if (visible && onLevel) prefetchScenarios();
+  }, [visible, onLevel]);
+
   function choose(level: TriageLevel) {
+    if (onLevel) {
+      onDismiss();
+      onLevel(level);
+      return;
+    }
     if (level === 'red') {
       Linking.openURL(telUrl(emergency.dispatch_phone));
       return;

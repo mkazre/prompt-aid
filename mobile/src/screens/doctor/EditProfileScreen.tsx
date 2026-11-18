@@ -9,6 +9,15 @@ import { Field, PrimaryButton, SoftCard } from '../../components/settings-ui';
 import { avatarUrl } from '../../services/app';
 import { pa, paFonts } from '../../theme';
 
+/** 27821234567 → 082 123 4567 (other countries: +digits). */
+function displayWa(digits: string) {
+  if (/^27\d{9}$/.test(digits)) {
+    const l = `0${digits.slice(2)}`;
+    return `${l.slice(0, 3)} ${l.slice(3, 6)} ${l.slice(6)}`;
+  }
+  return `+${digits}`;
+}
+
 /** Doctor profile editor — POST /doctor/profile (multipart when a photo is chosen). */
 export default function DoctorEditProfileScreen({ navigation }: any) {
   const { user, refreshMe } = useAuth();
@@ -17,6 +26,7 @@ export default function DoctorEditProfileScreen({ navigation }: any) {
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [specialization, setSpecialization] = useState(dp?.specialization ?? '');
   const [qualification, setQualification] = useState(dp?.qualification ?? '');
+  const [whatsapp, setWhatsapp] = useState(dp?.whatsapp_number ? displayWa(dp.whatsapp_number) : '');
   const [experience, setExperience] = useState(dp?.experience_years != null ? String(dp.experience_years) : '');
   const [bio, setBio] = useState(dp?.bio ?? '');
   const [accepting, setAccepting] = useState(dp?.is_accepting_appointments ?? true);
@@ -44,6 +54,7 @@ export default function DoctorEditProfileScreen({ navigation }: any) {
       phone: phone.trim(),
       specialization: specialization.trim(),
       qualification: qualification.trim(),
+      whatsapp_number: whatsapp.trim(),
       bio: bio.trim(),
       is_accepting_appointments: accepting ? '1' : '0',
     };
@@ -85,6 +96,10 @@ export default function DoctorEditProfileScreen({ navigation }: any) {
           <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
           <Field label="Speciality" value={specialization} onChangeText={setSpecialization} placeholder="e.g. General Practitioner" />
           <Field label="Qualification" value={qualification} onChangeText={setQualification} placeholder="e.g. MBChB (UCT)" />
+          <Field label="Consult WhatsApp number" value={whatsapp} onChangeText={setWhatsapp} keyboardType="phone-pad" placeholder="082 123 4567" maxLength={32} />
+          <Text style={{ fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: -8, marginBottom: 16 }}>
+            Patients who choose “WhatsApp call” after you accept an on-demand consult contact you on this number. Without it, WhatsApp is not offered for your consults.
+          </Text>
           <Field label="Years of experience" value={experience} onChangeText={(t) => setExperience(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" maxLength={2} />
           <Field label="Bio" value={bio} onChangeText={setBio} multiline maxLength={3000} style={{ minHeight: 100, textAlignVertical: 'top' }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>

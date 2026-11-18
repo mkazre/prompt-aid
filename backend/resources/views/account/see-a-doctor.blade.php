@@ -13,7 +13,20 @@
       'callbackTarget' => $callbackTarget,
       'dispatchPhone' => $dispatch?->phone,
       'dispatchTel' => $dispatch?->tel_url,
+      // Patient request scenario (?level=orange&auto=1): find the doctor first, channel after accept.
+      'level' => $scenarioLevel ?? null,
+      'plan' => $scenarioPlan ?? null,
+      'autoStart' => (bool) ($autoStart ?? false),
   ];
+  $dnPlan = $scenarioPlan ?? null;
+  $dnTiming = $dnPlan['channel_timing'] ?? null;
+  // Scenario asks for the channel AFTER a doctor accepts (or starts one itself): no channel question here.
+  $dnFindFirst = $dnPlan && $dnTiming !== 'before';
+  $dnPre = $dnTiming === 'before' ? (array) ($dnPlan['channels'] ?? []) : [];
+  if ($dnPre) {
+      $modes = array_values(array_filter($modes, fn ($m) => ($m === 'video' && array_intersect($dnPre, ['video', 'voice'])) || ($m === 'callback' && array_intersect($dnPre, ['phone', 'whatsapp']))));
+  }
+  $dnVoice = in_array('voice', $dnPre, true) && in_array('video', $modes, true);
   $dnPreMode = in_array($preMode, $modes, true) ? $preMode : ($modes[0] ?? 'video');
   $dnSpecSelected = $preSpecialty !== '' ? $preSpecialty : (string) $defaultSpecialty;
 @endphp
@@ -39,7 +52,7 @@
 
   {{-- ============ 1. Request form ============ --}}
   <section id="dn-form" class="pa-card {{ $current ? 'pa-hide' : '' }}">
-    <div class="pa-card-head"><h3>How should the doctor reach you?</h3><span class="pa-muted" style="font-size:12px">Doctors have {{ $offerSeconds }}s to accept</span></div>
+    <div class="pa-card-head"><h3>{{ $dnFindFirst ? 'Speak to a doctor now' : 'How should the doctor reach you?' }}</h3><span class="pa-muted" style="font-size:12px">Doctors have {{ $offerSeconds }}s to accept</span></div>
     <div class="pa-card-body">
       @if ($triageRef !== '')
         <div class="pa-note" style="margin-bottom:16px">Linked to your triage result <strong>{{ $triageRef }}</strong> — the doctor sees your answers before they accept.</div>
@@ -48,11 +61,21 @@
         <div class="pa-note-stop" style="margin-bottom:16px">Not breathing, chest pain or heavy bleeding? Don't wait — call <a href="{{ $dispatch->tel_url }}" style="color:inherit;font-weight:900">{{ $dispatch->phone }}</a> now.</div>
       @endif
 
+      @if ($dnFindFirst)
+        <div class="pa-note" style="margin-bottom:6px"><strong>We alert every available doctor at once — the first to accept takes your consult.</strong> Once a doctor has accepted, you choose how to talk{{ ! empty($dnPlan['channels']) ? ': '.\App\Services\Triage\ScenarioEngine::humanList(array_map(fn ($c) => mb_strtolower(\App\Services\Triage\ScenarioEngine::CHANNELS[$c] ?? $c), $dnPlan['channels']), 'or') : '' }}.@if (! empty($dnPlan['payment_note'])) {{ $dnPlan['payment_note'] }}@endif</div>
+        <input type="radio" name="dn-mode" value="any" checked hidden>
+      @else
       <div class="pa-dn-modes" role="radiogroup" aria-label="How to speak to the doctor" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
         @if (in_array('video', $modes, true))
         <label class="pa-dn-mode">
           <input type="radio" name="dn-mode" value="video" @checked($dnPreMode === 'video')>
           <span><strong style="font-size:17px">Video consult now</strong><span class="pa-muted">The doctor appears on your screen in minutes — your phone or computer rings and joins automatically.</span></span>
+        </label>
+        @endif
+        @if ($dnVoice)
+        <label class="pa-dn-mode">
+          <input type="radio" name="dn-mode" value="voice">
+          <span><strong style="font-size:17px">In-app voice call</strong><span class="pa-muted">Audio only, in the app — uses data, not airtime.</span></span>
         </label>
         @endif
         @if (in_array('callback', $modes, true))
@@ -62,9 +85,12 @@
         </label>
         @endif
       </div>
+      @if (! $dnPre)
       <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--pa-ink-soft)">
         <input type="radio" name="dn-mode" value="in_person" @checked($dnPreMode === 'in_person')> I'd rather go to a doctor's rooms near me (in person)
       </label>
+      @endif
+      @endif
 
       <div id="dn-callback" class="pa-hide" style="margin-top:18px">
         <div class="pa-formgrid">
@@ -127,7 +153,7 @@
       </div>
 
       <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <button type="button" class="pa-btn pa-btn-lg" id="dn-request">Start video consult now</button>
+        <button type="button" class="pa-btn pa-btn-lg" id="dn-request">{{ $dnFindFirst ? ($dnPlan['button_label'] ?? 'Request a doctor now') : 'Start video consult now' }}</button>
         <span class="pa-muted" style="font-size:12px">You're only billed once a doctor accepts. Free to cancel until then.</span>
       </div>
     </div>
@@ -186,6 +212,6 @@
 @include('payments.sheet')
 <script>window.PromptAidDoctorNow = @json($dnConfig);</script>
 @push('scripts')
-<script src="{{ asset('assets/js/doctor-now.js') }}?v=3"></script>
+<script src="{{ asset('assets/js/doctor-now.js') }}?v=4"></script>
 @endpush
 </x-layout>

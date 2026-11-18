@@ -26,26 +26,21 @@
 <div class="pa-container" style="padding-top:32px;padding-bottom:80px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:32px;align-items:start">
   <div>
 
-  @if($level === 'red')
+  @php
+    // Patient request scenario for this colour (Staff → Triage → Patient request scenarios).
+    $resultScenario = null;
+    if (\App\Services\Triage\ScenarioEngine::isLevel($level)) {
+        try {
+            $resultScenario = app(\App\Services\Triage\ScenarioEngine::class)->resolve($level, $submission?->reference);
+        } catch (\Throwable) {
+            $resultScenario = null;
+        }
+    }
+  @endphp
+  @if ($resultScenario)
+    <div style="margin-bottom:24px">@include('triage._steps', ['scenario' => $resultScenario, 'autoDial' => false])</div>
+  @elseif($level === 'red')
     <a class="pa-emergency-cta" style="margin-bottom:24px" href="{{ $primaryEmergencyContact?->tel_url }}">This is an emergency — call {{ $primaryEmergencyContact?->phone }} now</a>
-  @endif
-
-  @if($level === 'orange')
-    @php
-      $orangeQs = $submission ? '&triage='.urlencode($submission->reference) : '';
-      $orangeVideoUrl = url('/account/see-a-doctor').'?mode=video'.$orangeQs;
-      $orangeCallbackUrl = url('/account/see-a-doctor').'?mode=callback'.$orangeQs;
-    @endphp
-    <div class="pa-card" style="margin-bottom:24px;border:2px solid var(--pa-sats-orange)">
-      <div class="pa-card-head"><h3>Speak to a doctor now</h3></div>
-      <div class="pa-card-body">
-        <p style="margin:0 0 14px;font-size:15px;color:var(--pa-ink-soft)">Your request goes to every available doctor at once — the first to accept takes your consult.@if($submission) They will see your triage answers ({{ $submission->reference }}).@endif</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="pa-btn pa-btn-lg" href="{{ $orangeVideoUrl }}">Video consult now</a>
-          <a class="pa-btn-ghost pa-btn-lg" href="{{ $orangeCallbackUrl }}">Request a call back</a>
-        </div>
-      </div>
-    </div>
   @endif
 
   @if(! $hasRealLocation)

@@ -24,8 +24,10 @@ import { apiErrorMessage } from '../../api/client';
 import { ChatMessage, clockTime, fetchMessages, PickedFile, sendMessage } from '../../api/comms';
 import { initials } from '../../components/pa';
 import {
+  ChoiceChannel,
   ConsultHub,
   getHub,
+  hubChoose,
   HubCallChannel,
   hubCalling,
   hubConnected,
@@ -126,9 +128,20 @@ export default function ConsultHubScreen() {
         return;
       }
       if (h.role === 'doctor') {
+        const pending = !!h.channel_choice?.pending;
+        if (pending) {
+          // The patient is still choosing video / voice / WhatsApp: only start on an explicit "Start anyway".
+          const go = await new Promise<boolean>((resolve) =>
+            Alert.alert('The patient is still choosing', `Start a ${channel === 'voice' ? 'voice' : 'video'} call anyway?`, [
+              { text: 'Wait', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Start anyway', onPress: () => resolve(true) },
+            ]),
+          );
+          if (!go) return;
+        }
         setBusy(channel);
         try {
-          apply(await hubStartCall(appointmentId, channel)); // rings the patient with this channel
+          apply(await hubStartCall(appointmentId, channel, pending)); // rings the patient with this channel
         } catch (e) {
           Alert.alert('Could not start the call', apiErrorMessage(e));
           return;
@@ -144,6 +157,11 @@ export default function ConsultHubScreen() {
   // Arrived with a channel (doctor accepted a video consult / Join video / Join by voice).
   useEffect(() => {
     if (!hub || autoDone.current || !autoStart || !hub.is_open) return;
+    // Patient request scenario: never auto-start while the patient is choosing the channel.
+    if (hub.role === 'doctor' && hub.channel_choice?.pending) {
+      autoDone.current = true;
+      return;
+    }
     autoDone.current = true;
     if (hub.channels[autoStart].available) startChannel(autoStart, hub);
   }, [hub, autoStart, startChannel]);
@@ -155,6 +173,27 @@ export default function ConsultHubScreen() {
       if (done) Alert.alert(done);
     } catch (e) {
       Alert.alert('Not saved', apiErrorMessage(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /** Patient: chose how to talk after the doctor accepted (patient request scenario). */
+  async function choose(channel: ChoiceChannel) {
+    setBusy(`choose-${channel}`);
+    try {
+      const h = await hubChoose(appointmentId, channel, channel === 'phone' ? cbPhone.trim() || undefined : undefined);
+      apply(h);
+      if (channel === 'video' || channel === 'voice') {
+        navigation.navigate('VideoCall', { appointmentId, audioOnly: channel === 'voice', name: h.doctor.name });
+      } else if (channel === 'chat') {
+        setTab('chat');
+      } else if (channel === 'whatsapp' && h.channel_choice?.whatsapp_url) {
+        Linking.openURL(h.channel_choice.whatsapp_url).catch(() => Alert.alert('Could not open WhatsApp', 'Is WhatsApp installed?'));
+      }
+    } catch (e) {
+      Alert.alert('Could not start', apiErrorMessage(e));
+      load();
     } finally {
       setBusy(null);
     }
@@ -276,6 +315,9 @@ export default function ConsultHubScreen() {
           </View>
         ) : (
           <>
+            {hub.is_open && hub.channel_choice && !hub.consult.connected_at ? (
+              <ChoicePanel hub={hub} busy={busy} onChoose={choose} onJoin={(c) => startChannel(c)} phone={cbPhone} setPhone={setCbPhone} />
+            ) : null}
             <View style={styles.channels}>
               <ChannelButton
                 icon="videocam"
@@ -413,6 +455,90 @@ export default function ConsultHubScreen() {
       </ScrollView>
     </View>
   );
+}
+
+/** Patient: "Dr X accepted — how would you like to talk?"; doctor: waiting / join prompt. */
+function ChoicePanel({
+  hub,
+  busy,
+  onChoose,
+  onJoin,
+  phone,
+  setPhone,
+}: {
+  hub: ConsultHub;
+  busy: string | null;
+  onChoose: (c: ChoiceChannel) => void;
+  onJoin: (c: HubCallChannel) => void;
+  phone: string;
+  setPhone: (v: string) => void;
+}) {
+  const c = hub.channel_choice!;
+  const isDoctor = hub.role === 'doctor';
+  const icon: Record<string, keyof typeof Ionicons.glyphMap> = { video: 'videocam', voice: 'call', whatsapp: 'logo-whatsapp', phone: 'call-outline', chat: 'chatbubble-ellipses' };
+  if (!isDoctor && c.pending) {
+    return (
+      <View style={[styles.card, { marginBottom: 16, borderColor: pa.sats.orange, borderWidth: 2 }]}>
+        <Text style={styles.label}>{c.title}</Text>
+        <Text style={[styles.small, { marginBottom: 10 }]}>{hub.doctor.name} accepted your request. Choose one — you can switch later.</Text>
+        {c.options.map((o) => (
+          <Pressable
+            key={o.value}
+            onPress={() => onChoose(o.value)}
+            disabled={!!busy}
+            style={[styles.btn, o.value === 'whatsapp' ? styles.btnWa : o.value === c.default ? styles.btnGo : styles.btnInk, { marginTop: 8, flexDirection: 'row', gap: 8, opacity: busy && busy !== `choose-${o.value}` ? 0.6 : 1 }]}
+            accessibilityRole="button"
+          >
+            {busy === `choose-${o.value}` ? <ActivityIndicator color="#fff" /> : <Ionicons name={icon[o.value] ?? 'ellipse'} size={18} color="#fff" />}
+            <Text style={styles.btnText}>{o.label}</Text>
+          </Pressable>
+        ))}
+        {c.options.some((o) => o.value === 'phone') ? (
+          <TextInput value={phone} onChangeText={setPhone} placeholder="Number the doctor should call" keyboardType="phone-pad" style={[styles.input, { marginTop: 10 }]} maxLength={32} />
+        ) : null}
+      </View>
+    );
+  }
+  if (!isDoctor && c.chosen === 'whatsapp' && c.whatsapp_url) {
+    return (
+      <View style={[styles.card, { marginBottom: 16 }]}>
+        <Text style={styles.label}>WhatsApp with {hub.doctor.name}</Text>
+        <Text style={styles.small}>Open WhatsApp and send the message — then call or chat with the doctor there.</Text>
+        <Pressable onPress={() => Linking.openURL(c.whatsapp_url!)} style={[styles.btn, styles.btnWa, { marginTop: 10 }]}>
+          <Text style={styles.btnText}>Open WhatsApp</Text>
+        </Pressable>
+      </View>
+    );
+  }
+  if (isDoctor && c.pending) {
+    return (
+      <View style={[styles.card, { marginBottom: 16 }]}>
+        <Text style={styles.label}>Waiting for the patient to choose</Text>
+        <Text style={styles.small}>They can pick: {c.options.map((o) => o.label.toLowerCase()).join(', ')}. You will be alerted as soon as they choose.</Text>
+      </View>
+    );
+  }
+  if (isDoctor && (c.chosen === 'video' || c.chosen === 'voice') && !hub.consult.live_call) {
+    return (
+      <View style={[styles.card, { marginBottom: 16 }]}>
+        <Text style={styles.label}>The patient chose a {c.chosen === 'voice' ? 'voice' : 'video'} call</Text>
+        <Pressable onPress={() => onJoin(c.chosen as HubCallChannel)} style={[styles.btn, styles.btnGo, { marginTop: 10 }]}>
+          <Text style={styles.btnText}>Join {c.chosen === 'voice' ? 'voice' : 'video'} call</Text>
+        </Pressable>
+      </View>
+    );
+  }
+  if (isDoctor && (c.chosen === 'whatsapp' || c.chosen === 'phone')) {
+    return (
+      <View style={[styles.card, { marginBottom: 16 }]}>
+        <Text style={styles.label}>{c.chosen === 'whatsapp' ? 'The patient is contacting you on WhatsApp' : 'The patient asked you to phone them'}</Text>
+        <Text style={styles.small}>
+          {c.patient_phone_display ? `Their number: ${c.patient_phone_display}. ` : ''}Tap “Patient connected” below once you are talking — that starts the consult.
+        </Text>
+      </View>
+    );
+  }
+  return null;
 }
 
 function Row({ k, v }: { k: string; v: string }) {

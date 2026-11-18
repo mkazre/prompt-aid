@@ -305,6 +305,11 @@ class DoctorSettingsController extends Controller
             'experience_years' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:70'],
             'is_accepting_appointments' => ['sometimes', 'boolean'],
             'photo' => ['sometimes', 'image', 'max:5120'],
+            'whatsapp_number' => ['sometimes', 'nullable', 'string', 'max:32', function (string $attribute, $value, \Closure $fail) {
+                if (filled($value) && ! \App\Services\Consults\ConsultCallService::normalisePhone($value)) {
+                    $fail('Enter a valid WhatsApp number, e.g. 082 123 4567.');
+                }
+            }],
         ]);
 
         $userData = array_intersect_key($data, array_flip(['name', 'phone']));
@@ -322,7 +327,7 @@ class DoctorSettingsController extends Controller
             $user->update($userData);
         }
 
-        $doctor->update(array_intersect_key($data, array_flip(['bio', 'specialization', 'qualification', 'experience_years', 'is_accepting_appointments'])));
+        $doctor->update(array_intersect_key($data, array_flip(['bio', 'specialization', 'qualification', 'experience_years', 'is_accepting_appointments', 'whatsapp_number'])));
 
         return new UserResource($user->fresh(['doctorProfile']));
     }

@@ -117,7 +117,10 @@ export default function RootNavigator() {
     }
     // Consult hub updates (patient asked for a call back, consult ended, …).
     if ((data?.route === 'consult_hub' || data?.type === 'consult_hub') && callId) {
-      (navRef.navigate as (n: string, p?: object) => void).call(navRef, 'ConsultHub', { appointmentId: callId });
+      // Doctor: "patient chose a video / voice call — join now" opens straight into that call.
+      const ch = data?.channel ?? data?.params?.channel;
+      const autoStart = user?.role === 'doctor' && (ch === 'video' || ch === 'voice') ? ch : undefined;
+      (navRef.navigate as (n: string, p?: object) => void).call(navRef, 'ConsultHub', { appointmentId: callId, autoStart });
       return;
     }
     // On-demand request updates (matched, call back accepted, no doctor) open the request screen.

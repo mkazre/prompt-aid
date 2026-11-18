@@ -47,6 +47,8 @@ export interface DoctorMiniProfile {
   qualification?: string | null;
   experience_years?: number | null;
   consultation_fee?: number;
+  /** E.164 digits; patients who pick "WhatsApp call" after accept open wa.me/<this>. */
+  whatsapp_number?: string | null;
 }
 
 export type ThirdPartyCategory =

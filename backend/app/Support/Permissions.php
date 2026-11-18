@@ -119,6 +119,7 @@ class Permissions
         'broadcast-notifications.send' => ['group' => 'System', 'label' => 'Broadcast notifications'],
         'privacy-settings.manage' => ['group' => 'Privacy', 'label' => 'Privacy settings (retention, Information Officer)'],
         'doctor-now-settings.manage' => ['group' => 'System', 'label' => 'On-demand doctors settings'],
+        'triage-scenarios.manage' => ['group' => 'Triage', 'label' => 'Patient request scenarios (what RED / ORANGE / YELLOW / GREEN do, in which order) — super admin only'],
         'health-settings.manage' => ['group' => 'System', 'label' => 'Patient health settings (reminders, vitals ranges, feature switches)'],
         'reports.view' => ['group' => 'Overview', 'label' => 'Reports & analytics (platform-wide, with CSV downloads)'],
         'system-health.view' => ['group' => 'System', 'label' => 'System health (checks, run jobs, clear caches)'],

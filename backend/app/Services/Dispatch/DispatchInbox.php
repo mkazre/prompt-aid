@@ -223,7 +223,7 @@ class DispatchInbox
             'badges' => array_values(array_filter([
                 $req?->triageSubmission?->level ? strtoupper($req->triageSubmission->level) : null,
                 'Now',
-                match ($req?->mode) { 'video' => 'Video', 'callback' => 'Call back', default => 'In person' },
+                $req && \App\Services\Doctors\DoctorMatchService::choosesAfterAccept($req) ? 'Patient picks video / voice / WhatsApp' : match ($req?->mode) { 'video' => 'Video', 'callback' => 'Call back', default => 'In person' },
             ])),
             'mode' => $req?->mode,
             'appointment_id' => $o->appointment_id,
@@ -236,7 +236,7 @@ class DispatchInbox
             'dropoff' => null,
             'when' => null,
             'seconds_left' => $state === 'pending' ? $o->secondsLeft() : 0,
-            'timeout_s' => max(10, \App\Support\DoctorNowSettings::int('doctor_now_offer_timeout_seconds')),
+            'timeout_s' => $req ? $this->doctors->offerTimeoutFor($req) : max(10, \App\Support\DoctorNowSettings::int('doctor_now_offer_timeout_seconds')),
             'expires_at' => $o->expires_at?->toIso8601String(),
             'swipe' => false,
             'url' => '/staff/live-consults',
@@ -320,13 +320,13 @@ class DispatchInbox
                     'video', 'callback' => \App\Filament\Pages\ConsultHub::getUrl(['appointment' => $req->appointment_id], panel: 'admin'),
                     default => '/staff/live-consults',
                 };
-                $msg = match ($req->mode) {
+                $msg = $req->channel_pending ? 'Consult accepted — the patient is choosing video, voice or WhatsApp. Wait in the consult.' : match ($req->mode) {
                     'video' => 'Consult accepted — opening the video call. The patient is joining.',
                     'callback' => 'Consult accepted — call the patient now.',
                     default => 'Consult accepted. The patient has been notified.',
                 };
 
-                return ['message' => $msg, 'next' => ['type' => 'doctor_now', 'request_id' => $req->id, 'appointment_id' => $req->appointment_id, 'mode' => $req->mode, 'patient_name' => $req->appointment?->patient?->user?->name, 'url' => $url]];
+                return ['message' => $msg, 'next' => ['type' => 'doctor_now', 'request_id' => $req->id, 'appointment_id' => $req->appointment_id, 'mode' => $req->mode, 'channel_pending' => (bool) $req->channel_pending, 'chosen_channel' => $req->chosen_channel, 'patient_name' => $req->appointment?->patient?->user?->name, 'url' => $url]];
             }
             $offer = DispatchOffer::query()->where('provider_user_id', $user->id)->findOrFail($id);
             $job = $this->engine->accept($offer, $user);

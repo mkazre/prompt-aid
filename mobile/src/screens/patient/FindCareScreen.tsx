@@ -9,7 +9,7 @@ import { PaAvatar, PaBadge, PaEmptyState } from '../../components/pa';
 import { pa, paFonts, paRadius } from '../../theme';
 import WidgetHost from '../../widgets/WidgetHost';
 import { TriagePromptModal } from '../../components/pa/triage-extras';
-import { PaLiveStatus, navigateForEmergencyAction } from '../../components/pa/care-extras';
+import { PaLiveStatus, navigateForEmergencyAction, openEmergencyLevel } from '../../components/pa/care-extras';
 import { CareTab, featureOn, useSiteContent } from '../../services/siteContent';
 
 type Group = CareTab | 'video' | 'all';
@@ -106,7 +106,7 @@ export default function FindCareScreen({ navigation, route }: any) {
 
   return (
     <View style={styles.container}>
-      <TriagePromptModal visible={scaleOpen} onDismiss={() => setScaleOpen(false)} onAction={(a) => navigateForEmergencyAction(navigation, a)} />
+      <TriagePromptModal visible={scaleOpen} onDismiss={() => setScaleOpen(false)} onAction={(a) => navigateForEmergencyAction(navigation, a)} onLevel={(l) => openEmergencyLevel(navigation, l)} />
       <View style={[styles.head, { paddingTop: insets.top + 14 }]}>
         <Text style={styles.title}>Find care</Text>
       </View>

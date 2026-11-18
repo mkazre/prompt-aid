@@ -13,7 +13,10 @@
   var csrfMeta = document.querySelector('meta[name="csrf-token"]');
   var csrf = csrfMeta ? csrfMeta.getAttribute('content') : '';
   var state = { current: cfg.current, loc: null, pollTimer: null, quoteSeq: 0, busy: false, lastBody: null };
-  function modeLabel(m) { return m === 'video' ? 'Video consult' : m === 'callback' ? 'Call back' : 'In person'; }
+  function modeLabel(m, p) {
+    if (p && p.scenario && p.scenario.channel_timing === 'after' && !p.chosen_channel) return 'Video, voice or WhatsApp — you choose once a doctor accepts';
+    return m === 'video' ? 'Video consult' : m === 'callback' ? 'Call back' : m === 'any' ? 'Remote consult' : 'In person';
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -58,7 +61,7 @@
     if (!box || !specialty()) return;
     var seq = ++state.quoteSeq;
     box.innerHTML = '<div class="pa-muted" style="font-size:13px">Loading price…</div>';
-    api('GET', cfg.quoteUrl + '?specialty=' + encodeURIComponent(specialty()) + '&mode=' + encodeURIComponent(mode()))
+    api('GET', cfg.quoteUrl + '?specialty=' + encodeURIComponent(specialty()) + '&mode=' + encodeURIComponent(mode() === 'voice' ? 'video' : mode()))
       .then(function (json) {
         if (seq !== state.quoteSeq) return;
         var q = json.data;
@@ -90,7 +93,7 @@
     show('dn-inperson', m === 'in_person');
     show('dn-callback', m === 'callback');
     var b = $('dn-request');
-    if (b) b.textContent = m === 'video' ? 'Start video consult now' : m === 'callback' ? 'Request a call back' : 'Request a doctor now';
+    if (b && m !== 'any') b.textContent = m === 'video' ? 'Start video consult now' : m === 'voice' ? 'Start voice call now' : m === 'callback' ? 'Request a call back' : 'Request a doctor now';
     loadQuote();
   }
 
@@ -132,8 +135,8 @@
     }
     $('dn-search-line').textContent = line;
     var st = $('dn-search-title');
-    if (st) st.textContent = p.mode === 'callback' ? 'Finding a doctor to call you' : p.mode === 'video' ? 'Finding a doctor for your video consult' : 'Finding your doctor';
-    var meta = [esc(p.specialty), modeLabel(p.mode), money(p.price)];
+    if (st) st.textContent = p.scenario && p.scenario.channel_timing === 'after' ? 'Finding your doctor' : p.mode === 'callback' ? 'Finding a doctor to call you' : p.mode === 'video' ? 'Finding a doctor for your video consult' : 'Finding your doctor';
+    var meta = [esc(p.specialty), esc(modeLabel(p.mode, p)), money(p.price)];
     if (p.eta_seconds) meta.push('usually matched in ~' + fmtSecs(p.eta_seconds));
     meta.push('search ends in ' + fmtSecs(p.seconds_left));
     $('dn-search-meta').innerHTML = meta.join(' · ');
@@ -173,7 +176,15 @@
 
     var where = '';
     var actions = '';
-    if (p.mode === 'video') {
+    var cc = p.channel_choice;
+    if (cc && cc.pending) {
+      // Patient request scenario: the doctor accepted — now choose video / voice / WhatsApp (in the consult hub).
+      where = '<div class="pa-note"><strong>' + esc(d.name || 'Your doctor') + ' accepted.</strong> Choose how you would like to talk: ' +
+        esc((cc.options || []).map(function (o) { return o.label.toLowerCase(); }).join(', ')) + '.</div>';
+    } else if (cc && cc.chosen === 'whatsapp' && cc.whatsapp_url) {
+      where = '<div class="pa-note"><strong>WhatsApp with ' + esc(d.name || 'your doctor') + '.</strong> Open WhatsApp to message or call them.</div>';
+      actions += '<a class="pa-btn" href="' + esc(cc.whatsapp_url) + '" target="_blank" rel="noopener">Open WhatsApp</a>';
+    } else if (p.mode === 'video') {
       var joinUrl = p.call_url || p.video_url;
       where = p.ring
         ? '<div class="pa-note"><strong>' + esc(d.name || 'Your doctor') + ' is ready.</strong> Joining your video consult…</div>'
@@ -199,7 +210,7 @@
     } else {
       where = '<div class="pa-note">The doctor will message you with directions to their rooms.</div>';
     }
-    if (p.hub_url && (p.mode === 'video' || p.mode === 'callback')) actions = '<a class="pa-btn" href="' + esc(p.hub_url) + '">Open consult: video, voice &amp; chat</a>' + actions.replace('class="pa-btn"', 'class="pa-btn-ghost"');
+    if (p.hub_url && (p.mode === 'video' || p.mode === 'callback')) actions = '<a class="pa-btn" href="' + esc(p.hub_url) + '">' + (cc && cc.pending ? 'Choose how to talk to the doctor' : 'Open consult: video, voice &amp; chat') + '</a>' + actions.replace('class="pa-btn"', 'class="pa-btn-ghost"');
     actions += '<button class="pa-btn-ghost" type="button" data-dn="message">Message doctor</button>';
     if (p.can_cancel) actions += '<button class="pa-btn-ghost" type="button" data-dn="cancel">Cancel consult</button>';
     $('dn-m-where').innerHTML = where;
@@ -225,14 +236,22 @@
     $('dn-c-title').textContent = expired ? 'No doctor available right now' : 'Request cancelled';
     $('dn-c-msg').textContent = p.outcome_message || (expired ? 'No doctor accepted in time. You have not been charged.' : 'This request was cancelled.');
     var a = '';
+    var fb = p.fallback;
+    // Scenario fallback first ("nobody accepted": call emergency / book the next slot / wider search).
+    if (expired && fb && fb.action === 'call' && fb.tel) a += '<a class="pa-btn" href="' + esc(fb.tel) + '">' + esc(fb.label) + '</a>';
+    if (expired && fb && fb.action === 'book' && fb.url) a += '<a class="pa-btn" href="' + esc(fb.url) + '">' + esc(fb.label) + '</a>';
+    if (expired && fb && fb.action === 'retry' && fb.radius_km) state.retryRadius = fb.radius_km;
     if (expired) {
-      a += '<button type="button" class="pa-btn" data-dn="retry">Try again</button>';
+      a += '<button type="button" class="' + (fb && fb.action !== 'retry' ? 'pa-btn-ghost' : 'pa-btn') + '" data-dn="retry">' + esc(fb && fb.action === 'retry' ? fb.label : 'Try again') + '</button>';
       if (p.dispatch_tel) a += '<a class="pa-btn-ghost" href="' + esc(p.dispatch_tel) + '">Call dispatch · ' + esc(p.dispatch_phone || '') + '</a>';
       a += p.waitlisted
         ? '<span class="pa-badge is-go" style="align-self:center">We\'ll notify you when a ' + esc(p.specialty) + ' is online</span>'
         : '<button type="button" class="pa-btn-ghost" data-dn="waitlist">Notify me when one is online</button>';
     }
     if (p.book_url) a += '<a class="pa-btn-ghost" href="' + esc(p.book_url) + '">Book the next slot</a>';
+    (p.alternatives || []).forEach(function (s) {
+      if (s.url) a += '<a class="pa-btn-ghost" href="' + esc(s.url) + '">' + esc((s.settings && s.settings.label) || s.label) + '</a>';
+    });
     a += '<button type="button" class="pa-btn-ghost" data-dn="new">Start a new request</button>';
     $('dn-c-actions').innerHTML = a;
   }
@@ -254,7 +273,13 @@
     var p = state.current;
     if (state.busy) return;
     if (kind === 'new') { render(null); return; }
-    if (kind === 'retry') { if (state.lastBody) submit(state.lastBody, btn); else render(null); return; }
+    if (kind === 'retry') {
+      if (state.lastBody) {
+        if (state.retryRadius && state.lastBody.mode === 'in_person') state.lastBody.radius_km = state.retryRadius;
+        submit(state.lastBody, btn);
+      } else render(null);
+      return;
+    }
     if (kind === 'message') { $('dn-msg-form').submit(); return; }
     if (!p) return;
     if (kind === 'cancel') {
@@ -326,7 +351,9 @@
     if (state.busy) return;
     var m = mode();
     if (m === 'in_person' && !state.loc) { error('Share your location (or use your saved address) so we can find rooms near you.'); return; }
-    var body = { specialty: specialty(), mode: m };
+    var body = { specialty: specialty(), mode: m === 'voice' ? 'video' : m };
+    if (m === 'voice') body.channel = 'voice';
+    if (cfg.level) body.level = cfg.level;
     if (cfg.triageRef) body.triage_reference = cfg.triageRef;
     if (m === 'in_person') { body.lat = state.loc.lat; body.lng = state.loc.lng; var rk = $('dn-radius'); if (rk && rk.value) body.radius_km = Number(rk.value); }
     if (m === 'callback') {
@@ -345,5 +372,12 @@
 
   syncMode();
   render(state.current);
+
+  // Orange (or any scenario that finds the doctor first): tapping the colour starts the request
+  // straight away — no channel question; payment (if switched on) opens first.
+  if (cfg.autoStart && !state.current && reqBtn) {
+    try { var u = new URL(window.location.href); u.searchParams.delete('auto'); window.history.replaceState(null, '', u.toString()); } catch (e) { /* old browser */ }
+    reqBtn.click();
+  }
 })();
 /* ========================== END DOCTOR NOW ========================== */

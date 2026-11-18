@@ -23,6 +23,7 @@ import TriageFlagsScreen from '../screens/patient/TriageFlagsScreen';
 import TriageResultScreen from '../screens/patient/TriageResultScreen';
 import ConsultRoomScreen from '../screens/ConsultRoomScreen';
 import InstantConsultScreen from '../screens/patient/InstantConsultScreen';
+import TriageScenarioScreen from '../screens/patient/TriageScenarioScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import HealthArticlesScreen from '../screens/patient/HealthArticlesScreen';
 import HealthArticleDetailScreen from '../screens/patient/HealthArticleDetailScreen';
@@ -61,6 +62,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="TriageResult" component={TriageResultScreen as any} options={{ title: 'Your result', headerBackVisible: false }} />
       <HomeStack.Screen name="ConsultRoom" component={ConsultRoomScreen} options={{ headerShown: false }} />
       <HomeStack.Screen name="InstantConsult" component={InstantConsultScreen} options={{ title: 'See a doctor now' }} />
+      <HomeStack.Screen name="TriageScenario" component={TriageScenarioScreen} options={{ title: 'Your next steps' }} />
       <HomeStack.Screen name="HealthArticles" component={HealthArticlesScreen} options={{ title: 'Health articles' }} />
       <HomeStack.Screen name="HealthArticleDetail" component={HealthArticleDetailScreen} options={{ title: '' }} />
       <HomeStack.Screen name="Search" component={SearchScreen} options={{ headerShown: false, animation: 'fade' }} />

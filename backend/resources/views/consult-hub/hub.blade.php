@@ -63,6 +63,19 @@
         </div>
       </div>
 
+      {{-- Patient request scenario: "Dr X accepted — how would you like to talk?" (filled by pa-consult-hub.js). --}}
+      <div class="pa-hub__ring" data-hub-choice hidden style="background:rgba(228,112,30,.08);border-color:rgba(228,112,30,.45)">
+        <strong data-hub-choice-title></strong>
+        <span data-hub-choice-line></span>
+        <div class="pa-hub__row" data-hub-choice-options style="flex-wrap:wrap"></div>
+        @unless ($isDoctor)
+          <div data-hub-choice-phone hidden style="margin-top:6px">
+            <label class="pa-hub__label" for="pa-hub-choice-phone">Number the doctor should call</label>
+            <input class="pa-hub__input" id="pa-hub-choice-phone" type="tel" autocomplete="tel" maxlength="32" placeholder="082 123 4567">
+          </div>
+        @endunless
+      </div>
+
       <div class="pa-hub__channels" role="toolbar" aria-label="Connection options">
         <button type="button" class="pa-hub__ch" data-hub-ch="video">
           <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
@@ -100,7 +113,7 @@
             </div>
             <div class="pa-hub__row" style="margin-top:10px">
               <button type="button" class="pa-hub__btn pa-hub__btn--ghost" data-hub-connected="phone">Patient answered (phone)</button>
-              <button type="button" class="pa-hub__btn pa-hub__btn--ghost" data-hub-connected="whatsapp">Patient answered (WhatsApp)</button>
+              <button type="button" class="pa-hub__btn pa-hub__btn--ghost" data-hub-connected="whatsapp">Patient connected (WhatsApp)</button>
             </div>
             <p class="pa-hub__muted" style="font-size:12px">{{ $fallback['whatsapp_note'] }}</p>
           @else

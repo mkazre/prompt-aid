@@ -197,6 +197,36 @@ export interface ConsultHub {
   can_end?: boolean;
   // patient only
   emergency?: { phone: string | null; tel_url: string | null } | null;
+  /** Patient request scenario: "Dr X accepted — choose video / voice / WhatsApp" (absent on older servers). */
+  channel_choice?: ChannelChoice | null;
+}
+
+export type ChoiceChannel = 'video' | 'voice' | 'whatsapp' | 'phone' | 'chat';
+
+export interface ChannelChoice {
+  pending: boolean;
+  title: string;
+  options: { value: ChoiceChannel; label: string; hint: string }[];
+  default: ChoiceChannel;
+  chosen: ChoiceChannel | null;
+  chosen_label: string | null;
+  chosen_by: 'patient' | 'doctor' | 'auto' | null;
+  chosen_at: string | null;
+  auto_pick_at: string | null;
+  // patient
+  phone_display?: string | null;
+  /** wa.me/<doctor's consult WhatsApp> with a prefilled message (only when WhatsApp is offered / chosen). */
+  whatsapp_url?: string | null;
+  // doctor
+  patient_phone?: string | null;
+  patient_phone_display?: string | null;
+  tel_url?: string | null;
+}
+
+/** Patient: choose how to talk after the doctor accepted. */
+export async function hubChoose(appointmentId: number, channel: ChoiceChannel, phone?: string): Promise<ConsultHub> {
+  const { data } = await api.post(`/consult-hub/${appointmentId}/choose`, { channel, phone: phone || null });
+  return data.data as ConsultHub;
 }
 
 export async function getHub(appointmentId: number): Promise<ConsultHub> {
@@ -211,8 +241,9 @@ export async function hubPresence(appointmentId: number, channel: HubCallChannel
 }
 
 /** Doctor: Start video / Start voice — rings the patient with that channel. */
-export async function hubStartCall(appointmentId: number, channel: HubCallChannel): Promise<ConsultHub> {
-  const { data } = await api.post(`/consult-hub/${appointmentId}/start`, { channel });
+export async function hubStartCall(appointmentId: number, channel: HubCallChannel, override = false): Promise<ConsultHub> {
+  // override: "Start anyway" while the patient is still choosing a channel.
+  const { data } = await api.post(`/consult-hub/${appointmentId}/start`, override ? { channel, override: true } : { channel });
   return data.data as ConsultHub;
 }
 

@@ -13,7 +13,7 @@ import CommsHeaderIcons from '../../components/CommsHeaderIcons';
 import AnnouncementBanner from '../../components/AnnouncementBanner';
 import FeedbackPromptCard from '../../components/FeedbackPromptCard';
 import { TriagePromptModal } from '../../components/pa/triage-extras';
-import { navigateForEmergencyAction } from '../../components/pa/care-extras';
+import { navigateForEmergencyAction, openEmergencyLevel } from '../../components/pa/care-extras';
 import { STATUS_COLOURS, featureOn, useSiteContent, websiteUrl } from '../../services/siteContent';
 
 interface TopService { kind: string; group: string; id: number; name: string; rating_avg: number; rating_count: number }
@@ -104,6 +104,7 @@ export default function HomeScreen({ navigation }: any) {
         visible={scaleOpen}
         onDismiss={() => setScaleOpen(false)}
         onAction={(action) => navigateForEmergencyAction(navigation, action)}
+        onLevel={(level) => openEmergencyLevel(navigation, level)}
       />
 
       <Text style={styles.slogan}>{content.home.eyebrow}</Text>

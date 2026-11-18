@@ -57,6 +57,14 @@ class SiteLinks
                 'findCare' => route('doctors.index'),
                 'virtualConsult' => route('virtual-consult'),
                 'whatsapp' => self::whatsappUrl(),
+                // What each colour of the emergency popup opens (patient request scenarios; tel: = dial at once).
+                'triage' => (function () {
+                    try {
+                        return app(\App\Services\Triage\ScenarioEngine::class)->entryUrls();
+                    } catch (\Throwable) {
+                        return [];
+                    }
+                })(),
             ],
         ];
     }

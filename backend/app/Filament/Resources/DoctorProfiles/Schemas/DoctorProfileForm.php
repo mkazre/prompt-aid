@@ -36,6 +36,15 @@ class DoctorProfileForm
                     ->helperText('Overrides Staff → Payment settings → Upfront payments for this booking.'),
                 TextInput::make('deposit_percent')->label('Deposit % (if deposit)')->numeric()->minValue(1)->maxValue(100),
                 TextInput::make('registration_no'),
+                TextInput::make('whatsapp_number')->label('Consult WhatsApp number')->tel()->maxLength(32)
+                    ->placeholder('082 123 4567')
+                    ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                        if (filled($value) && ! \App\Services\Consults\ConsultCallService::normalisePhone($value)) {
+                            $fail('Enter a valid phone number, e.g. 082 123 4567 or +27 82 123 4567.');
+                        }
+                    })
+                    ->formatStateUsing(fn ($state) => $state ? \App\Services\Consults\ConsultCallService::displayPhone($state) : null)
+                    ->helperText('Patients who choose "WhatsApp call" after you accept an on-demand consult message / call you on this number. Without it, WhatsApp is not offered for your consults.'),
                 Select::make('status')
                     ->options(['active' => 'Active', 'inactive' => 'Inactive', 'pending_approval' => 'Pending Approval'])
                     ->required()

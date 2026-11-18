@@ -26,7 +26,14 @@ class DoctorProfile extends Model
         'consultation_fee', 'registration_no', 'signature', 'rating_avg', 'rating_count', 'status',
         'is_accepting_appointments', 'availability', 'current_lat', 'current_lng', 'location_updated_at',
         'offers_video', 'last_seen_at', 'last_offered_at', 'last_assigned_at',
+        'whatsapp_number',
     ];
+
+    /** Stored as E.164 digits (082 123 4567 → 27821234567) so wa.me links always work. */
+    public function setWhatsappNumberAttribute(?string $value): void
+    {
+        $this->attributes['whatsapp_number'] = \App\Services\Consults\ConsultCallService::normalisePhone($value);
+    }
 
     /**
      * Public traffic-light status shown to patients, driven by the doctor's

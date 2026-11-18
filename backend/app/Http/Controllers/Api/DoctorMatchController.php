@@ -34,10 +34,12 @@ class DoctorMatchController extends Controller
     {
         $data = $request->validate([
             'specialty' => ['nullable', 'string', 'max:255'],
-            'mode' => ['required', 'in:video,in_person,callback'],
+            'mode' => ['required', 'in:video,in_person,callback,any'],
         ]);
+        // "any" (channel chosen after accept) is priced as a remote video consult.
+        $mode = $data['mode'] === DoctorMatchService::MODE_ANY ? \App\Models\Appointment::MODE_VIDEO : $data['mode'];
 
-        return response()->json(['data' => $this->pricing->quote(($data['specialty'] ?? '') ?: (string) DoctorMatchService::defaultSpecialty(), $data['mode'])]);
+        return response()->json(['data' => $this->pricing->quote(($data['specialty'] ?? '') ?: (string) DoctorMatchService::defaultSpecialty(), $mode)]);
     }
 
     /** Patient: request an instant video/in-person match (back-compat: returns the appointment + `match`). */
@@ -46,7 +48,10 @@ class DoctorMatchController extends Controller
         $data = $request->validate([
             // Specialty defaults to GP / general (orange triage "speak to a doctor now").
             'specialty' => ['nullable', 'string', 'max:255'],
-            'mode' => ['required', 'in:video,in_person,callback'],
+            // "any" = find a doctor first; the patient request scenario decides when / how the channel is chosen.
+            'mode' => ['required', 'in:video,in_person,callback,any'],
+            'level' => ['nullable', 'in:red,orange,yellow,green'],
+            'channel' => ['nullable', 'in:video,voice,whatsapp,phone,chat'],
             'lat' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-90,90'],
             'lng' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-180,180'],
             'radius_km' => ['nullable', 'numeric', 'min:1', 'max:500'],
@@ -61,7 +66,7 @@ class DoctorMatchController extends Controller
         abort_unless($patient, 403);
 
         try {
-            $match = $this->match->start($patient, $data['specialty'] ?? null, $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : $patient->search_radius_km, \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note', 'triage_reference', 'bill_medical_aid']));
+            $match = $this->match->start($patient, $data['specialty'] ?? null, $data['mode'], isset($data['lat']) ? (float) $data['lat'] : null, isset($data['lng']) ? (float) $data['lng'] : null, isset($data['radius_km']) ? (float) $data['radius_km'] : null, \Illuminate\Support\Arr::only($data, ['callback_phone', 'callback_channel', 'callback_note', 'triage_reference', 'bill_medical_aid', 'channel']) + ['scenario_level' => $data['level'] ?? null, 'default_radius_km' => $patient->search_radius_km]);
         } catch (DoctorMatchException $e) {
             $open = $this->match->openRequestFor($patient);
 
