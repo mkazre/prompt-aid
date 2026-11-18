@@ -19,6 +19,8 @@ class DoctorMatchOffer extends Model
     protected $fillable = [
         'doctor_match_request_id', 'appointment_id', 'doctor_profile_id', 'status',
         'distance_km', 'offered_at', 'expires_at', 'responded_at',
+        // Orange practice-call flow: the practice offered (target 'practice' = its reception team answers).
+        'clinic_id', 'target',
     ];
 
     protected function casts(): array

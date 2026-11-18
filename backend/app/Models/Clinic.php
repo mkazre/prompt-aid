@@ -39,6 +39,12 @@ class Clinic extends Model
         return $this->belongsToMany(DoctorProfile::class, 'clinic_doctor');
     }
 
+    /** Reception team (users with role practice_reception) — practice calls. */
+    public function receptionists(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'practice_staff')->withPivot(['role', 'is_active'])->withTimestamps();
+    }
+
     public function services(): HasMany
     {
         return $this->hasMany(Service::class);

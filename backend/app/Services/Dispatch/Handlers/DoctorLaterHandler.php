@@ -56,6 +56,9 @@ class DoctorLaterHandler extends BaseHandler
             if (! $doctor->user) {
                 continue;
             }
+            if (class_exists(\App\Services\Billing\PracticeSubscription::class) && ! \App\Services\Billing\PracticeSubscription::canReceiveRequests($doctor)) {
+                continue; // practice subscription lapsed (only when enforcement is on)
+            }
             $ok = $avail->qualifiesAt($doctor->user, $from, $to) || $this->weeklyCovers($doctor, $from);
             if (! $ok) {
                 continue;

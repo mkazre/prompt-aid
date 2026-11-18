@@ -1,0 +1,49 @@
+/* Practice call page (patient website + staff panel). Own CSS: Filament's is purged. */
+#pa-pcall{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start;font-size:14px;color:#101012}
+@media (max-width:900px){#pa-pcall{grid-template-columns:minmax(0,1fr)}}
+.pa-pc-card{background:#fff;border:1px solid #E7E3DA;border-radius:14px;padding:16px;min-width:0}
+.pa-pc-card h2{font-size:20px;font-weight:900;margin:0 0 6px}
+.pa-pc-card h3{font-size:15px;font-weight:800;margin:14px 0 8px}
+.pa-pc-status{display:inline-block;font-weight:800;padding:4px 10px;border-radius:999px;background:#F2EFE8;margin-bottom:8px}
+.pa-pc-status.s-ringing{background:#FEF3C7}.pa-pc-status.s-connected{background:#DCFCE7;color:#14532D}
+.pa-pc-status.s-declined,.pa-pc-status.s-missed{background:#FEE2E2;color:#7F1D1D}
+.pa-pc-notice{display:flex;gap:8px;align-items:flex-start;background:#FFF7ED;border:1px solid #FDBA74;color:#7C2D12;border-radius:10px;padding:10px 12px;margin:8px 0;font-weight:600}
+.pa-pc-notice b{color:#C2410C}
+.pa-pc-who .sub,.pa-pc-booked .sub{color:#57534E;font-size:13px;margin-top:2px}
+.pa-pc-brief{margin:6px 0 0 18px;padding:0;color:#44403C;font-size:13px}
+.pa-pc-stage{min-height:300px;background:#0b0b0d;border-radius:12px;overflow:hidden;position:relative;margin-top:10px}
+.pa-pc-stage .pa-call{height:300px}
+.pa-pc-stage.is-ended{opacity:.6}
+#pa-pc-stage-msg{color:#fff;padding:16px;font-size:13px}
+.pa-pc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.pa-pc-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:999px;border:0;font-weight:800;cursor:pointer;text-decoration:none;font-size:14px}
+.pa-pc-btn.green{background:#1E8E3E;color:#fff}.pa-pc-btn.red{background:#C8102E;color:#fff}.pa-pc-btn.ghost{background:#fff;color:#101012;border:1px solid #CFC9BD}
+.pa-pc-btn:disabled{opacity:.5;cursor:not-allowed}
+.pa-pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#pa-pcall label{display:block;font-weight:700;font-size:13px;margin:8px 0}
+#pa-pcall input[type=text],#pa-pcall input[type=date],#pa-pcall input[type=time],#pa-pcall select,#pa-pcall textarea{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid #CFC9BD;border-radius:8px;font:inherit;background:#fff;color:#101012}
+#pa-pcall label.pa-pc-chk,#pa-pcall label.pa-pc-radio{display:flex;gap:8px;align-items:center;font-weight:600}
+#pa-pcall label.pa-pc-chk input[type=time]{display:inline-block;margin:0}
+.pa-pc-modes{display:flex;gap:16px;flex-wrap:wrap}
+.pa-pc-slots{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.pa-pc-slot{border:1px solid #CFC9BD;background:#fff;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer}
+.pa-pc-slot.off{text-decoration:line-through;opacity:.45;cursor:not-allowed}
+.pa-pc-slot.on{background:#1F4E7A;color:#fff;border-color:#1F4E7A}
+.pa-pc-booked{background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.pa-pc-booked .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#166534;font-weight:800}
+.pa-pc-muted{color:#78716C;font-size:13px}
+.pa-pc-link{color:#1F4E7A;font-weight:700}
+.pa-pc-quotes{margin:8px 0 0 18px;padding:0}
+.pa-pc-quote{display:grid;grid-template-columns:1fr auto;gap:2px 10px;width:100%;text-align:left;border:1px solid #CFC9BD;background:#fff;border-radius:10px;padding:10px 12px;margin:6px 0;cursor:pointer}
+.pa-pc-quote span{font-weight:900}.pa-pc-quote small{grid-column:1/-1;color:#78716C}
+.pa-pc-quote:hover{border-color:#1E8E3E}
+.pa-pc-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#DC2626;animation:paPcBlink 1.2s infinite}
+@keyframes paPcBlink{50%{opacity:.25}}
+.pa-pc-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#101012;color:#fff;padding:10px 16px;border-radius:10px;z-index:2147483001;font-weight:700;max-width:90vw}
+.pa-pc-toast.bad{background:#991B1B}
+.pa-pc-prompt{position:fixed;inset:0;z-index:2147483000;background:rgba(16,16,18,.95);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
+.pa-pc-prompt[hidden]{display:none}
+.pa-pc-prompt h2{font-size:26px;margin:8px 0 6px;color:#fff}
+.pa-pc-prompt .halo{width:104px;height:104px;border-radius:50%;margin:0 auto 16px;background:#2a2a2e;box-shadow:0 0 0 10px rgba(30,142,62,.25),0 0 0 22px rgba(30,142,62,.12);display:flex;align-items:center;justify-content:center;font-size:40px}
+.pa-pc-prompt .nt{font-size:13px;color:#FDBA74;margin:12px 0}
+@media (max-width:600px){.pa-pc-grid{grid-template-columns:1fr}}

@@ -29,6 +29,10 @@ class AppointmentPaymentService
         $clinic = $appointment->clinic;
         $policy = $doctor?->payment_policy ?: ($clinic?->payment_policy ?: PaymentSettings::str('appointment_payment_policy'));
         $policy = array_key_exists($policy, PaymentSettings::POLICIES) ? $policy : 'at_practice';
+        if (! PaymentSettings::consultPaymentsEnabled()) {
+            // Consultation fees are handled by the practice outside Prompt Aid.
+            $policy = 'at_practice';
+        }
         $pct = $doctor?->deposit_percent ?? $clinic?->deposit_percent ?? PaymentSettings::float('appointment_deposit_percent');
 
         return ['policy' => $policy, 'deposit_percent' => max(1, min(100, (float) $pct))];

@@ -38,7 +38,7 @@ class WebAuthController extends Controller
         // patientProfile. This is the website's public login form; staff
         // should normally use their panel's own /login route directly.
         $panelPath = match ($user->role) {
-            User::ROLE_SUPER_ADMIN, User::ROLE_CLINIC_ADMIN, User::ROLE_DOCTOR => '/staff',
+            User::ROLE_SUPER_ADMIN, User::ROLE_CLINIC_ADMIN, User::ROLE_DOCTOR, User::ROLE_PRACTICE_RECEPTION => '/staff',
             User::ROLE_PHARMACY_ADMIN => '/vendor',
             User::ROLE_THIRD_PARTY => '/partner',
             User::ROLE_DRIVER => '/driver',

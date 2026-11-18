@@ -272,6 +272,7 @@ class LedgerPoster
             'pharmacy' => 'Pharmacy order',
             'lab' => 'Lab booking',
             'subscription' => 'Subscription',
+            'practice_subscription' => 'Practice subscription',
             default => 'Payment',
         };
         $ref = $attrMeta['ride_ref'] ?? $attrMeta['order_no'] ?? $meta['reference'] ?? null;

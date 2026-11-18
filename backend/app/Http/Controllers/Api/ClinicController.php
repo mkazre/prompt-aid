@@ -17,6 +17,7 @@ class ClinicController extends Controller
         $geo = $request->filled('radius_km') ? \App\Support\GeoRadius::fromRequest($request) : null;
         $clinics = Clinic::query()
             ->where('status', 'active')
+            ->tap(fn ($q) => class_exists(\App\Services\Billing\PracticeSubscription::class) ? \App\Services\Billing\PracticeSubscription::scopeListed($q) : $q)
             ->when($geo, fn ($q) => \App\Support\GeoRadius::box($q, 'lat', 'lng', $geo))
             ->when($request->string('search')->isNotEmpty(), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
             ->when($request->string('city')->isNotEmpty(), fn ($q) => $q->where('city', $request->string('city')))
@@ -40,6 +41,7 @@ class ClinicController extends Controller
         $geo = $request->filled('radius_km') ? \App\Support\GeoRadius::fromRequest($request) : null;
         $doctors = DoctorProfile::query()
             ->where('status', 'active')
+            ->tap(fn ($q) => class_exists(\App\Services\Billing\PracticeSubscription::class) ? \App\Services\Billing\PracticeSubscription::scopeListed($q) : $q)
             ->when($geo, fn ($q) => $q->whereHas('clinics', fn ($cq) => \App\Support\GeoRadius::box($cq, 'clinics.lat', 'clinics.lng', $geo)))
             ->with(['user', 'clinics', 'availabilities' => fn ($q) => $q->where('is_active', true)])
             ->when($group === 'gp', fn ($q) => $q->generalPractitioners())
@@ -111,6 +113,7 @@ class ClinicController extends Controller
     {
         $doctors = DoctorProfile::query()
             ->where('status', 'active')
+            ->tap(fn ($q) => class_exists(\App\Services\Billing\PracticeSubscription::class) ? \App\Services\Billing\PracticeSubscription::scopeListed($q) : $q)
             ->where('is_accepting_appointments', true)
             ->with(['user', 'clinics'])
             ->orderByDesc('rating_avg')

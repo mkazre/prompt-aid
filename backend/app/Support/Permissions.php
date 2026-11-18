@@ -100,6 +100,9 @@ class Permissions
         'ledger-entries' => 'Finance',
         'payout-batches' => 'Finance',
         'payout-accounts' => 'Finance',
+        // Practice billing: platform plans + practice subscriptions (super_admin-only resources).
+        'practice-plans' => 'Finance',
+        'practice-subscriptions' => 'Finance',
     ];
 
     /**
@@ -134,6 +137,15 @@ class Permissions
         'payment-settings.manage' => ['group' => 'System', 'label' => 'Payment settings (PayFast / Paystack / Ozow credentials, routing) — super admin only'],
         'finance-overview.view' => ['group' => 'Finance', 'label' => 'Finance overview (platform revenue, outstanding provider balances) — super admin only'],
         'finance-settings.manage' => ['group' => 'Finance', 'label' => 'Finance settings (minimum payout, hold period, weekly batch) — super admin only'],
+        // Orange practice calls, call records and recordings.
+        'practice-calls.handle' => ['group' => 'Clinical', 'label' => 'Practice calls (answer urgent orange requests, in-app call with the patient, book during the call)'],
+        'call-logs.view' => ['group' => 'Clinical', 'label' => 'Calls & recordings (call logs — practice users see their own practice only)'],
+        'call-recordings.play' => ['group' => 'Clinical', 'label' => 'Play / download call recordings (every access is logged)'],
+        'call-recordings.manage' => ['group' => 'System', 'label' => 'Call recordings: legal hold, delete — super admin only'],
+        'practice-call-settings.manage' => ['group' => 'System', 'label' => 'Practice call settings (ringing, re-queue, shuttle timing) — super admin only'],
+        'recording-storage.manage' => ['group' => 'System', 'label' => 'Recording storage (Bunny.net, retention, JaaS webhook) — super admin only'],
+        'practice-billing.view' => ['group' => 'Finance', 'label' => 'Practice billing overview (MRR, renewals, failed payments) — super admin only'],
+        'practice-billing-settings.manage' => ['group' => 'Finance', 'label' => 'Practice billing settings (enforcement, gated features, grace period) — super admin only'],
     ];
 
     /**
@@ -193,19 +205,24 @@ class Permissions
         return match ($role) {
             User::ROLE_SUPER_ADMIN => '*',
 
-            User::ROLE_CLINIC_ADMIN => self::keysFor([
+            User::ROLE_CLINIC_ADMIN => array_merge(self::keysFor([
                 'appointments', 'clinics', 'doctor-profiles', 'encounters',
                 'lab-requests', 'patient-profiles', 'prescriptions', 'reviews',
                 'services', 'claims', 'invoices', 'medical-schemes', 'payments',
                 'orders', 'pharmacies', 'products', 'service-categories',
                 'third-party-profiles',
-            ]),
+            ]), ['practice-calls.handle', 'call-logs.view', 'call-recordings.play']),
 
-            User::ROLE_DOCTOR => self::keysFor([
+            User::ROLE_DOCTOR => array_merge(self::keysFor([
                 'appointments', 'doctor-profiles', 'encounters', 'lab-requests',
                 'patient-profiles', 'prescriptions', 'reviews', 'services',
                 'invoices', 'claims', 'conversations',
-            ]),
+            ]), ['practice-calls.handle', 'call-logs.view', 'call-recordings.play']),
+
+            User::ROLE_PRACTICE_RECEPTION => array_merge(
+                ['appointments.view', 'appointments.create', 'appointments.edit', 'patient-profiles.view'],
+                ['practice-calls.handle', 'call-logs.view', 'call-recordings.play'],
+            ),
 
             default => [],
         };

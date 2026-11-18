@@ -50,7 +50,7 @@ class DoctorMatchController extends Controller
             'specialty' => ['nullable', 'string', 'max:255'],
             // "any" = find a doctor first; the patient request scenario decides when / how the channel is chosen.
             'mode' => ['required', 'in:video,in_person,callback,any'],
-            'level' => ['nullable', 'in:red,orange,yellow,green'],
+            'level' => ['nullable', 'in:red,orange,yellow,green,virtual'],
             'channel' => ['nullable', 'in:video,voice,whatsapp,phone,chat'],
             'lat' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-90,90'],
             'lng' => ['required_if:mode,in_person', 'nullable', 'numeric', 'between:-180,180'],

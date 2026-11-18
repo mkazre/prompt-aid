@@ -30,6 +30,9 @@ class User extends Authenticatable implements FilamentUser
 
     public const ROLE_PHARMACY_ADMIN = 'pharmacy_admin';
 
+    /** Practice receptionist / secretary linked to one or more clinics (practice_staff). */
+    public const ROLE_PRACTICE_RECEPTION = 'practice_reception';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -164,6 +167,41 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === self::ROLE_PATIENT;
     }
 
+    public function isPracticeReception(): bool
+    {
+        return $this->role === self::ROLE_PRACTICE_RECEPTION;
+    }
+
+    /** Practices this user works at as reception (practice_staff). */
+    public function practiceStaff(): HasMany
+    {
+        return $this->hasMany(PracticeStaff::class);
+    }
+
+    /**
+     * Clinic ids this user acts for in practice calls / call records: reception team
+     * memberships, administered clinics, and a doctor's own practices.
+     *
+     * @return array<int, int>
+     */
+    public function practiceClinicIds(): array
+    {
+        $ids = [];
+        try {
+            if ($this->isPracticeReception()) {
+                $ids = $this->practiceStaff()->where('is_active', true)->pluck('clinic_id')->all();
+            } elseif ($this->isClinicAdmin()) {
+                $ids = $this->clinicsAdministered()->pluck('id')->all();
+            } elseif ($this->isDoctor() && $this->doctorProfile) {
+                $ids = $this->doctorProfile->clinics()->pluck('clinics.id')->all();
+            }
+        } catch (\Throwable) {
+            $ids = [];
+        }
+
+        return array_values(array_unique(array_map('intval', $ids)));
+    }
+
     /**
      * Fine-grained navigation/CRUD permission check for the Staff panel,
      * layered on top of (never replacing) the `role` enum's panel access
@@ -203,6 +241,7 @@ class User extends Authenticatable implements FilamentUser
                 self::ROLE_SUPER_ADMIN,
                 self::ROLE_CLINIC_ADMIN,
                 self::ROLE_DOCTOR,
+                self::ROLE_PRACTICE_RECEPTION,
             ], true),
             'vendor' => $this->role === self::ROLE_PHARMACY_ADMIN,
             'partner' => $this->role === self::ROLE_THIRD_PARTY,

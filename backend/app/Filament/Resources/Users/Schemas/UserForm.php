@@ -32,6 +32,7 @@ class UserForm
                         'doctor' => 'Doctor',
                         'driver' => 'Driver',
                         'patient' => 'Patient',
+                        'practice_reception' => 'Practice reception (link to a clinic under Clinics → Reception team)',
                     ])
                     ->required()
                     ->default('patient')

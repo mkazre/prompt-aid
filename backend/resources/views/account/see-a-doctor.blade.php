@@ -17,7 +17,11 @@
       'level' => $scenarioLevel ?? null,
       'plan' => $scenarioPlan ?? null,
       'autoStart' => (bool) ($autoStart ?? false),
+      // Consultation fees through Prompt Aid (Payment settings master switch, default OFF).
+      'consultPayments' => \App\Support\PaymentSettings::consultPaymentsEnabled(),
   ];
+  $dnPracticeFlow = ($scenarioPlan['flow'] ?? null) === 'practice';
+  $dnConsultPay = $dnConfig['consultPayments'];
   $dnPlan = $scenarioPlan ?? null;
   $dnTiming = $dnPlan['channel_timing'] ?? null;
   // Scenario asks for the channel AFTER a doctor accepts (or starts one itself): no channel question here.
@@ -62,7 +66,11 @@
       @endif
 
       @if ($dnFindFirst)
-        <div class="pa-note" style="margin-bottom:6px"><strong>We alert every available doctor at once — the first to accept takes your consult.</strong> Once a doctor has accepted, you choose how to talk{{ ! empty($dnPlan['channels']) ? ': '.\App\Services\Triage\ScenarioEngine::humanList(array_map(fn ($c) => mb_strtolower(\App\Services\Triage\ScenarioEngine::CHANNELS[$c] ?? $c), $dnPlan['channels']), 'or') : '' }}.@if (! empty($dnPlan['payment_note'])) {{ $dnPlan['payment_note'] }}@endif</div>
+        @if ($dnPracticeFlow)
+        <div class="pa-note" style="margin-bottom:6px"><strong>We alert every available GP practice at once — the first to accept calls you in the app</strong> and books your visit (in person or by video) on the call. They can also book you a shuttle. No payment is needed here.</div>
+        @else
+        <div class="pa-note" style="margin-bottom:6px"><strong>We alert every available doctor at once — the first to accept takes your consult.</strong> Once a doctor has accepted, you choose how to talk{{ ! empty($dnPlan['channels']) ? ': '.\App\Services\Triage\ScenarioEngine::humanList(array_map(fn ($c) => mb_strtolower(\App\Services\Triage\ScenarioEngine::CHANNELS[$c] ?? $c), $dnPlan['channels']), 'or') : '' }}.@if (! empty($dnPlan['payment_note']) && $dnConsultPay) {{ $dnPlan['payment_note'] }}@endif</div>
+        @endif
         <input type="radio" name="dn-mode" value="any" checked hidden>
       @else
       <div class="pa-dn-modes" role="radiogroup" aria-label="How to speak to the doctor" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
@@ -154,7 +162,7 @@
 
       <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <button type="button" class="pa-btn pa-btn-lg" id="dn-request">{{ $dnFindFirst ? ($dnPlan['button_label'] ?? 'Request a doctor now') : 'Start video consult now' }}</button>
-        <span class="pa-muted" style="font-size:12px">You're only billed once a doctor accepts. Free to cancel until then.</span>
+        <span class="pa-muted" style="font-size:12px">{{ $dnConsultPay ? 'You\'re only billed once a doctor accepts. Free to cancel until then.' : 'No consultation fee is charged in the app. Free to cancel.' }}</span>
       </div>
     </div>
   </section>
@@ -208,7 +216,9 @@
 </div>
 </div>
 
-@include('payments.plan-offer', ['scope' => 'telehealth_membership', 'heading' => 'Become a member: cheaper consults, priority matching'])
+@if ($dnConsultPay)
+  @include('payments.plan-offer', ['scope' => 'telehealth_membership', 'heading' => 'Become a member: cheaper consults, priority matching'])
+@endif
 @include('payments.sheet')
 <script>window.PromptAidDoctorNow = @json($dnConfig);</script>
 @push('scripts')

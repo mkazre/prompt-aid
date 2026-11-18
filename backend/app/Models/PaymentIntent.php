@@ -52,6 +52,7 @@ class PaymentIntent extends Model
         'subscription' => Subscription::class,
         'consult' => DoctorMatchRequest::class,
         'ride' => Ride::class,
+        'practice_subscription' => PracticeSubscription::class,
     ];
 
     protected $fillable = [

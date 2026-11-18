@@ -93,7 +93,7 @@ class LedgerEntryResource extends Resource
                 ])->query(fn (Builder $q, array $data) => $q->when($data['type'] ?? null, fn ($q, $t) => $q->where('account_type', $t))
                     ->when(($data['id'] ?? null) && ($data['type'] ?? null) !== 'platform', fn ($q) => $q->where('account_id', (int) $data['id']))),
                 SelectFilter::make('entry_type')->label('Entry type')->options(LedgerEntry::ENTRY_TYPES),
-                SelectFilter::make('service_type')->label('Service')->options(CommissionRule::SERVICES + ['subscription' => 'Subscriptions', 'other' => 'Other']),
+                SelectFilter::make('service_type')->label('Service')->options(CommissionRule::SERVICES + ['subscription' => 'Subscriptions', 'practice_subscription' => 'Practice subscriptions', 'other' => 'Other']),
                 Filter::make('dates')->schema([
                     DatePicker::make('from'),
                     DatePicker::make('until'),

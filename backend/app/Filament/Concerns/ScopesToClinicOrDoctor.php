@@ -53,6 +53,11 @@ trait ScopesToClinicOrDoctor
             return static::applyScope($query, static::doctorScope(), $user->doctorProfile->id, false);
         }
 
+        if ($user->isPracticeReception()) {
+            // Practice reception: only their practice(s), like a clinic admin.
+            return static::applyScope($query, static::clinicScope(), $user->practiceClinicIds() ?: [0], true);
+        }
+
         return $query;
     }
 

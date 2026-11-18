@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { CallbackChannel, CallbackInfo, displayPhone, RingPayload } from '../../services/consults';
 import { showIncomingCall } from '../../components/PatientCallHost';
 import PaymentSheet from '../../components/payments/PaymentSheet';
-import { getScenario, goToTarget, ScenarioPlan, ScenarioStep } from '../../services/scenarios';
+import { getScenario, goToTarget, ScenarioLevel, ScenarioPlan, ScenarioStep } from '../../services/scenarios';
 import type { ChannelChoice } from '../../services/consults';
 import type { TriageLevel } from '../../services/triage';
 
@@ -46,6 +46,17 @@ interface MatchPayload {
   /** Patient request scenario additions (absent on older servers). */
   payment?: { required: boolean; state: string; amount: number } | null;
   scenario?: { level: TriageLevel; version: number | null; channel_timing: string | null } | null;
+  /** 'practice' = orange practice call: the practice calls in the app and books the visit (no payment). */
+  flow?: 'practice' | 'doctor';
+  consult_payments?: boolean;
+  practice_call?: {
+    call_id: number | null;
+    call_status: string | null;
+    ringing: boolean;
+    practice_name: string | null;
+    booked: boolean;
+    booking: { mode_label: string; when_label: string; doctor_name: string | null; practice_name: string | null; practice_address: string | null; booking_ref: string; mode: string } | null;
+  } | null;
   channel_choice?: ChannelChoice | null;
   chosen_channel?: string | null;
   fallback?: { action: 'retry' | 'call' | 'book'; label: string; tel?: string | null; url?: string | null; radius_km?: number | null } | null;
@@ -79,7 +90,8 @@ export default function InstantConsultScreen({ navigation, route }: any) {
   const hubOpened = useRef<Record<number, true>>({});
   // Patient request scenario (Staff → Triage): orange default = find the doctor first,
   // the patient picks video / voice / WhatsApp only after a doctor accepted.
-  const level: TriageLevel | undefined = route?.params?.level;
+  const level: ScenarioLevel | undefined = route?.params?.level;
+  const practiceOpened = useRef<Record<number, true>>({});
   const [plan, setPlan] = useState<ScenarioPlan | null>(null);
   const [planLoaded, setPlanLoaded] = useState(!level);
   const loadedOnce = useRef(false);
@@ -100,6 +112,15 @@ export default function InstantConsultScreen({ navigation, route }: any) {
       if (m && m.status === 'searching' && m.payment?.required && !payShown.current[m.id]) {
         payShown.current[m.id] = true;
         setPayFor(m);
+      }
+      // Orange practice call: the practice accepted and is calling — open the call (once per call).
+      if (m && m.status === 'matched' && m.flow === 'practice') {
+        const pc = m.practice_call;
+        if (pc?.ringing && pc.call_id && !practiceOpened.current[pc.call_id]) {
+          practiceOpened.current[pc.call_id] = true;
+          navigation.navigate('PracticeCall', { callId: pc.call_id });
+        }
+        return m;
       }
       // Doctor accepted: straight to the connection options (once per consult).
       if (m && m.status === 'matched' && m.hub_url && (m.mode === 'video' || m.mode === 'callback') && !hubOpened.current[m.appointment_id]) {
@@ -283,9 +304,9 @@ export default function InstantConsultScreen({ navigation, route }: any) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <View style={styles.banner}>
-        <Text style={styles.bannerEyebrow}>{emergency.eyebrow} · Orange</Text>
+        <Text style={styles.bannerEyebrow}>{emergency.eyebrow} · {level === 'virtual' ? 'Virtual consult' : 'Orange'}</Text>
         <Text style={styles.bannerTitle}>Speak to a doctor now</Text>
-        <Text style={styles.bannerText}>Your request goes to every available doctor at once — the first to accept takes your consult.</Text>
+        <Text style={styles.bannerText}>{plan?.flow === 'practice' ? 'Your request goes to every available GP practice at once — the first to accept calls you in the app and books your visit. No payment in the app.' : 'Your request goes to every available doctor at once — the first to accept takes your consult.'}</Text>
       </View>
 
       <Pressable onPress={() => Linking.openURL(telUrl(emergency.dispatch_phone))} style={styles.stop}>
@@ -301,6 +322,27 @@ export default function InstantConsultScreen({ navigation, route }: any) {
             {match.seconds_left ? ` · ${Math.ceil(match.seconds_left / 60)} min left` : ''}
           </Text>
           {match.can_cancel ? <PaButton title="Cancel request" variant="ghost" onPress={cancel} loading={cancelling} style={{ marginTop: 12 }} /> : null}
+        </PaCard>
+      ) : active && match.status === 'matched' && match.flow === 'practice' ? (
+        <PaCard style={{ borderLeftWidth: 6, borderLeftColor: pa.go }}>
+          <Text style={[styles.cardTitle, { color: pa.go }]}>{match.practice_call?.booked ? 'Booked' : 'Accepted'}</Text>
+          <Text style={styles.cardTitle}>{match.practice_call?.practice_name ?? 'A practice'}</Text>
+          {match.practice_call?.booked && match.practice_call.booking ? (
+            <Text style={[styles.body, { marginTop: 8 }]}>
+              {match.practice_call.booking.mode_label} · {match.practice_call.booking.when_label}
+              {match.practice_call.booking.doctor_name ? ` · ${match.practice_call.booking.doctor_name}` : ''}
+              {match.practice_call.booking.mode === 'in_person' && match.practice_call.booking.practice_address ? `\n${match.practice_call.booking.practice_address}` : ''}
+              {`\nRef ${match.practice_call.booking.booking_ref} — in your Appointments.`}
+            </Text>
+          ) : (
+            <Text style={[styles.body, { marginTop: 8 }]}>
+              {match.practice_call?.ringing ? 'The practice is calling you in the app now — answer to book your visit.' : 'Open the call to talk to the practice and book your visit.'}
+            </Text>
+          )}
+          {match.practice_call?.call_id ? (
+            <PaButton title={match.practice_call.ringing ? 'Answer the call' : 'Open the call'} onPress={() => navigation.navigate('PracticeCall', { callId: match.practice_call!.call_id })} style={{ marginTop: 12 }} />
+          ) : null}
+          {match.can_cancel && !match.practice_call?.booked ? <PaButton title="Cancel request" variant="ghost" onPress={cancel} loading={cancelling} style={{ marginTop: 8 }} /> : null}
         </PaCard>
       ) : active && match.status === 'matched' ? (
         <PaCard style={{ borderLeftWidth: 6, borderLeftColor: pa.go }}>
@@ -385,12 +427,16 @@ export default function InstantConsultScreen({ navigation, route }: any) {
 
           {findFirst ? (
             <PaCard style={{ marginBottom: 14 }}>
-              <Text style={styles.cardTitle}>{sending ? 'Requesting a doctor…' : 'We alert every available doctor at once'}</Text>
+              <Text style={styles.cardTitle}>{sending ? 'Requesting a doctor…' : plan?.flow === 'practice' ? 'We alert every available practice at once' : 'We alert every available doctor at once'}</Text>
+              {plan?.flow === 'practice' ? (
+                <Text style={styles.body}>The first practice to accept calls you in the app (you tap Accept) and books your visit — in person or by video — on the call. They can also book you a shuttle.</Text>
+              ) : (
               <Text style={styles.body}>
                 The first doctor to accept takes your consult. Then you choose how to talk
                 {plan?.channels?.length ? `: ${plan.channels.map((c) => ({ video: 'video call', voice: 'in-app voice call', whatsapp: 'WhatsApp call', phone: 'phone call-back', chat: 'chat' } as Record<string, string>)[c] ?? c).join(', ')}` : ''}.
               </Text>
-              {plan?.payment_note ? <Text style={styles.muted}>{plan.payment_note}</Text> : null}
+              )}
+              {plan?.payment && plan?.payment_note ? <Text style={styles.muted}>{plan.payment_note}</Text> : null}
             </PaCard>
           ) : null}
           {findFirst ? null : (<>

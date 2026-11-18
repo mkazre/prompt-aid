@@ -114,7 +114,7 @@ class SubscriptionService
         if (abs($amount - (float) $sub->amount) > 0.01) {
             return 'renewal_amount_mismatch';
         }
-        PaymentIntent::query()->create([
+        $renewal = PaymentIntent::query()->create([
             'user_id' => $sub->user_id,
             'payable_type' => $sub->getMorphClass(),
             'payable_id' => $sub->id,
@@ -125,8 +125,12 @@ class SubscriptionService
             'gateway_ref' => $gatewayRef,
             'description' => 'Renewal: '.($sub->plan?->name ?? 'subscription'),
             'paid_at' => now(),
+            'captured_at' => now(),
+            'captured_amount' => $amount,
             'metadata' => ['renewal' => true],
         ]);
+        // Every renewal capture is platform revenue: post it to the ledger (was first payment only).
+        DB::afterCommit(fn () => $this->payments->fireCaptured($renewal->fresh(), $amount));
         $completed = (int) $sub->cycles_completed + 1;
         $done = $sub->cycles > 0 && $completed >= $sub->cycles;
         $sub->update([

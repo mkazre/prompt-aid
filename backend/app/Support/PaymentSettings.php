@@ -72,6 +72,13 @@ class PaymentSettings
         'payments_mock_when_unconfigured' => '1',
         'payments_intent_ttl_minutes' => '30',
 
+        // --- Consultation fees through the platform (master switch, Nov 2026: OFF —
+        // practices charge consultation fees outside Prompt Aid; practices pay a monthly
+        // platform subscription instead). Off = no consult invoice, no upfront hold,
+        // no consult cancellation fee, booked appointments are "pay at the practice".
+        // Shuttle and pharmacy payments are unaffected.
+        'consult_payments_enabled' => '0',
+
         // --- Upfront consult payment (doctor-now video / call back / in person) ---
         'consult_upfront_payment' => '1',
         'consult_payment_window_minutes' => '10',
@@ -100,6 +107,12 @@ class PaymentSettings
     ];
 
     public const POLICIES = ['full' => 'Pay in full when booking', 'deposit' => 'Pay a deposit when booking', 'at_practice' => 'Pay at the practice'];
+
+    /** Patients pay consultation fees through the platform (master switch, default off). */
+    public static function consultPaymentsEnabled(): bool
+    {
+        return self::bool('consult_payments_enabled');
+    }
 
     public static function int(string $key): int
     {

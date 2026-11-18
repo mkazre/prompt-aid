@@ -208,6 +208,8 @@
 @endphp
 <script>window.PA_RING = @json($paRingCfg);</script>
 <script src="{{ asset('assets/js/pa-consult-ring.js') }}?v=2" defer></script>
+{{-- "Your practice is calling you" (orange practice call) on any page. --}}
+@include('practice-calls.ring-poller')
 @endif
 @stack('scripts')
 </body>

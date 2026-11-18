@@ -88,11 +88,30 @@ class DispatchInbox
 
         if ($user->role === User::ROLE_DOCTOR && ($doctor = $user->doctorProfile)) {
             DoctorMatchOffer::query()->with(['matchRequest.patient.user', 'matchRequest.triageSubmission', 'matchRequest.appointment'])->where('doctor_profile_id', $doctor->id)
+                // Practice offers go to the practice's reception team, not to the GP.
+                ->where(fn ($q) => $q->whereNull('target')->orWhere('target', '!=', 'practice'))
                 ->where(fn ($q) => $q->where('status', DoctorMatchOffer::OFFERED)->orWhere('responded_at', '>=', now()->subSeconds(90)))
                 ->where('offered_at', '>=', now()->subMinutes(30))
                 ->latest('id')->limit(15)->get()
                 ->each(function (DoctorMatchOffer $o) use (&$offers, &$recent, $doctor) {
                     $card = $this->doctorNowCard($o, $doctor->id);
+                    if ($card['state'] === 'pending') {
+                        $offers[] = $card;
+                    } elseif (in_array($card['state'], ['taken', 'expired', 'cancelled'], true)) {
+                        $recent[] = $card;
+                    }
+                });
+        }
+
+        if ($user->role === User::ROLE_PRACTICE_RECEPTION && ($clinicIds = $user->practiceClinicIds())) {
+            // Orange practice-call requests offered to this user's practice(s).
+            DoctorMatchOffer::query()->with(['matchRequest.patient.user', 'matchRequest.triageSubmission', 'matchRequest.appointment', 'matchRequest.clinic'])
+                ->where('target', 'practice')->whereIn('clinic_id', $clinicIds)
+                ->where(fn ($q) => $q->where('status', DoctorMatchOffer::OFFERED)->orWhere('responded_at', '>=', now()->subSeconds(90)))
+                ->where('offered_at', '>=', now()->subMinutes(30))
+                ->latest('id')->limit(15)->get()
+                ->each(function (DoctorMatchOffer $o) use (&$offers, &$recent) {
+                    $card = $this->practiceCard($o);
                     if ($card['state'] === 'pending') {
                         $offers[] = $card;
                     } elseif (in_array($card['state'], ['taken', 'expired', 'cancelled'], true)) {
@@ -243,6 +262,42 @@ class DispatchInbox
         ];
     }
 
+    /** Practice offer (orange practice-call flow) for a reception team member. @return array<string, mixed> */
+    public function practiceCard(DoctorMatchOffer $o): array
+    {
+        $req = $o->matchRequest;
+        $state = 'pending';
+        if ($o->status !== DoctorMatchOffer::OFFERED || ! $o->expires_at || $o->expires_at->lt(now()->subSeconds(1)) || ! $req || $req->status !== DoctorMatchRequest::SEARCHING) {
+            $state = match (true) {
+                $o->status === DoctorMatchOffer::ACCEPTED => 'accepted',
+                $req && $req->status === DoctorMatchRequest::MATCHED && (int) $req->clinic_id !== (int) $o->clinic_id => 'taken',
+                $o->status === DoctorMatchOffer::DECLINED => 'declined',
+                $req && $req->status === DoctorMatchRequest::CANCELLED => 'cancelled',
+                default => 'expired',
+            };
+        }
+        $card = $this->doctorNowCard($o, (int) $o->doctor_profile_id);
+        $name = (string) ($req?->patient?->user?->name ?? 'Patient');
+
+        return array_merge($card, [
+            'state' => $state,
+            'service_label' => 'Urgent patient (orange)',
+            'title' => 'Urgent patient needs a booking NOW',
+            'subtitle' => 'Accept → an in-app call with '.trim(strtok($name, ' ') ?: $name).' rings straight away',
+            'badges' => array_values(array_filter([
+                $req?->triageSubmission?->level ? strtoupper($req->triageSubmission->level) : ($req?->scenario_level ? strtoupper((string) $req->scenario_level) : null),
+                'Now',
+                'In-app call',
+                'First practice to accept',
+            ])),
+            'lines' => $req && $state === 'pending' ? $this->doctors->offerLines($req) : [],
+            'earning' => null,
+            'fare' => null,
+            'seconds_left' => $state === 'pending' ? $o->secondsLeft() : 0,
+            'url' => '/staff',
+        ]);
+    }
+
     /** @return array<string, mixed> */
     public function jobCard(DispatchOffer $o): array
     {
@@ -308,10 +363,19 @@ class DispatchInbox
 
                 return ['message' => 'Trip accepted. Head to the pickup point.', 'next' => ['type' => 'ride', 'ride_id' => $ride->id, 'url' => '/driver']];
             }
+            if ($kind === 'dm' && $user->role === User::ROLE_PRACTICE_RECEPTION) {
+                $offer = DoctorMatchOffer::query()->where('target', 'practice')->whereIn('clinic_id', $user->practiceClinicIds() ?: [0])->findOrFail($id);
+                $req = $this->doctors->acceptForPractice($offer, $user);
+
+                return $this->practiceNext($req, $user);
+            }
             if ($kind === 'dm') {
                 $doctor = $user->doctorProfile;
                 $offer = DoctorMatchOffer::query()->where('doctor_profile_id', $doctor?->id)->findOrFail($id);
                 $req = $this->doctors->accept($offer, $doctor);
+                if ($req->flow === 'practice') {
+                    return $this->practiceNext($req, $user);
+                }
 
                 // Video → straight into the in-panel call (the patient's screen is ringing);
                 // call back → the call card with Call / WhatsApp buttons.
@@ -340,10 +404,48 @@ class DispatchInbox
         }
     }
 
+    /** After a practice accepted: straight into the in-app call (rings both sides). @return array<string, mixed> */
+    protected function practiceNext(DoctorMatchRequest $req, User $user): array
+    {
+        $call = \App\Models\CallLog::query()->where('doctor_match_request_id', $req->id)->latest('id')->first();
+        $url = $call && class_exists(\App\Filament\Pages\PracticeCallPage::class)
+            ? \App\Filament\Pages\PracticeCallPage::getUrl(['call' => $call->id], panel: 'admin')
+            : '/staff';
+
+        return [
+            'message' => 'Accepted — the in-app call with '.($req->appointment?->patient?->user?->name ?? 'the patient').' is ringing. Answer it to book the visit.',
+            'next' => [
+                'type' => 'practice_call',
+                'request_id' => $req->id,
+                'appointment_id' => $req->appointment_id,
+                'call_id' => $call?->id,
+                'mode' => $req->mode,
+                'flow' => 'practice',
+                'channel_pending' => false,
+                'chosen_channel' => 'voice',
+                'patient_name' => $req->appointment?->patient?->user?->name,
+                'url' => $url,
+            ],
+        ];
+    }
+
     public function decline(User $user, string $key, ?string $reason = null): void
     {
         [$kind, $id] = $this->parseKey($key);
         try {
+            if ($kind === 'dm' && $user->role === User::ROLE_PRACTICE_RECEPTION) {
+                $offer = DoctorMatchOffer::query()->where('target', 'practice')->whereIn('clinic_id', $user->practiceClinicIds() ?: [0])->findOrFail($id);
+                if ($offer->status === DoctorMatchOffer::OFFERED) {
+                    DoctorMatchOffer::query()->whereKey($offer->id)->where('status', DoctorMatchOffer::OFFERED)
+                        ->update(['status' => DoctorMatchOffer::DECLINED, 'responded_at' => now(), 'updated_at' => now()]);
+                    $this->doctors->bumpOfferedPractice((int) $offer->doctor_match_request_id);
+                    if ($offer->matchRequest) {
+                        $this->doctors->progress($offer->matchRequest);
+                    }
+                }
+
+                return;
+            }
             if ($kind === 'ride') {
                 $driver = $user->driverProfile;
                 $offer = RideOffer::query()->where('driver_profile_id', $driver?->id)->findOrFail($id);

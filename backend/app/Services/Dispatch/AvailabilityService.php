@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Cache;
  */
 class AvailabilityService
 {
-    public const PROVIDER_ROLES = [User::ROLE_DOCTOR, User::ROLE_DRIVER, User::ROLE_PHARMACY_ADMIN, User::ROLE_THIRD_PARTY];
+    public const PROVIDER_ROLES = [User::ROLE_DOCTOR, User::ROLE_DRIVER, User::ROLE_PHARMACY_ADMIN, User::ROLE_THIRD_PARTY, User::ROLE_PRACTICE_RECEPTION];
 
     public static function isProvider(?User $user): bool
     {

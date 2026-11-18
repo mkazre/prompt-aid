@@ -29,7 +29,7 @@ Route::get('/app-pages/{key}', [\App\Http\Controllers\Api\AccountController::cla
 
 Route::post('/triage/submit', [TriageSubmissionController::class, 'store']);
 // Patient request scenario for a triage level: ordered steps + resolved numbers / links (app + web share one resolver).
-Route::middleware('throttle:120,1')->get('/triage/scenario/{level}', [\App\Http\Controllers\TriageScenarioController::class, 'show'])->where('level', 'red|orange|yellow|green');
+Route::middleware('throttle:120,1')->get('/triage/scenario/{level}', [\App\Http\Controllers\TriageScenarioController::class, 'show'])->where('level', 'red|orange|yellow|green|virtual');
 Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
 Route::get('/map-config', \App\Http\Controllers\Api\MapConfigController::class);
 Route::get('/app-links', fn () => response()->json(['data' => \App\Support\SiteLinks::forJs()]));
@@ -89,6 +89,8 @@ require __DIR__.'/api_health.php';
 require __DIR__.'/api_support.php';
 // Online payments: webhooks (public), plans (public), intents + subscriptions (auth inside).
 require __DIR__.'/api_payments.php';
+// Orange practice calls + JaaS recording webhook (own auth:sanctum group inside).
+require __DIR__.'/api_practice_calls.php';
 
 // --- Authenticated (any role) ---
 Route::middleware('auth:sanctum')->group(function () {

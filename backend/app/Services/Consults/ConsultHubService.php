@@ -516,6 +516,8 @@ class ConsultHubService
         if ($connectedChannel) {
             $this->markConnected($s, $appt, $connectedChannel);
         }
+        // Call records / consultation evidence (join + leave per participant).
+        app(\App\Services\PracticeCalls\CallLogService::class)->consultPresence($appt, $user, $channel, $in);
 
         return $s->fresh();
     }
@@ -700,6 +702,7 @@ class ConsultHubService
 
         $this->notifyEnded($appt, $outcome);
         $this->fireEnded($appt, $outcome);
+        app(\App\Services\PracticeCalls\CallLogService::class)->consultEnded($appt, $user, $outcome);
 
         return $s->fresh();
     }

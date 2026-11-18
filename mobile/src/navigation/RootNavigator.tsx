@@ -5,6 +5,9 @@ import { Linking } from 'react-native';
 import { useAlerts } from '../services/alerts';
 import ProviderDispatchHost from '../components/ProviderDispatchHost';
 import PatientCallHost from '../components/PatientCallHost';
+import PracticeCallHost from '../components/PracticeCallHost';
+import PracticeCallScreen from '../screens/comms/PracticeCallScreen';
+import PracticeTabs from './PracticeTabs';
 import ConsultCardScreen from '../screens/comms/ConsultCardScreen';
 import ConsultHubScreen from '../screens/comms/ConsultHubScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -82,6 +85,12 @@ function SignedInStack({ Tabs }: { Tabs: React.ComponentType<any> }) {
         component={ConsultHubScreen}
         options={{ headerShown: true, title: 'Consult', headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerShadowVisible: false }}
       />
+      {/* Orange practice call (patient + practice): in-app voice call, booking and shuttle on the call. */}
+      <AppStack.Screen
+        name="PracticeCall"
+        component={PracticeCallScreen}
+        options={{ headerShown: true, title: 'Call', headerTintColor: pa.ink, headerTitleStyle: { fontFamily: paFonts.bold }, headerShadowVisible: false }}
+      />
       {/* Doctor's call-back consult card (orange triage call back / booked call back). */}
       <AppStack.Screen
         name="ConsultCard"
@@ -108,6 +117,12 @@ export default function RootNavigator() {
     if (!navRef.isReady()) return;
     // Incoming request offers open the full-screen alert (ProviderDispatchHost), not the feed.
     if (data?.type === 'dispatch_offer' || data?.offer_key) return;
+    // Orange practice call ringing / updated: open the call (accept / decline is on that screen too).
+    const practiceCallId = Number(data?.call_id ?? data?.params?.call_id);
+    if ((data?.type === 'practice_call' || data?.route === 'practice_call') && practiceCallId) {
+      (navRef.navigate as (n: string, p?: object) => void).call(navRef, 'PracticeCall', { callId: practiceCallId });
+      return;
+    }
     // "Dr X is calling you — tap to join": straight into the in-app video call.
     const callId = Number(data?.appointment_id ?? data?.params?.appointment_id);
     if (data?.type === 'consult_call' && callId) {
@@ -152,7 +167,9 @@ export default function RootNavigator() {
           ? DoctorTabs
           : user?.role === 'pharmacy_admin'
             ? PharmacyTabs
-            : PatientTabs;
+            : user?.role === 'practice_reception'
+              ? PracticeTabs
+              : PatientTabs;
 
   return (
     <NavigationContainer ref={navRef}>
@@ -163,6 +180,13 @@ export default function RootNavigator() {
       {user ? (
         <PatientCallHost
           enabled={user.role === 'patient'}
+          navigate={(name, params) => navRef.isReady() && (navRef.navigate as (n: string, p?: object) => void).call(navRef, name, params)}
+        />
+      ) : null}
+      {/* Orange practice call ringing (patients + practice users): accept / decline over every screen. */}
+      {user ? (
+        <PracticeCallHost
+          enabled={['patient', 'practice_reception', 'doctor', 'clinic_admin'].includes(user.role)}
           navigate={(name, params) => navRef.isReady() && (navRef.navigate as (n: string, p?: object) => void).call(navRef, name, params)}
         />
       ) : null}

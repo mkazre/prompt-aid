@@ -49,6 +49,10 @@ class AppointmentsTable
             ->recordActions([
                 \App\Filament\Resources\Appointments\AppointmentVideoAction::make(),
                 \App\Filament\Resources\Appointments\AppointmentVideoAction::callback(),
+                // Proof the consult happened: times, participants, segments, recordings (PDF; CSV from the call record).
+                \Filament\Actions\Action::make('evidence')->label('Evidence')->icon('heroicon-o-document-check')->color('gray')
+                    ->visible(fn (\App\Models\Appointment $record) => \App\Models\CallLog::query()->where('appointment_id', $record->id)->exists() || \App\Models\ConsultSession::query()->where('appointment_id', $record->id)->exists())
+                    ->url(fn (\App\Models\Appointment $record) => route('consult-evidence.download', ['appointment' => $record->id, 'format' => 'pdf']), true),
                 EditAction::make(),
             ])
             // Streamed CSV download (no queue): current filters/search/sort, or the ticked rows.

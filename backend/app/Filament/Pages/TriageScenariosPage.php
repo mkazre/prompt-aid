@@ -146,6 +146,7 @@ class TriageScenariosPage extends Page
             'auto_start_channel.channel' => ScenarioEngine::CHANNELS,
             'book_appointment.when' => ScenarioEngine::BOOK_WHEN,
             'find_care.category' => ScenarioEngine::CARE_CATEGORIES,
+            'capture_booking.default_mode' => ScenarioEngine::BOOKING_MODES,
         ];
         $labels = [
             'broadcast_to_doctors.optional' => 'Only when the patient taps a button (optional request)',
@@ -162,6 +163,12 @@ class TriageScenariosPage extends Page
             'collect_payment.allow_medical_aid' => 'Allow "bill my medical aid" (co-payment only upfront)',
             'health_article.slug' => 'Article slug (empty = article list)',
             'self_care_advice.lines' => 'Advice (one line each)',
+            'practice_call.record' => 'Record the call (both sides are told at the start)',
+            'practice_call.title' => 'Patient sees',
+            'capture_booking.in_person' => 'Allow in-person consults',
+            'capture_booking.video' => 'Allow video consults',
+            'capture_booking.default_mode' => 'Pre-selected consult type',
+            'capture_booking.shuttle' => 'Offer "Book a shuttle" (patient chooses and pays)',
         ];
 
         foreach (ScenarioEngine::types() as $type => $def) {

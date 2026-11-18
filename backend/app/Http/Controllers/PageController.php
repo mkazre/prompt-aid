@@ -95,6 +95,7 @@ class PageController extends Controller
         $geo = $request->filled('radius_km') ? \App\Support\GeoRadius::fromRequest($request) : null;
         $doctors = DoctorProfile::query()
             ->where('status', 'active')
+            ->tap(fn ($q) => class_exists(\App\Services\Billing\PracticeSubscription::class) ? \App\Services\Billing\PracticeSubscription::scopeListed($q) : $q)
             ->when($geo, fn ($q) => $q->whereHas('clinics', fn ($cq) => \App\Support\GeoRadius::box($cq, 'clinics.lat', 'clinics.lng', $geo)))
             ->with(['user', 'clinics', 'availabilities' => fn ($q) => $q->where('is_active', true)])
             ->when($group === 'gp', fn ($q) => $q->generalPractitioners())

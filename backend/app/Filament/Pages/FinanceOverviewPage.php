@@ -58,7 +58,7 @@ class FinanceOverviewPage extends Page
                 $tot[$k] = round($v + $r[$k], 2);
             }
         }
-        $labels = collect(CommissionRule::SERVICES)->map(fn ($l) => explode(' (', $l)[0])->all() + ['subscription' => 'Subscriptions', 'other' => 'Other'];
+        $labels = collect(CommissionRule::SERVICES)->map(fn ($l) => explode(' (', $l)[0])->all() + ['subscription' => 'Subscriptions', 'practice_subscription' => 'Practice subscriptions', 'other' => 'Other'];
 
         return [
             'range' => EarningsService::rangeLabel($a, $b),

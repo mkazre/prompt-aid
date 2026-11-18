@@ -30,6 +30,8 @@ class DoctorMatchRequest extends Model
         // Patient request scenario (ScenarioEngine) + "choose the channel after a doctor accepts".
         'scenario_level', 'scenario_version', 'scenario', 'channel_pending', 'chosen_channel',
         'channel_chosen_at', 'channel_chosen_by',
+        // 'practice' = orange practice-call flow (see PracticeCallService), else the doctor flow.
+        'flow',
     ];
 
     protected function casts(): array

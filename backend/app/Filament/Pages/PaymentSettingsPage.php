@@ -141,6 +141,9 @@ class PaymentSettingsPage extends Page
                         Text::make('Notify URL (sent with each payment): '.$base.'/api/payments/webhooks/ozow. Ozow refunds are done in the Ozow merchant dashboard; then use "Mark refunded" on the payment.'),
                     ]),
                     Tab::make('Upfront payments')->schema([
+                        Section::make('Consultation fees')
+                            ->description('OFF (default): practices charge consultation fees outside Prompt Aid — patients never pay for a consult in the app or on the website (no upfront hold, no consult invoice, no consult cancellation fee; booked appointments are "pay at the practice"). Shuttle and pharmacy payments are not affected. Practices pay a monthly platform subscription instead.')
+                            ->schema([Toggle::make('consult_payments_enabled')->label('Patients pay consultation fees through Prompt Aid')]),
                         Section::make('On-demand consults (see a doctor now, video, call back)')
                             ->description('The patient pays before any doctor is alerted. The money is held and only finalised when the consult starts; no match / expiry / doctor no-show or doctor cancel = full automatic refund; patient cancel after accept = cancellation fee kept, rest refunded.')
                             ->schema([Grid::make(2)->schema([

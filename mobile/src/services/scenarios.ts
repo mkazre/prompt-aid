@@ -19,6 +19,8 @@ export type ScenarioStepType =
   | 'broadcast_to_doctors'
   | 'choose_channel'
   | 'auto_start_channel'
+  | 'practice_call'
+  | 'capture_booking'
   | 'book_appointment'
   | 'find_care'
   | 'self_care_advice'
@@ -56,14 +58,21 @@ export interface ScenarioPlan {
   payment_note?: string | null;
   specialty?: string | null;
   button_label?: string;
-  channel_timing: 'before' | 'after' | 'auto' | 'none';
+  channel_timing: 'before' | 'after' | 'auto' | 'practice' | 'none';
+  /** 'practice' = orange practice call (the practice calls the patient in the app and books the visit). */
+  flow?: 'practice' | 'doctor' | 'none';
+  practice_call?: boolean;
+  booking?: { modes: ('in_person' | 'video')[]; default_mode: string; shuttle: boolean } | null;
   channels: string[];
   default_channel?: string;
   fallback?: string;
 }
 
+/** The four triage colours plus 'virtual' (the blue "Virtual / video consult" button). */
+export type ScenarioLevel = TriageLevel | 'virtual';
+
 export interface Scenario {
-  level: TriageLevel;
+  level: ScenarioLevel;
   level_label: string;
   version: number;
   steps: ScenarioStep[];
@@ -73,10 +82,10 @@ export interface Scenario {
   emergency: { label: string; phone: string; tel: string } | null;
 }
 
-const cache: Partial<Record<TriageLevel, { at: number; data: Scenario }>> = {};
+const cache: Partial<Record<ScenarioLevel, { at: number; data: Scenario }>> = {};
 const TTL = 60_000;
 
-export async function getScenario(level: TriageLevel, opts: { fresh?: boolean; timeoutMs?: number } = {}): Promise<Scenario | null> {
+export async function getScenario(level: ScenarioLevel, opts: { fresh?: boolean; timeoutMs?: number } = {}): Promise<Scenario | null> {
   const hit = cache[level];
   if (!opts.fresh && hit && Date.now() - hit.at < TTL) return hit.data;
   try {
@@ -117,7 +126,7 @@ export function goToTarget(navigation: any, target: AppTarget | null | undefined
  * default: no channel question), or open the scenario screen.
  * Returns false when no scenario could be loaded (caller uses its fallback).
  */
-export async function openScenarioEntry(navigation: any, level: TriageLevel, triageReference?: string): Promise<boolean> {
+export async function openScenarioEntry(navigation: any, level: ScenarioLevel, triageReference?: string): Promise<boolean> {
   const sc = await getScenario(level, { timeoutMs: 2500 });
   if (!sc) return false;
   const refParams = triageReference ? { triageReference } : {};
@@ -127,7 +136,9 @@ export async function openScenarioEntry(navigation: any, level: TriageLevel, tri
     return true;
   }
   if (sc.entry.kind === 'consult') {
-    return goToTarget(navigation, { tab: 'Home', screen: 'InstantConsult', params: { level, auto: true, ...refParams } });
+    // auto=false (blue button): the page asks video / call back first, then the request goes out.
+    const auto = sc.entry.app?.params?.auto === false ? false : true;
+    return goToTarget(navigation, { tab: 'Home', screen: 'InstantConsult', params: { level, auto, ...refParams } });
   }
   return goToTarget(navigation, { tab: 'Home', screen: 'TriageScenario', params: { level, ...refParams } });
 }

@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Model;
  *   ride, ride_charge                     → the ride's driver (shuttle)
  *   lab_request                           → partner (third-party profile)
  *   subscription / anything unattributed  → platform only
+ *   practice_subscription                 → platform only (practice platform fee)
  */
 class Attribution
 {
@@ -80,6 +81,12 @@ class Attribution
         if ($payable instanceof Subscription) {
             $out['service'] = 'subscription';
             $out['meta'] = ['subscription_id' => $payable->id];
+        }
+
+        if ($payable instanceof \App\Models\PracticeSubscription) {
+            // Practice platform fee: 100% platform revenue.
+            $out['service'] = 'practice_subscription';
+            $out['meta'] = ['practice_subscription_id' => $payable->id, 'practice' => $payable->subscriber_type.':'.$payable->subscriber_id];
         }
 
         return $out;

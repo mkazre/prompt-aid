@@ -185,6 +185,7 @@ class SearchController extends Controller
     {
         return DoctorProfile::query()
             ->where('status', 'active')
+            ->tap(fn ($q) => class_exists(\App\Services\Billing\PracticeSubscription::class) ? \App\Services\Billing\PracticeSubscription::scopeListed($q) : $q)
             ->where(fn ($w) => $w
                 ->whereHas('user', fn ($u) => $u->where('name', 'like', $this->like($q)))
                 ->orWhere('specialization', 'like', $this->like($q)))
@@ -211,6 +212,7 @@ class SearchController extends Controller
     {
         return Clinic::query()
             ->where('status', 'active')
+            ->tap(fn ($q) => class_exists(\App\Services\Billing\PracticeSubscription::class) ? \App\Services\Billing\PracticeSubscription::scopeListed($q) : $q)
             ->where(fn ($w) => $w
                 ->where('name', 'like', $this->like($q))
                 ->orWhere('city', 'like', $this->like($q)))

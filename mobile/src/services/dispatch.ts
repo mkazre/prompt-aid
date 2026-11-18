@@ -70,10 +70,10 @@ export interface InboxResponse {
 
 export interface AcceptResult {
   message: string;
-  next?: { type: string; ride_id?: number; request_id?: number; appointment_id?: number; subject_id?: number; url?: string; mode?: 'video' | 'callback' | 'in_person' | string; patient_name?: string | null; channel_pending?: boolean; chosen_channel?: string | null };
+  next?: { type: string; ride_id?: number; request_id?: number; appointment_id?: number; subject_id?: number; url?: string; mode?: 'video' | 'callback' | 'in_person' | string; patient_name?: string | null; channel_pending?: boolean; chosen_channel?: string | null; call_id?: number; flow?: string };
 }
 
-export const PROVIDER_ROLES = ['doctor', 'driver', 'pharmacy_admin', 'third_party'];
+export const PROVIDER_ROLES = ['doctor', 'driver', 'pharmacy_admin', 'third_party', 'practice_reception'];
 
 export async function acceptOffer(key: string): Promise<AcceptResult> {
   const { data } = await api.post(`/dispatch/offers/${encodeURIComponent(key)}/accept`);

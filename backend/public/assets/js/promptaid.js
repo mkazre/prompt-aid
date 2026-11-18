@@ -112,7 +112,7 @@
       '</div>' +
       '<div class="pa-modal-foot">' +
         '<a class="pa-btn-whatsapp" href="' + esc(urls.whatsapp || '#') + '" target="_blank" rel="noopener">' + waIcon + esc(popup.askDoctorLabel || 'ASK A DOCTOR') + '</a>' +
-        '<a class="pa-btn-video" href="' + esc(urls.virtualConsult || (base + '/virtual-consult')) + '">' + esc(popup.videoLabel || 'VIRTUAL/VIDEO consult') + '</a>' +
+        '<a class="pa-btn-video" href="' + esc(scen.virtual || urls.virtualConsult || (base + '/virtual-consult')) + '">' + esc(popup.videoLabel || 'VIRTUAL/VIDEO consult') + '</a>' +
       '</div>' +
     '</div>';
 

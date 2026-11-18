@@ -7,6 +7,8 @@ return [
     App\Providers\DispatchServiceProvider::class,
     App\Providers\ConsultHubServiceProvider::class,
     App\Providers\FinanceServiceProvider::class,
+    App\Providers\PracticeCallServiceProvider::class,
+    App\Providers\PracticeBillingServiceProvider::class,
     App\Providers\Filament\AdminPanelProvider::class,
     App\Providers\Filament\VendorPanelProvider::class,
     App\Providers\Filament\PartnerPanelProvider::class,

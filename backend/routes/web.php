@@ -57,8 +57,8 @@ Route::get('/emergency-results', [EmergencyResultsController::class, 'show'])->n
 Route::post('/emergency/submit', [\App\Http\Controllers\TriageSubmissionController::class, 'store'])->name('emergency.submit');
 Route::post('/emergency/alert-contact', [EmergencyResultsController::class, 'alertContact'])->name('emergency.alert-contact');
 // Patient request scenarios (Staff → Triage → Patient request scenarios): what each colour does.
-Route::middleware('throttle:120,1')->get('/emergency/scenario/{level}.json', [\App\Http\Controllers\TriageScenarioController::class, 'show'])->where('level', 'red|orange|yellow|green')->name('emergency.scenario.json');
-Route::get('/emergency/scenario/{level}', [\App\Http\Controllers\TriageScenarioController::class, 'page'])->where('level', 'red|orange|yellow|green')->name('emergency.scenario');
+Route::middleware('throttle:120,1')->get('/emergency/scenario/{level}.json', [\App\Http\Controllers\TriageScenarioController::class, 'show'])->where('level', 'red|orange|yellow|green|virtual')->name('emergency.scenario.json');
+Route::get('/emergency/scenario/{level}', [\App\Http\Controllers\TriageScenarioController::class, 'page'])->where('level', 'red|orange|yellow|green|virtual')->name('emergency.scenario');
 Route::get('/topic-of-the-month', [\App\Http\Controllers\HealthTopicController::class, 'current'])->name('topic.show');
 Route::get('/topics/{topic}', [\App\Http\Controllers\HealthTopicController::class, 'show'])->name('topic.view');
 Route::get('/testimonials/submit', [\App\Http\Controllers\HealthTopicController::class, 'createTestimonial'])->name('testimonials.create');
@@ -211,6 +211,8 @@ require __DIR__.'/web_consult_hub.php';
 require __DIR__.'/web_payments.php';
 require __DIR__.'/web_safety.php';
 require __DIR__.'/web_finance.php';
+require __DIR__.'/web_practice_billing.php';
+require __DIR__.'/web_practice_calls.php';
 require __DIR__.'/web_dashboards.php';
 
 // Page builder catch-all — must stay last. Never matches a path starting

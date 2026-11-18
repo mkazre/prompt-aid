@@ -41,7 +41,8 @@ class ConsultPaymentService
 
     public function required(): bool
     {
-        return PaymentSettings::bool('consult_upfront_payment');
+        // Master switch (Payment settings → "Consultation fees through Prompt Aid", default off).
+        return PaymentSettings::consultPaymentsEnabled() && PaymentSettings::bool('consult_upfront_payment');
     }
 
     public function amountDue(DoctorMatchRequest $req): float

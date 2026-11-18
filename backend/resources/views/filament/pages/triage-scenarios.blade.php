@@ -1,6 +1,6 @@
 @php
   $tsLevels = \App\Services\Triage\ScenarioEngine::LEVEL_LABELS;
-  $tsColours = ['red' => '#C62828', 'orange' => '#E4701E', 'yellow' => '#D4A20B', 'green' => '#2E7D32'];
+  $tsColours = ['red' => '#C62828', 'orange' => '#E4701E', 'yellow' => '#D4A20B', 'green' => '#2E7D32', 'virtual' => '#1F4E7A'];
   $tsPreview = $this->preview();
   $tsInfo = $this->liveInfo();
   $tsHistory = $this->history();
@@ -17,7 +17,7 @@
   </div>
 
   <p style="font-size:13px;opacity:.8;margin:0">
-    Decide exactly what happens when a patient chooses <strong>{{ strtoupper($tsActive) }}</strong> (emergency popup, triage result — app and website).
+    Decide exactly what happens when a patient chooses <strong>{{ $tsActive === 'virtual' ? 'the BLUE “Virtual / video consult” button' : strtoupper($tsActive) }}</strong> (emergency popup, triage result — app and website).
     The order of the steps is the order the patient goes through. Live version: <strong>{{ $tsInfo['version'] ?: 'built-in default' }}</strong>@if ($tsInfo['updated_at']) · saved {{ \Illuminate\Support\Carbon::parse($tsInfo['updated_at'])->diffForHumans() }}@endif @if ($tsInfo['updated_by']) by {{ $tsInfo['updated_by'] }}@endif.
   </p>
 

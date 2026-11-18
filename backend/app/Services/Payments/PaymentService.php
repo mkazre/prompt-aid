@@ -4,6 +4,8 @@ namespace App\Services\Payments;
 
 use App\Models\PaymentEvent;
 use App\Models\PaymentIntent;
+use App\Models\PracticeSubscription;
+use App\Services\Billing\PracticeBilling;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Support\PaymentSettings;
@@ -227,6 +229,9 @@ class PaymentService
                     if ($payable instanceof Subscription && $gatewayRef && $gatewayRef !== $intent->gateway_ref) {
                         return app(SubscriptionService::class)->recordRenewal($payable, $amount ?? (float) $payable->amount, $gatewayRef, $intent->gateway);
                     }
+                    if ($payable instanceof PracticeSubscription && $gatewayRef && $gatewayRef !== $intent->gateway_ref) {
+                        return app(PracticeBilling::class)->recordRenewal($payable, $amount ?? ((int) $payable->amount_cents) / 100, $gatewayRef, $intent->gateway, $intent);
+                    }
 
                     return 'already_paid';
                 }
@@ -276,11 +281,13 @@ class PaymentService
                 if ($payable) {
                     if ($payable instanceof Subscription) {
                         app(SubscriptionService::class)->activate($payable, $intent, $token);
+                    } elseif ($payable instanceof PracticeSubscription) {
+                        app(PracticeBilling::class)->onFirstPayment($payable, $intent->fresh(), $token);
                     } else {
                         $this->payables->markPaid($payable, $intent);
                     }
                 }
-                if ($token && $intent->meta('save_card') && ! ($payable instanceof Subscription) && $intent->user) {
+                if ($token && $intent->meta('save_card') && ! ($payable instanceof Subscription) && ! ($payable instanceof PracticeSubscription) && $intent->user) {
                     app(SubscriptionService::class)->storeCardToken($intent->user, $intent->gateway, $token);
                 }
 
@@ -305,6 +312,13 @@ class PaymentService
                         app(SubscriptionService::class)->markCancelledByGateway($payable);
 
                         return 'subscription_cancelled';
+                    }
+                    if ($payable instanceof PracticeSubscription) {
+                        $status === 'cancelled'
+                            ? app(PracticeBilling::class)->onGatewayCancelled($payable)
+                            : app(PracticeBilling::class)->onPaymentFailed($payable, (string) (data_get($payload, 'StatusMessage') ?: 'The card payment was declined'));
+
+                        return 'practice_subscription_'.$status;
                     }
 
                     return 'ignored_after_paid';

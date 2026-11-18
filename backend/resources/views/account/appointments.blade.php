@@ -26,7 +26,16 @@
           <td><div class="t-main">{{ $appt->date->format('d M Y') }} {{ \Illuminate\Support\Carbon::parse($appt->start_time)->format('H:i') }}</div><div class="t-sub">{{ $appt->booking_ref }}</div></td>
           <td>{{ $appt->doctor?->user?->name ?? 'Matching…' }}</td>
           <td>{{ $appt->isVideo() ? 'Video consultation' : ($appt->isCallback() ? 'Call back' : 'In person') }}{{ $appt->clinic ? ' · '.$appt->clinic->name : '' }}</td>
-          <td><span class="pa-badge {{ in_array($appt->status, ['completed', 'confirmed', 'checked_in']) ? 'is-go' : (in_array($appt->status, ['cancelled', 'no_show']) ? 'is-stop' : 'is-wait') }}">{{ str($appt->status)->headline() }}</span></td>
+          <td><span class="pa-badge {{ in_array($appt->status, ['completed', 'confirmed', 'checked_in']) ? 'is-go' : (in_array($appt->status, ['cancelled', 'no_show']) ? 'is-stop' : 'is-wait') }}">{{ str($appt->status)->headline() }}</span>
+            @php
+              // Consult evidence summary (video / voice consults that took place).
+              $paEv = $appt->isVideo() && in_array($appt->status, ['completed', 'confirmed', 'checked_in', 'no_show'], true)
+                  ? app(\App\Services\PracticeCalls\CallLogService::class)->evidence($appt, false) : null;
+            @endphp
+            @if ($paEv && $paEv['happened'])
+              <div class="t-sub">Consult held {{ $paEv['actual_start'] ? \Illuminate\Support\Carbon::parse($paEv['actual_start'])->format('d M H:i') : '' }} · {{ $paEv['duration_label'] }}</div>
+            @endif
+          </td>
           <td class="t-right">
             @if ($appt->isVideo() && $appt->canJoinVideoNow())
               <a class="pa-btn pa-btn-sm" href="{{ route('account.consult-hub', $appt) }}">Join consult</a>

@@ -150,6 +150,8 @@ class CloseOutService
         }
         $n = 0;
         DoctorMatchRequest::query()->where('status', DoctorMatchRequest::MATCHED)->where('matched_at', '<', now()->subHours($hours))
+            // Practice-call bookings are real future appointments (closed by the appointment rules).
+            ->where(fn ($q) => $q->whereNull('flow')->orWhere('flow', '!=', 'practice'))
             ->whereHas('appointment', fn ($a) => $a->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED, Appointment::STATUS_CHECKED_IN]))
             ->with('appointment')->orderBy('id')->limit(100)->get()
             ->each(function (DoctorMatchRequest $r) use (&$n) {

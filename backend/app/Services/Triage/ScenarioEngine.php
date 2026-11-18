@@ -42,13 +42,22 @@ use Throwable;
  */
 class ScenarioEngine
 {
-    public const LEVELS = ['red', 'orange', 'yellow', 'green'];
+    /**
+     * Triage colours plus 'virtual' = the BLUE "Virtual / video consult" button of the
+     * emergency popup (web) / EmergencyScale (app): the "speak to a doctor now" page where
+     * the patient chooses video consult or call back, then the request goes to doctors.
+     */
+    public const LEVELS = ['red', 'orange', 'yellow', 'green', 'virtual'];
+
+    /** The four triage colours (TriageSubmission levels) without the blue button. */
+    public const TRIAGE_LEVELS = ['red', 'orange', 'yellow', 'green'];
 
     public const LEVEL_LABELS = [
         'red' => 'Red · immediate',
         'orange' => 'Orange · very urgent',
         'yellow' => 'Yellow · urgent',
         'green' => 'Green · routine',
+        'virtual' => 'Blue button · virtual / video consult',
     ];
 
     /** Consult channels a patient can be offered. */
@@ -91,10 +100,13 @@ class ScenarioEngine
     public const ACTION_TYPES = ['call_emergency', 'offer_ambulance_or_shuttle', 'book_appointment', 'find_care', 'pharmacy', 'health_article'];
 
     /** Steps that belong to the "speak to a doctor now" consult flow. */
-    public const CONSULT_TYPES = ['collect_payment', 'broadcast_to_doctors', 'choose_channel', 'auto_start_channel'];
+    public const CONSULT_TYPES = ['collect_payment', 'broadcast_to_doctors', 'choose_channel', 'auto_start_channel', 'practice_call', 'capture_booking'];
 
     /** Only one of each of these per scenario. */
-    public const SINGLE_TYPES = ['call_emergency', 'offer_ambulance_or_shuttle', 'collect_payment', 'broadcast_to_doctors', 'choose_channel', 'auto_start_channel', 'pharmacy', 'end'];
+    public const SINGLE_TYPES = ['call_emergency', 'offer_ambulance_or_shuttle', 'collect_payment', 'broadcast_to_doctors', 'choose_channel', 'auto_start_channel', 'practice_call', 'capture_booking', 'pharmacy', 'end'];
+
+    /** Consult types the practice can book during a practice call. */
+    public const BOOKING_MODES = ['in_person' => 'In-person consult', 'video' => 'Video consult'];
 
     public const MAX_STEPS = 15;
 
@@ -130,7 +142,7 @@ class ScenarioEngine
             ],
             'collect_payment' => [
                 'label' => 'Collect payment upfront',
-                'help' => 'Pay-before-we-connect (Payments settings). Must come before "Offer to doctors" while upfront payment is switched on. The hold is only captured once the consult starts and is released if no doctor accepts.',
+                'help' => 'Pay-before-we-connect (Payments settings). Only used while "Patients pay consultation fees through Prompt Aid" is ON (default OFF: practices charge outside the system, so this step is skipped). Must come before "Offer to doctors". The hold is only captured once the consult starts and is released if no doctor accepts.',
                 'settings' => ['allow_medical_aid' => ['bool', true], 'note' => ['text', 'Pay securely to connect — refunded in full if no doctor accepts.']],
             ],
             'broadcast_to_doctors' => [
@@ -161,6 +173,24 @@ class ScenarioEngine
                 'label' => 'Start a channel automatically',
                 'help' => 'No question: as soon as a doctor accepts, this channel starts. Must come after "Offer to doctors".',
                 'settings' => ['channel' => ['select', 'video']],
+            ],
+            'practice_call' => [
+                'label' => 'In-app call between the practice and the patient',
+                'help' => 'After "Offer to doctors": the request goes to every available GP PRACTICE (their reception team; the GP when no receptionist is online). The first practice to accept gets the patient and an in-app voice call immediately rings BOTH sides — the practice and the patient each accept. Both are told the call is recorded.',
+                'settings' => [
+                    'record' => ['bool', true],
+                    'title' => ['text', 'A practice accepted — answer their call'],
+                ],
+            ],
+            'capture_booking' => [
+                'label' => 'Practice captures the appointment during the call',
+                'help' => 'After "In-app call": the practice books the appointment while on the call (GP, date/time, in-person or video) and can book a shuttle the patient chooses and pays for immediately. The booking shows on the doctor\'s and the patient\'s calendars.',
+                'settings' => [
+                    'in_person' => ['bool', true],
+                    'video' => ['bool', true],
+                    'default_mode' => ['select', 'in_person'],
+                    'shuttle' => ['bool', true],
+                ],
             ],
             'book_appointment' => [
                 'label' => 'Book an appointment',
@@ -218,11 +248,14 @@ class ScenarioEngine
                 $s('broadcast_to_doctors', ['optional' => true, 'button_label' => 'Also request a doctor now'], 'red-doc'),
                 $s('choose_channel', ['channels' => ['video', 'voice', 'whatsapp'], 'default_channel' => 'video'], 'red-channel'),
             ],
+            // Nov 2026: the first GP practice to accept calls the patient in-app and books the
+            // appointment (in person / video, optional shuttle) during the call. No consult payment.
             'orange' => [
-                $s('collect_payment', [], 'orange-pay'),
-                $s('broadcast_to_doctors', ['button_label' => 'Get connected to a doctor now', 'fallback' => 'retry'], 'orange-doc'),
-                $s('choose_channel', ['channels' => ['video', 'voice', 'whatsapp'], 'default_channel' => 'video', 'title' => 'How would you like to talk to your doctor?'], 'orange-channel'),
+                $s('broadcast_to_doctors', ['button_label' => 'Get connected to a practice now', 'fallback' => 'retry'], 'orange-doc'),
+                $s('practice_call', [], 'orange-call'),
+                $s('capture_booking', [], 'orange-book'),
                 $s('find_care', ['category' => 'gp', 'label' => 'Find a practice near me instead'], 'orange-find'),
+                $s('end', ['message' => 'Your booking shows under Appointments and in your calendar.'], 'orange-end'),
             ],
             'yellow' => [
                 $s('show_message', ['title' => 'You need to be seen today', 'body' => 'A GP or clinic can handle this — an emergency department will keep you waiting behind the red and orange cases.', 'style' => 'warning'], 'yellow-msg'),
@@ -235,6 +268,13 @@ class ScenarioEngine
                 $s('find_care', ['category' => 'all', 'label' => 'Book a non-urgent service or consult'], 'green-find'),
                 $s('pharmacy', [], 'green-pharmacy'),
                 $s('health_article', [], 'green-articles'),
+            ],
+            // Blue "Virtual / video consult" button: the former orange page — choose video consult
+            // or call back first, then the request goes to every available doctor. No payment.
+            'virtual' => [
+                $s('choose_channel', ['channels' => ['video', 'phone', 'whatsapp'], 'default_channel' => 'video', 'title' => 'How should the doctor reach you?'], 'virtual-channel'),
+                $s('broadcast_to_doctors', ['button_label' => 'Speak to a doctor now', 'fallback' => 'retry'], 'virtual-doc'),
+                $s('book_appointment', ['when' => 'next_available', 'label' => 'Book the next available slot instead'], 'virtual-book'),
             ],
         ];
     }
@@ -337,6 +377,8 @@ class ScenarioEngine
         $pay = $first('collect_payment');
         $choose = $first('choose_channel');
         $auto = $first('auto_start_channel');
+        $pc = $first('practice_call');
+        $cap = $first('capture_booking');
 
         if ($pay !== null && ($b === null || $pay > $b)) {
             $errors[] = $label('collect_payment').' must come before '.$label('broadcast_to_doctors').' (there is nothing to pay for otherwise).';
@@ -352,6 +394,18 @@ class ScenarioEngine
         }
         if ($choose !== null && $b === null) {
             $errors[] = $label('choose_channel').' only makes sense with '.$label('broadcast_to_doctors').'.';
+        }
+        if ($pc !== null && ($b === null || $pc < $b)) {
+            $errors[] = $label('practice_call').' needs a practice: put it after '.$label('broadcast_to_doctors').'.';
+        }
+        if ($pc !== null && ($choose !== null || $auto !== null)) {
+            $errors[] = 'With '.$label('practice_call').' the practice talks to the patient in the app — remove '.$label($choose !== null ? 'choose_channel' : 'auto_start_channel').'.';
+        }
+        if ($cap !== null && ($pc === null || $cap < $pc)) {
+            $errors[] = $label('capture_booking').' happens during the call: put it after '.$label('practice_call').'.';
+        }
+        if ($pay !== null && ! $this->paymentsOn()) {
+            $warnings[] = 'Consultation fees through Prompt Aid are switched OFF (Staff → Payment settings), so '.$label('collect_payment').' is skipped — patients are not asked to pay.';
         }
 
         foreach ($steps as $i => $step) {
@@ -446,6 +500,25 @@ class ScenarioEngine
                         $errors[] = $where.'choose the channel to start.';
                     }
                     break;
+                case 'practice_call':
+                    if ($b !== null) {
+                        $bs = $steps[$b]['settings'] ?? [];
+                        if (! in_array($bs['dispatch_mode'] ?? 'default', ['default', 'broadcast'], true)) {
+                            $errors[] = $where.'a practice call goes to every available practice at once — set the dispatch mode of '.$label('broadcast_to_doctors').' to "Use Dispatch settings" or "Broadcast".';
+                        }
+                    }
+                    if (! $st['record']) {
+                        $warnings[] = $where.'calls are not recorded — call logs are still kept.';
+                    }
+                    break;
+                case 'capture_booking':
+                    if (! $st['in_person'] && ! $st['video']) {
+                        $errors[] = $where.'allow at least in-person or video consults.';
+                    }
+                    if (! isset(self::BOOKING_MODES[$st['default_mode']]) || empty($st[$st['default_mode']])) {
+                        $errors[] = $where.'the default consult type must be one of the allowed types.';
+                    }
+                    break;
                 case 'book_appointment':
                     if (! isset(self::BOOK_WHEN[$st['when']])) {
                         $errors[] = $where.'choose when.';
@@ -469,10 +542,13 @@ class ScenarioEngine
             }
         }
 
-        if ($b !== null && $choose === null && $auto === null) {
+        if ($b !== null && $choose === null && $auto === null && $pc === null) {
             $warnings[] = 'No channel step: the consult defaults to a video call that the doctor starts from the consult hub.';
         }
-        $consultEnd = max(array_filter([$b, $choose, $auto], fn ($v) => $v !== null) ?: [-1]);
+        if ($pc !== null && $cap === null) {
+            $warnings[] = 'No '.$label('capture_booking').' step: the practice can still book from the call screen.';
+        }
+        $consultEnd = max(array_filter([$b, $choose, $auto, $pc, $cap], fn ($v) => $v !== null) ?: [-1]);
         if ($consultEnd >= 0) {
             foreach ($steps as $i => $step) {
                 if ($i > $consultEnd && in_array($step['type'] ?? '', self::ACTION_TYPES, true)) {
@@ -638,12 +714,15 @@ class ScenarioEngine
         $idx = fn (string $t) => collect($steps)->search(fn ($s) => ($s['type'] ?? null) === $t);
         $b = $idx('broadcast_to_doctors');
         if ($b === false) {
-            return ['has_consult' => false, 'auto_request' => false, 'channel_timing' => 'none', 'channels' => [], 'payment' => false];
+            return ['has_consult' => false, 'auto_request' => false, 'channel_timing' => 'none', 'channels' => [], 'payment' => false, 'flow' => 'none', 'practice_call' => false, 'booking' => null];
         }
         $bs = $steps[$b]['settings'];
         $c = $idx('choose_channel');
         $a = $idx('auto_start_channel');
         $p = $idx('collect_payment');
+        $pcIdx = $idx('practice_call');
+        $capIdx = $idx('capture_booking');
+        $practice = $pcIdx !== false && $pcIdx > $b;
 
         $timing = 'none';
         $channels = [];
@@ -664,6 +743,22 @@ class ScenarioEngine
             $channels = [$autoChannel];
             $default = $autoChannel;
         }
+        $booking = null;
+        if ($practice) {
+            // The practice calls the patient in the app (voice) once it accepted.
+            $timing = 'practice';
+            $channels = ['voice'];
+            $default = 'voice';
+            $autoChannel = null;
+            $title = $steps[$pcIdx]['settings']['title'] ?: null;
+            $cs = $capIdx !== false ? $steps[$capIdx]['settings'] : self::normalizeStep(['type' => 'capture_booking'])['settings'];
+            $modes = array_values(array_filter(array_keys(self::BOOKING_MODES), fn ($m) => ! empty($cs[$m])));
+            $booking = [
+                'modes' => $modes ?: ['in_person'],
+                'default_mode' => in_array($cs['default_mode'], $modes, true) ? $cs['default_mode'] : ($modes[0] ?? 'in_person'),
+                'shuttle' => (bool) $cs['shuttle'],
+            ];
+        }
 
         // Automatic request: no patient action is needed in front of the doctor request.
         $blocked = false;
@@ -681,7 +776,7 @@ class ScenarioEngine
             'has_consult' => true,
             'optional' => $optional,
             'auto_request' => ! $optional && ! $blocked && $timing !== 'before',
-            'payment' => $p !== false && $p < $b,
+            'payment' => $p !== false && $p < $b && self::consultPaymentsOn(),
             'allow_medical_aid' => $p !== false ? (bool) $steps[$p]['settings']['allow_medical_aid'] : true,
             'payment_note' => $p !== false ? ($steps[$p]['settings']['note'] ?: null) : null,
             'specialty' => $bs['specialty'] !== '' ? $bs['specialty'] : null,
@@ -697,6 +792,10 @@ class ScenarioEngine
             'auto_channel' => $autoChannel,
             'choice_title' => $title,
             'auto_pick_after_seconds' => $autoPick,
+            'flow' => $practice ? 'practice' : 'doctor',
+            'practice_call' => $practice,
+            'record_calls' => $practice ? (bool) $steps[$pcIdx]['settings']['record'] : false,
+            'booking' => $booking,
         ];
     }
 
@@ -719,6 +818,7 @@ class ScenarioEngine
         return array_intersect_key($plan, array_flip([
             'level', 'version', 'specialty', 'dispatch_mode', 'offer_timeout_seconds', 'max_wait_minutes', 'radius_km', 'fallback',
             'channel_timing', 'channels', 'default_channel', 'auto_channel', 'choice_title', 'auto_pick_after_seconds', 'allow_medical_aid',
+            'flow', 'practice_call', 'record_calls', 'booking',
         ]));
     }
 
@@ -782,7 +882,15 @@ class ScenarioEngine
                     $firstAction = false;
                     break;
                 case 'collect_payment':
-                    $lines[] = $n.'Takes the consult fee upfront'.($st['allow_medical_aid'] ? ' (or the medical-aid co-payment)' : '').' — no doctor is alerted until it is paid; refunded in full if nobody accepts.'.($this->paymentsOn() ? '' : ' (Upfront payment is currently OFF in Payment settings, so this is skipped.)');
+                    $lines[] = $n.'Takes the consult fee upfront'.($st['allow_medical_aid'] ? ' (or the medical-aid co-payment)' : '').' — no doctor is alerted until it is paid; refunded in full if nobody accepts.'.($this->paymentsOn() ? '' : ' (Consultation fees through Prompt Aid / upfront payment are OFF in Payment settings, so this is SKIPPED — the patient pays nothing.)');
+                    break;
+                case 'practice_call':
+                    $lines[] = $n.'As soon as a practice accepts, an in-app VOICE call rings both the practice\'s reception and the patient (ringtone + push). Each side taps Accept; once both have, they are connected.'.($st['record'] ? ' Both are told the call is recorded; the recording and call log are kept for the practice and Prompt Aid.' : ' The call is not recorded; the call log is kept.');
+                    break;
+                case 'capture_booking':
+                    $modes = array_values(array_filter(array_keys(self::BOOKING_MODES), fn ($m) => ! empty($st[$m])));
+                    $lines[] = $n.'During the call the practice books the appointment — GP, date and time, '.self::humanList(array_map(fn ($m) => mb_strtolower(self::BOOKING_MODES[$m]), $modes), 'or').'. It appears on the doctor\'s and the patient\'s calendars at once.'
+                        .($st['shuttle'] ? ' The practice can also book a shuttle: the patient sees the vehicle options with fares, chooses one and pays immediately.' : '');
                     break;
                 case 'broadcast_to_doctors':
                     $spec = $st['specialty'] !== '' ? $st['specialty'] : 'General Practitioner';
@@ -797,7 +905,9 @@ class ScenarioEngine
                     $lines[] = $n.($st['optional']
                         ? 'Shows a “'.$st['button_label'].'” button. If tapped, it '.$reach.$timing.$fallback
                         : ($plan['auto_request'] && $firstAction ? 'Immediately — without asking anything else — '.$reach.$timing.$fallback : 'Then '.$reach.$timing.$fallback));
-                    $lines[] = '   Doctors get the full-screen alert with sound; the others see “accepted by another doctor” as soon as one accepts.';
+                    $lines[] = ! empty($plan['practice_call'])
+                        ? '   Each practice\'s online reception team (or its GP when nobody is at reception) gets the full-screen alert with sound; the others see “taken” as soon as one practice accepts. No payment is asked.'
+                        : '   Doctors get the full-screen alert with sound; the others see “accepted by another doctor” as soon as one accepts.';
                     $firstAction = false;
                     break;
                 case 'choose_channel':
@@ -953,8 +1063,28 @@ class ScenarioEngine
         if ($plan['auto_request']) {
             return ['kind' => 'consult', 'tel' => null, 'url' => $this->consultUrl($level, $ref, true), 'app' => ['tab' => 'Home', 'screen' => 'InstantConsult', 'params' => ['level' => $level, 'auto' => true] + ($ref ? ['triageReference' => $ref] : [])]];
         }
+        if (($plan['has_consult'] ?? false) && ($plan['channel_timing'] ?? '') === 'before' && ! ($plan['optional'] ?? false) && $this->onlyConsultFirst($steps)) {
+            // "Choose video or call back, then we find a doctor" (blue button): open that page directly.
+            return ['kind' => 'consult', 'tel' => null, 'url' => $this->consultUrl($level, $ref, false), 'app' => ['tab' => 'Home', 'screen' => 'InstantConsult', 'params' => ['level' => $level, 'auto' => false] + ($ref ? ['triageReference' => $ref] : [])]];
+        }
 
         return ['kind' => 'steps', 'tel' => null, 'url' => $pageUrl, 'app' => $screen];
+    }
+
+    /** True when nothing but messages / the channel choice comes before the doctor request. */
+    protected function onlyConsultFirst(array $steps): bool
+    {
+        foreach ($steps as $s) {
+            $t = $s['type'] ?? '';
+            if ($t === 'broadcast_to_doctors') {
+                return true;
+            }
+            if (! in_array($t, ['show_message', 'choose_channel', 'collect_payment', 'self_care_advice'], true)) {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     /** Website link each colour of the emergency popup opens (tel: for an instant dial). @return array<string, string> */
@@ -1027,8 +1157,14 @@ class ScenarioEngine
 
     protected function paymentsOn(): bool
     {
+        return self::consultPaymentsOn();
+    }
+
+    /** Consultation fees through the platform (Payment settings master switch, default off) AND upfront payment on. */
+    public static function consultPaymentsOn(): bool
+    {
         try {
-            return PaymentSettings::bool('consult_upfront_payment');
+            return PaymentSettings::consultPaymentsEnabled() && PaymentSettings::bool('consult_upfront_payment');
         } catch (Throwable) {
             return false;
         }

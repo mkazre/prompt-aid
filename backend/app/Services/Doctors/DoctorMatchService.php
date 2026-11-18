@@ -234,7 +234,14 @@ class DoctorMatchService
         $chosen = null;
         $chosenBy = null;
         $preferred = is_string($extra['channel'] ?? null) ? $extra['channel'] : null;
-        if ($mode === self::MODE_ANY) {
+        // Scenario "in-app call between the practice and the patient": the request goes to GP
+        // practices; the accepting practice calls the patient in the app and books the visit.
+        $flow = ! empty($snap['practice_call']) ? 'practice' : 'doctor';
+        if ($flow === 'practice') {
+            $mode = Appointment::MODE_VIDEO; // routing only (no location filter); the practice books in person / video
+            $chosen = 'voice';
+            $chosenBy = 'practice';
+        } elseif ($mode === self::MODE_ANY) {
             $timing = $snap['channel_timing'] ?? 'after';
             if ($timing === 'before') {
                 throw new DoctorMatchException('Choose how the doctor should reach you first.', 422);
@@ -281,7 +288,7 @@ class DoctorMatchService
         if (! in_array($mode, [Appointment::MODE_VIDEO, Appointment::MODE_IN_PERSON, Appointment::MODE_CALLBACK], true)) {
             throw new DoctorMatchException('Choose a video consult, a call back or in person.');
         }
-        if (! in_array($mode, self::enabledModes(), true)) {
+        if ($flow !== 'practice' && ! in_array($mode, self::enabledModes(), true)) {
             throw new DoctorMatchException($mode === Appointment::MODE_CALLBACK
                 ? 'Call backs are not available right now. Please choose a video consult.'
                 : 'Video consults are not available right now. Please request a call back.', 409);
@@ -316,7 +323,7 @@ class DoctorMatchService
         $quote = $this->pricing->quote($specialty, $mode);
         $now = now();
 
-        $request = DB::transaction(function () use ($patient, $specialty, $mode, $lat, $lng, $quote, $now, $radiusKm, $callbackPhone, $channel, $note, $triage, $level, $snap, $chosen, $chosenBy) {
+        $request = DB::transaction(function () use ($patient, $specialty, $mode, $lat, $lng, $quote, $now, $radiusKm, $callbackPhone, $channel, $note, $triage, $level, $snap, $chosen, $chosenBy, $flow) {
             $appointment = Appointment::query()->create([
                 'patient_profile_id' => $patient->id,
                 // Appointment dates/times are South African clinic time (see Appointment::CLINIC_TIMEZONE).
@@ -334,7 +341,7 @@ class DoctorMatchService
                 'status' => Appointment::STATUS_MATCHING,
                 'mode' => $mode,
                 'requested_specialty' => $specialty,
-                'reason' => $mode === Appointment::MODE_CALLBACK ? 'Doctor call back requested' : 'See a doctor now',
+                'reason' => $flow === 'practice' ? 'Urgent (orange) — practice call' : ($mode === Appointment::MODE_CALLBACK ? 'Doctor call back requested' : 'See a doctor now'),
                 'callback_phone' => $callbackPhone,
                 'callback_channel' => $channel,
                 'callback_note' => $note,
@@ -358,6 +365,7 @@ class DoctorMatchService
                 'radius_km' => $radiusKm !== null && $mode === Appointment::MODE_IN_PERSON ? DispatchSettings::clampRadius($radiusKm) : null,
                 'triage_submission_id' => $triage?->id,
                 'scenario_level' => $level,
+                'flow' => $flow,
                 'scenario_version' => isset($snap['version']) ? (int) $snap['version'] : null,
                 'scenario' => $snap,
                 'channel_pending' => false,
@@ -369,7 +377,12 @@ class DoctorMatchService
 
         // Upfront payment: the request is only broadcast once the hold is secured
         // (instantly in test mode; after the verified webhook when a gateway is live).
-        app(\App\Services\Payments\ConsultPaymentService::class)->prepare($request, (bool) ($extra['bill_medical_aid'] ?? false));
+        // Practice calls never take a consult payment (fees are settled at the practice).
+        if ($flow === 'practice') {
+            $request->forceFill(['payment_state' => \App\Services\Payments\ConsultPaymentService::NOT_REQUIRED])->save();
+        } else {
+            app(\App\Services\Payments\ConsultPaymentService::class)->prepare($request, (bool) ($extra['bill_medical_aid'] ?? false));
+        }
 
         $this->progress($request->fresh());
 
@@ -395,6 +408,12 @@ class DoctorMatchService
                     ->orWhere(function ($m) {
                         $m->where('status', DoctorMatchRequest::MATCHED)
                             ->whereHas('appointment', fn ($a) => $a->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED, Appointment::STATUS_CHECKED_IN]))
+                            ->where('matched_at', '>=', now()->subHours(6));
+                    })
+                    // Practice call in progress (booking not captured yet).
+                    ->orWhere(function ($m) {
+                        $m->where('status', DoctorMatchRequest::MATCHED)->where('flow', 'practice')
+                            ->whereHas('appointment', fn ($a) => $a->where('status', Appointment::STATUS_MATCHING))
                             ->where('matched_at', '>=', now()->subHours(6));
                     });
             })
@@ -437,7 +456,8 @@ class DoctorMatchService
 
         if ($request->status === DoctorMatchRequest::MATCHED) {
             $appointment = $request->appointment;
-            if (! $appointment || ! in_array($appointment->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED], true)) {
+            $practicePending = $request->flow === 'practice' && $appointment && $appointment->status === Appointment::STATUS_MATCHING;
+            if (! $appointment || (! $practicePending && ! in_array($appointment->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED], true))) {
                 throw new DoctorMatchException('This consult can no longer be cancelled.', 409);
             }
 
@@ -462,7 +482,8 @@ class DoctorMatchService
             return;
         }
 
-        $fee = $byPatient ? $this->pricing->cancellationFee($request) : 0.0;
+        // No consult cancellation fee while consultation fees are handled outside Prompt Aid.
+        $fee = $byPatient && \App\Support\PaymentSettings::consultPaymentsEnabled() && $request->flow !== 'practice' ? $this->pricing->cancellationFee($request) : 0.0;
 
         $request->update([
             'status' => DoctorMatchRequest::CANCELLED,
@@ -670,6 +691,42 @@ class DoctorMatchService
             }
 
             $dispatchMode = $this->dispatchModeFor($req);
+            if ($req->flow === 'practice' && $dispatchMode !== 'manual') {
+                // Every qualifying GP practice at once (reception team; its GPs when nobody is at reception).
+                DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->where('status', DoctorMatchOffer::OFFERED)
+                    ->where('expires_at', '<=', now())->update(['status' => DoctorMatchOffer::EXPIRED, 'responded_at' => now(), 'updated_at' => now()]);
+                if ($req->expires_at && $req->expires_at->isPast()) {
+                    $this->expireLocked($req, 'timed_out');
+                    $events[] = ['expired', $req];
+
+                    return $events;
+                }
+                $timeout = $this->offerTimeoutFor($req);
+                $candidates = app(\App\Services\PracticeCalls\PracticeTeam::class)->candidates($req, max(1, \App\Support\PracticeCallSettings::int('practice_call_max_practices')));
+                if ($candidates->isEmpty() && (int) $req->attempts > 0
+                    && ! DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->where('status', DoctorMatchOffer::OFFERED)->exists()) {
+                    $this->expireLocked($req, 'no_doctor_accepted');
+                    $events[] = ['expired', $req];
+
+                    return $events;
+                }
+                foreach ($candidates as $candidate) {
+                    $offer = DoctorMatchOffer::query()->create([
+                        'doctor_match_request_id' => $req->id,
+                        'appointment_id' => $req->appointment_id,
+                        'doctor_profile_id' => $candidate['doctor']->id,
+                        'clinic_id' => $candidate['clinic']?->id,
+                        'target' => $candidate['target'] === 'practice' ? 'practice' : null,
+                        'status' => DoctorMatchOffer::OFFERED,
+                        'offered_at' => now(),
+                        'expires_at' => now()->addSeconds($timeout),
+                    ]);
+                    $req->increment('attempts');
+                    $events[] = ['offered', $offer, $candidate['recipients']];
+                }
+
+                return $events;
+            }
             if ($dispatchMode === 'manual') {
                 if ($req->expires_at && $req->expires_at->isPast()) {
                     $this->expireLocked($req, 'timed_out');
@@ -767,9 +824,12 @@ class DoctorMatchService
             return $events;
         });
 
-        foreach ($events as [$type, $model]) {
+        foreach ($events as $event) {
+            [$type, $model] = $event;
             try {
-                if ($type === 'offered') {
+                if ($type === 'offered' && isset($event[2]) && $model->target === 'practice') {
+                    $this->notifyPracticeOffer($model, (array) $event[2]);
+                } elseif ($type === 'offered') {
                     $this->notifyOffer($model);
                 } elseif ($type === 'expired') {
                     $this->notifyExpired($model);
@@ -919,6 +979,9 @@ class DoctorMatchService
         $rows = new Collection;
 
         foreach ($doctors as $doctor) {
+            if (class_exists(\App\Services\Billing\PracticeSubscription::class) && ! \App\Services\Billing\PracticeSubscription::canReceiveRequests($doctor)) {
+                continue; // practice subscription lapsed (only when enforcement is on)
+            }
             $distance = null;
             $clinic = null;
             if ($req->mode === Appointment::MODE_IN_PERSON) {
@@ -997,6 +1060,10 @@ class DoctorMatchService
         if ($offer->doctor_profile_id !== $doctor->id) {
             throw new DoctorMatchException('This offer is not yours.', 404);
         }
+        if ($offer->target === 'practice' || DoctorMatchRequest::query()->whereKey($offer->doctor_match_request_id)->value('flow') === 'practice') {
+            // Practice call flow: the GP takes the patient for their practice and the in-app call rings.
+            return $this->acceptForPractice($offer, $doctor->user ?? $doctor->user()->first(), $doctor);
+        }
 
         $result = DB::transaction(function () use ($offer, $doctor) {
             $offer = DoctorMatchOffer::query()->whereKey($offer->id)->lockForUpdate()->first();
@@ -1042,7 +1109,7 @@ class DoctorMatchService
             };
             $breakdown = (array) $req->price_breakdown;
             $suffix = ! empty($breakdown['notes']) ? ' ('.implode('; ', (array) $breakdown['notes']).')' : '';
-            $invoice = Invoice::query()->create([
+            $invoice = ! \App\Support\PaymentSettings::consultPaymentsEnabled() ? null : Invoice::query()->create([
                 'appointment_id' => $req->appointment_id,
                 'patient_profile_id' => $req->patient_profile_id,
                 'clinic_id' => $billingClinicId,
@@ -1053,13 +1120,15 @@ class DoctorMatchService
                 'status' => Invoice::STATUS_UNPAID,
                 'due_date' => $now->toDateString(),
             ]);
-            InvoiceItem::query()->create([
-                'invoice_id' => $invoice->id,
-                'description' => mb_substr("On-demand {$modeLabel} consultation — {$req->specialty}{$suffix}", 0, 255),
-                'qty' => 1,
-                'unit_price' => $req->price,
-                'amount' => $req->price,
-            ]);
+            if ($invoice) {
+                InvoiceItem::query()->create([
+                    'invoice_id' => $invoice->id,
+                    'description' => mb_substr("On-demand {$modeLabel} consultation — {$req->specialty}{$suffix}", 0, 255),
+                    'qty' => 1,
+                    'unit_price' => $req->price,
+                    'amount' => $req->price,
+                ]);
+            }
 
             $req->update([
                 'status' => DoctorMatchRequest::MATCHED,
@@ -1067,7 +1136,7 @@ class DoctorMatchService
                 'matched_at' => $now,
                 'doctor_profile_id' => $doctor->id,
                 'clinic_id' => $clinic?->id,
-                'invoice_id' => $invoice->id,
+                'invoice_id' => $invoice?->id,
                 // Scenario "choose the channel after a doctor accepts": the patient picks next.
                 'channel_pending' => self::choosesAfterAccept($req) && ! $req->chosen_channel,
             ]);
@@ -1127,6 +1196,120 @@ class DoctorMatchService
         return $result->fresh();
     }
 
+    /**
+     * Practice call flow: a practice's receptionist (practice offer) or a GP (their own
+     * offer) takes the patient. First accept wins (row locks). The booking's doctor is the
+     * offer's GP (the practice can switch to another of its GPs when capturing the booking).
+     * No invoice, the GP is not made busy; the in-app call then rings both sides.
+     */
+    public function acceptForPractice(DoctorMatchOffer $offer, ?\App\Models\User $user, ?DoctorProfile $asDoctor = null): DoctorMatchRequest
+    {
+        if (! $user) {
+            throw new DoctorMatchException('This offer is not yours.', 404);
+        }
+        $team = app(\App\Services\PracticeCalls\PracticeTeam::class);
+        if ($offer->target === 'practice') {
+            $mine = $offer->clinic_id && $team->isMember($user, (int) $offer->clinic_id);
+        } else {
+            $mine = $asDoctor && (int) $offer->doctor_profile_id === (int) $asDoctor->id;
+        }
+        if (! $mine) {
+            throw new DoctorMatchException('This offer is not yours.', 404);
+        }
+
+        $result = DB::transaction(function () use ($offer, $asDoctor) {
+            $offer = DoctorMatchOffer::query()->whereKey($offer->id)->lockForUpdate()->first();
+            $req = DoctorMatchRequest::query()->whereKey($offer->doctor_match_request_id)->lockForUpdate()->first();
+
+            if ($req && $req->status === DoctorMatchRequest::MATCHED) {
+                return (int) $req->clinic_id === (int) $offer->clinic_id && $offer->status === DoctorMatchOffer::ACCEPTED ? 'gone' : 'taken';
+            }
+            if ($offer->status !== DoctorMatchOffer::OFFERED || ! $req || $req->status !== DoctorMatchRequest::SEARCHING) {
+                return 'gone';
+            }
+            if ($offer->expires_at && $offer->expires_at->lt(now()->subSeconds(3))) {
+                $offer->update(['status' => DoctorMatchOffer::EXPIRED, 'responded_at' => now()]);
+
+                return 'expired';
+            }
+
+            $doctor = $asDoctor ?? DoctorProfile::query()->find($offer->doctor_profile_id);
+            $clinicId = $offer->clinic_id ?: $doctor?->clinics()->value('clinics.id');
+            $now = now();
+            $offer->update(['status' => DoctorMatchOffer::ACCEPTED, 'responded_at' => $now]);
+            // The appointment stays "matching" (not on any calendar) until the practice books it on the call.
+            $req->appointment?->update(['doctor_profile_id' => $doctor?->id, 'clinic_id' => $clinicId]);
+            $req->update([
+                'status' => DoctorMatchRequest::MATCHED,
+                'outcome_reason' => 'accepted',
+                'matched_at' => $now,
+                'doctor_profile_id' => $doctor?->id,
+                'clinic_id' => $clinicId,
+                'channel_pending' => false,
+                'chosen_channel' => 'voice',
+                'channel_chosen_at' => $now,
+                'channel_chosen_by' => 'practice',
+            ]);
+            $doctor?->forceFill(['last_assigned_at' => $now])->saveQuietly();
+
+            DoctorMatchOffer::query()->where('doctor_match_request_id', $req->id)->where('id', '!=', $offer->id)
+                ->where('status', DoctorMatchOffer::OFFERED)
+                ->update(['status' => DoctorMatchOffer::EXPIRED, 'responded_at' => $now, 'updated_at' => $now]);
+
+            return $req;
+        });
+        $this->bumpOfferedPractice((int) $offer->doctor_match_request_id);
+
+        if ($result === 'taken') {
+            throw new DoctorMatchException('This patient was taken by another practice.', 409);
+        }
+        if ($result === 'gone') {
+            throw new DoctorMatchException('This request has already been taken or cancelled.', 409);
+        }
+        if ($result === 'expired') {
+            $this->progress($offer->matchRequest);
+
+            throw new DoctorMatchException('This offer has expired.', 409);
+        }
+
+        try {
+            app(\App\Services\PracticeCalls\PracticeCallService::class)->startForRequest($result->fresh(), $user);
+        } catch (\Throwable $e) {
+            Log::warning('[DoctorMatch] practice call start failed: '.$e->getMessage());
+        }
+
+        return $result->fresh();
+    }
+
+    /** Bump every user alerted for a practice-flow request (receptionists + GPs). */
+    public function bumpOfferedPractice(int $requestId): void
+    {
+        $this->bumpOffered($requestId);
+        try {
+            $team = app(\App\Services\PracticeCalls\PracticeTeam::class);
+            DoctorMatchOffer::query()->where('doctor_match_request_id', $requestId)->where('target', 'practice')->pluck('clinic_id')->unique()
+                ->each(fn ($cid) => $team->receptionists((int) $cid)->each(fn ($u) => ProviderAlerts::bump((int) $u->id)));
+        } catch (\Throwable) {
+        }
+    }
+
+    protected function notifyPracticeOffer(DoctorMatchOffer $offer, array $recipients): void
+    {
+        $offer->loadMissing(['matchRequest.triageSubmission']);
+        $req = $offer->matchRequest;
+        $secs = $this->offerTimeoutFor($req);
+        $level = $req->triageSubmission?->level ?? $req->scenario_level;
+        $title = ($level ? strtoupper($level).' · ' : '').'Urgent patient — take the booking';
+        $lines = $this->offerLines($req);
+        $body = trim(implode(' · ', array_slice($lines, 0, 3)).' Accept within '.$secs.'s — the first practice to accept calls the patient in the app.');
+        foreach (array_unique(array_map('intval', $recipients)) as $uid) {
+            ProviderAlerts::offer($uid, $title, $body, [
+                'service' => 'doctor_now', 'request_id' => $req->id, 'offer_id' => $offer->id, 'offer_key' => 'dm:'.$offer->id,
+                'route' => 'practice_offer', 'params' => ['offer_id' => $offer->id], 'url' => '/staff',
+            ]);
+        }
+    }
+
     public function decline(DoctorMatchOffer $offer, DoctorProfile $doctor): void
     {
         if ($offer->doctor_profile_id !== $doctor->id) {
@@ -1150,6 +1333,7 @@ class DoctorMatchService
 
         return DoctorMatchOffer::query()
             ->where('doctor_profile_id', $doctor->id)
+            ->where(fn ($q) => $q->whereNull('target')->orWhere('target', '!=', 'practice'))
             ->where('status', DoctorMatchOffer::OFFERED)
             ->where('expires_at', '>', now()->subSeconds(2))
             ->with(['matchRequest.patient.user'])
@@ -1163,6 +1347,7 @@ class DoctorMatchService
         return DoctorMatchRequest::query()
             ->where('doctor_profile_id', $doctor->id)
             ->where('status', DoctorMatchRequest::MATCHED)
+            ->where(fn ($q) => $q->whereNull('flow')->orWhere('flow', '!=', 'practice'))
             ->whereHas('appointment', fn ($a) => $a
                 ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED, Appointment::STATUS_CHECKED_IN])
                 ->whereNull('video_ended_at'))
@@ -1335,7 +1520,9 @@ class DoctorMatchService
         } catch (\Throwable) {
             $dispatch = null;
         }
-        $apptActive =$appt && in_array($appt->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED], true);
+        $apptActive = $appt && (in_array($appt->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED], true)
+            || ($request->flow === 'practice' && $appt->status === Appointment::STATUS_MATCHING));
+        $consultPay = \App\Support\PaymentSettings::consultPaymentsEnabled() && $request->flow !== 'practice';
 
         return [
             'id' => $request->id,
@@ -1347,9 +1534,12 @@ class DoctorMatchService
             'outcome_message' => $this->outcomeMessage($request),
             'specialty' => $request->specialty,
             'mode' => $request->mode,
-            'price' => (float) $request->price,
+            // Consultation fees handled outside Prompt Aid (default): no price is shown or charged.
+            'price' => $consultPay ? (float) $request->price : 0.0,
             'currency' => 'ZAR',
-            'price_breakdown' => $request->price_breakdown,
+            'price_breakdown' => $consultPay ? $request->price_breakdown : null,
+            'consult_payments' => $consultPay,
+            'flow' => $request->flow ?: 'doctor',
             'attempts' => (int) $request->attempts,
             'max_attempts' => max(1, DoctorNowSettings::int('doctor_now_max_attempts')),
             'created_at' => $request->created_at?->toIso8601String(),
@@ -1391,11 +1581,25 @@ class DoctorMatchService
                 'status' => $invoice->status,
             ] : null,
             'can_cancel' => $request->status === DoctorMatchRequest::SEARCHING || ($request->status === DoctorMatchRequest::MATCHED && $apptActive),
-            'cancel_fee_now' => $request->status === DoctorMatchRequest::MATCHED ? $this->pricing->cancellationFee($request) : 0.0,
+            'cancel_fee_now' => $request->status === DoctorMatchRequest::MATCHED && $consultPay ? $this->pricing->cancellationFee($request) : 0.0,
             'cancel_fee' => (float) $request->cancel_fee,
             'waitlisted' => in_array($request->status, [DoctorMatchRequest::SEARCHING, DoctorMatchRequest::EXPIRED], true) && $this->isWaitlisted($request),
             'book_url' => \Illuminate\Support\Facades\Route::has('doctors.index') ? route('doctors.index', ['specialization' => $request->specialty]) : null,
+            // Practice call flow: the in-app call with the practice + the booking captured on it.
+            'practice_call' => $request->flow === 'practice' ? $this->practiceCallPayload($request) : null,
         ] + $this->scenarioPayload($request);
+    }
+
+    /** @return array<string, mixed>|null */
+    protected function practiceCallPayload(DoctorMatchRequest $request): ?array
+    {
+        try {
+            return app(\App\Services\PracticeCalls\PracticeCallService::class)->requestSummary($request);
+        } catch (\Throwable $e) {
+            Log::warning('[DoctorMatch] practice call payload failed: '.$e->getMessage());
+
+            return null;
+        }
     }
 
     /**
@@ -1470,9 +1674,11 @@ class DoctorMatchService
                 ? 'You cancelled after the doctor accepted. A cancellation fee of R'.number_format((float) $request->cancel_fee, 2).' applies.'
                 : 'You cancelled within the free cancellation window. You have not been charged.',
             'cancelled_by_provider' => 'The practice cancelled this consult. You have not been charged.',
-            'accepted' => $request->mode === Appointment::MODE_CALLBACK && $request->doctor?->user
+            'accepted' => $request->flow === 'practice'
+                ? ($request->clinic?->name ?? 'A practice').' accepted. Answer their in-app call to book your visit.'
+                : ($request->mode === Appointment::MODE_CALLBACK && $request->doctor?->user
                 ? 'Dr. '.$request->doctor->user->name.' will call you'.(($p = ConsultCallService::displayPhone(app(ConsultCallService::class)->callbackDigits($request->appointment))) ? ' on '.$p : '').' within '.ConsultCallService::targetMinutes().' minutes.'
-                : null,
+                : null),
             default => null,
         };
     }

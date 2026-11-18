@@ -1,4 +1,4 @@
-export type Role = 'super_admin' | 'clinic_admin' | 'doctor' | 'driver' | 'patient' | 'third_party' | 'pharmacy_admin';
+export type Role = 'super_admin' | 'clinic_admin' | 'doctor' | 'driver' | 'patient' | 'third_party' | 'pharmacy_admin' | 'practice_reception';
 
 export interface PatientProfile {
   id: number;

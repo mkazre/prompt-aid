@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentIntent;
+use App\Models\PracticeSubscription;
 use App\Models\Ride;
 use App\Models\RideCharge;
 use App\Models\Subscription;
@@ -43,6 +44,7 @@ class Payables
 
         return match (true) {
             $model instanceof Subscription => (int) $model->user_id === (int) $user->id,
+            $model instanceof PracticeSubscription => \App\Services\Billing\PracticeBilling::canManage($user, $model),
             $model instanceof Invoice, $model instanceof Order, $model instanceof RideCharge,
             $model instanceof DoctorMatchRequest, $model instanceof Ride => $patientId && (int) $model->patient_profile_id === (int) $patientId,
             default => false,
@@ -56,6 +58,7 @@ class Payables
             $model instanceof Order => $model->payment_status === 'unpaid' && $model->status === Order::STATUS_PENDING_PAYMENT,
             $model instanceof RideCharge => in_array($model->status, [RideCharge::STATUS_PENDING, RideCharge::STATUS_FAILED], true),
             $model instanceof Subscription => $model->status === Subscription::STATUS_PENDING,
+            $model instanceof PracticeSubscription => ! empty($model->pending_checkout),
             $model instanceof DoctorMatchRequest => $model->status === DoctorMatchRequest::SEARCHING && $model->payment_state === 'awaiting',
             $model instanceof Ride => ! $model->payment_intent_id && ! in_array($model->status, ['completed', 'cancelled'], true),
             default => false,
@@ -78,6 +81,7 @@ class Payables
             $model instanceof Order => (float) $model->total,
             $model instanceof RideCharge => (float) $model->amount,
             $model instanceof Subscription => (float) $model->amount,
+            $model instanceof PracticeSubscription => ((int) ($model->pending_checkout['amount_cents'] ?? 0)) / 100,
             $model instanceof DoctorMatchRequest => app(ConsultPaymentService::class)->amountDue($model),
             $model instanceof Ride => RidePaymentService::holdAmount($model),
             default => 0,
@@ -89,7 +93,7 @@ class Payables
         return match (true) {
             $model instanceof Order => 'pharmacy',
             $model instanceof RideCharge => 'ride',
-            $model instanceof Subscription => 'subscription',
+            $model instanceof Subscription, $model instanceof PracticeSubscription => 'subscription',
             $model instanceof Ride => 'ride',
             default => 'invoice',
         };
@@ -108,6 +112,7 @@ class Payables
             $model instanceof Order => 'PromptAid pharmacy order '.$model->order_no,
             $model instanceof RideCharge => 'PromptAid shuttle '.strtolower($model->typeLabel()).' '.$model->getPayableReference(),
             $model instanceof Subscription => 'PromptAid '.($model->plan?->name ?? 'subscription'),
+            $model instanceof PracticeSubscription => 'PromptAid practice plan '.($model->pending_checkout['plan_name'] ?? $model->plan?->name ?? ''),
             $model instanceof DoctorMatchRequest => 'PromptAid consult ('.($model->specialty ?: 'doctor').', '.str_replace('_', ' ', (string) $model->mode).')',
             $model instanceof Ride => 'PromptAid shuttle trip '.($model->ride_ref ?? ''),
             default => 'PromptAid payment',

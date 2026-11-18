@@ -25,7 +25,7 @@ class DashboardController extends Controller
         // other way, so it degrades to a redirect instead of a crash.
         if (! $patient) {
             $panelPath = match ($user->role) {
-                User::ROLE_SUPER_ADMIN, User::ROLE_CLINIC_ADMIN, User::ROLE_DOCTOR => '/staff',
+                User::ROLE_SUPER_ADMIN, User::ROLE_CLINIC_ADMIN, User::ROLE_DOCTOR, User::ROLE_PRACTICE_RECEPTION => '/staff',
                 User::ROLE_PHARMACY_ADMIN => '/vendor',
                 User::ROLE_THIRD_PARTY => '/partner',
                 User::ROLE_DRIVER => '/driver',

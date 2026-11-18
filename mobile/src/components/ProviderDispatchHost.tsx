@@ -40,7 +40,9 @@ export default function ProviderDispatchHost({
   function onAccepted(res: AcceptResult, card: DispatchOfferCard) {
     setTimeout(() => {
       const next = res.next;
-      if (card.service === 'shuttle') navigate('Main', { screen: 'Drive', params: { screen: 'Trip' } });
+      // Orange practice call: the in-app call with the patient is ringing — open it (book on the call).
+      if (next?.type === 'practice_call' && next.call_id) navigate('PracticeCall', { callId: next.call_id });
+      else if (card.service === 'shuttle') navigate('Main', { screen: 'Drive', params: { screen: 'Trip' } });
       // Video / call back: the consult hub (Start video / voice, chat, phone + WhatsApp fallback). The patient's phone is already ringing for video.
       else if (role === 'doctor' && card.service === 'doctor_now' && next?.appointment_id && (next?.mode === 'video' || next?.mode === 'callback'))
         // Patient request scenario: while the patient picks video / voice / WhatsApp, wait in the hub (no auto-start).

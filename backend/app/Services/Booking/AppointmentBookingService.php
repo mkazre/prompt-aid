@@ -170,6 +170,9 @@ class AppointmentBookingService
         array $options = [],
     ): Appointment {
         $startTime = substr($startTime, 0, 5);
+        if (empty($options['by_doctor']) && class_exists(\App\Services\Billing\PracticeSubscription::class) && ! \App\Services\Billing\PracticeSubscription::allows($doctor, 'bookings')) {
+            throw new \RuntimeException('This practice is not taking online bookings right now. Please choose another doctor.');
+        }
         $slots = $this->availableSlots($doctor, $clinicId, $date);
 
         if (! $slots->contains($startTime)) {

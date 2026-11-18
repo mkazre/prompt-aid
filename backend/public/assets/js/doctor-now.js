@@ -60,6 +60,12 @@
     var box = $('dn-quote');
     if (!box || !specialty()) return;
     var seq = ++state.quoteSeq;
+    if (!cfg.consultPayments) {
+      // Consultation fees are handled by the practice outside Prompt Aid — nothing to pay here.
+      box.innerHTML = '<div class="pa-dn-price"><div><div class="pa-label" style="margin:0">Consultation fee</div><div style="font-weight:800">No payment in the app</div>' +
+        '<div class="pa-muted" style="font-size:12px">The practice handles its consultation fee directly with you.</div></div></div>';
+      return;
+    }
     box.innerHTML = '<div class="pa-muted" style="font-size:13px">Loading price…</div>';
     api('GET', cfg.quoteUrl + '?specialty=' + encodeURIComponent(specialty()) + '&mode=' + encodeURIComponent(mode() === 'voice' ? 'video' : mode()))
       .then(function (json) {
@@ -136,7 +142,8 @@
     $('dn-search-line').textContent = line;
     var st = $('dn-search-title');
     if (st) st.textContent = p.scenario && p.scenario.channel_timing === 'after' ? 'Finding your doctor' : p.mode === 'callback' ? 'Finding a doctor to call you' : p.mode === 'video' ? 'Finding a doctor for your video consult' : 'Finding your doctor';
-    var meta = [esc(p.specialty), esc(modeLabel(p.mode, p)), money(p.price)];
+    var meta = [esc(p.specialty), esc(modeLabel(p.mode, p))];
+    if (p.consult_payments !== false && p.price > 0) meta.push(money(p.price));
     if (p.eta_seconds) meta.push('usually matched in ~' + fmtSecs(p.eta_seconds));
     meta.push('search ends in ' + fmtSecs(p.seconds_left));
     $('dn-search-meta').innerHTML = meta.join(' · ');
@@ -158,6 +165,7 @@
   }
 
   function renderMatched(p) {
+    if (p.flow === 'practice' && p.practice_call) { renderPracticeMatched(p); return; }
     // Consult hub: once a doctor accepts a video / call-back consult, go straight to the
     // connection options (video, in-app voice, chat; phone / WhatsApp fallback). Only once
     // per consult per tab, so coming back here shows the card with an "Open consult" button.
@@ -229,6 +237,33 @@
       }
     }
     $('dn-m-bill').innerHTML = bill;
+  }
+
+  // Orange practice call: the practice that accepted calls the patient in the app and books the visit.
+  function renderPracticeMatched(p) {
+    var pc = p.practice_call || {};
+    var name = pc.practice_name || 'A practice';
+    var photo = $('dn-m-photo');
+    photo.innerHTML = esc(initials(name));
+    $('dn-m-name').textContent = name;
+    $('dn-m-spec').textContent = p.doctor ? 'For ' + (p.doctor.name || '') : '';
+    $('dn-m-rating').innerHTML = '';
+    $('dn-m-badge').textContent = pc.booked ? 'Booked' : 'Accepted';
+    var where, actions = '';
+    if (pc.booked && pc.booking) {
+      var b = pc.booking;
+      where = '<div class="pa-note"><strong>' + esc(b.mode_label) + ' · ' + esc(b.when_label) + '</strong><br>' + esc(b.doctor_name || '') + (b.practice_name ? ' · ' + esc(b.practice_name) : '') +
+        (b.practice_address && b.mode === 'in_person' ? '<br>' + esc(b.practice_address) : '') + '<br><span class="pa-muted">Ref ' + esc(b.booking_ref) + ' — it is in your calendar under Appointments.</span></div>';
+      if (b.ics_url) actions += '<a class="pa-btn-ghost" href="' + esc(b.ics_url) + '">Add to my phone calendar</a>';
+    } else {
+      where = '<div class="pa-note"><strong>' + esc(name) + ' accepted your request.</strong> ' + (pc.ringing ? 'They are calling you now in the app — answer to book your visit.' : 'Open the call to talk to them and book your visit.') + '</div>';
+    }
+    if (pc.url) actions = '<a class="pa-btn" href="' + esc(pc.url) + '">' + (pc.ringing ? 'Answer the call' : 'Open the call') + '</a>' + actions;
+    if (p.can_cancel && !pc.booked) actions += '<button class="pa-btn-ghost" type="button" data-dn="cancel">Cancel request</button>';
+    $('dn-m-where').innerHTML = where;
+    $('dn-m-actions').innerHTML = actions;
+    $('dn-m-bill').innerHTML = '';
+    if (pc.ringing && pc.url && state.pcOpened !== pc.call_id) { state.pcOpened = pc.call_id; window.location.href = pc.url; }
   }
 
   function renderClosed(p) {

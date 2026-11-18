@@ -238,19 +238,34 @@ class VideoRoomService
      */
     public function mintJwt(Appointment $appointment, User $user): ?array
     {
+        $moderator = $this->isModerator($appointment, $user);
+        // JaaS server recording of video consults (Recording storage settings; paid JaaS plan).
+        $record = $moderator && $this->provider() === 'jaas'
+            && \App\Support\PracticeCallSettings::bool('call_recording_enabled')
+            && \App\Support\PracticeCallSettings::bool('call_recording_video_consults')
+            && in_array(\App\Support\PracticeCallSettings::str('call_recording_mode'), ['auto', 'jaas'], true);
+
+        return $this->mintRoomJwt($this->ensureRoom($appointment), $user, $moderator, $appointment->videoWindowEnd(), $record);
+    }
+
+    /**
+     * Per-call JWT for any room (appointment consults and practice calls).
+     * $recording grants the JaaS "recording" feature to this participant.
+     *
+     * @return array{jwt: string, expires_at: \Carbon\CarbonInterface}|null
+     */
+    public function mintRoomJwt(string $room, User $user, bool $moderator, ?\Carbon\CarbonInterface $notAfter = null, bool $recording = false): ?array
+    {
         $provider = $this->provider();
         if ($provider === 'public') {
             return null;
         }
 
-        $room = $this->ensureRoom($appointment);
         $now = now();
         $exp = $now->copy()->addMinutes($this->tokenTtlMinutes());
-        $windowEnd = $appointment->videoWindowEnd();
-        if ($windowEnd && $windowEnd->lt($exp)) {
-            $exp = $windowEnd->copy()->max($now->copy()->addMinutes(5));
+        if ($notAfter && $notAfter->lt($exp)) {
+            $exp = \Illuminate\Support\Carbon::instance($notAfter)->max($now->copy()->addMinutes(5));
         }
-        $moderator = $this->isModerator($appointment, $user);
 
         $userClaim = array_filter([
             'id' => 'pa-'.$user->id,
@@ -281,7 +296,7 @@ class VideoRoomService
                         'user' => $userClaim + ['hidden-from-recorder' => false],
                         'features' => [
                             'livestreaming' => false,
-                            'recording' => false,
+                            'recording' => $recording,
                             'transcription' => false,
                             'outbound-call' => false,
                         ],
@@ -349,6 +364,37 @@ class VideoRoomService
             'backUrl' => $backUrl,
             'csrf' => $mode === 'app' ? null : csrf_token(),
         ];
+    }
+
+    /**
+     * Call-page config for a room that is not an appointment consult (practice ↔ patient
+     * in-app calls). Same shape as callConfig().
+     *
+     * @param  'web'|'staff'|'app'  $mode
+     * @param  array<string, mixed>  $extra
+     */
+    public function roomConfig(string $room, User $user, bool $moderator, bool $audioOnly, string $mode, string $counterpart, bool $recording = false, array $extra = []): array
+    {
+        $token = $this->mintRoomJwt($room, $user, $moderator, null, $recording);
+
+        return [
+            'mode' => $mode,
+            'provider' => $this->provider(),
+            'domain' => $this->domain(),
+            'scriptUrl' => $this->externalApiUrl(),
+            'roomName' => $this->provider() === 'jaas' && $this->jaasAppId() ? $this->jaasAppId().'/'.$room : $room,
+            'jwt' => $token['jwt'] ?? null,
+            'displayName' => $this->displayName($user),
+            'email' => (string) $user->email,
+            'counterpart' => $counterpart,
+            'role' => $moderator ? 'moderator' : 'participant',
+            'audioOnly' => $audioOnly,
+            'prejoin' => false,
+            'toolbar' => [],
+            'endUrl' => null,
+            'backUrl' => null,
+            'csrf' => $mode === 'app' ? null : csrf_token(),
+        ] + $extra;
     }
 
     /** Single-use, ≤5-minute token that lets the app WebView open /video/embed/{id}. */

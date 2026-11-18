@@ -16,7 +16,7 @@ class Statements
 {
     public const SERVICE_LABELS = [
         'consult' => 'Consult', 'appointment' => 'Appointment', 'shuttle' => 'Shuttle', 'pharmacy' => 'Pharmacy',
-        'lab' => 'Lab / partner', 'subscription' => 'Subscription', 'other' => 'Other',
+        'lab' => 'Lab / partner', 'subscription' => 'Subscription', 'practice_subscription' => 'Practice subscription', 'other' => 'Other',
     ];
 
     public function __construct(protected EarningsService $earnings) {}
