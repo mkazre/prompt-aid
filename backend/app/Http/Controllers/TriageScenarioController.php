@@ -24,7 +24,7 @@ class TriageScenarioController extends Controller
         abort_unless(ScenarioEngine::isLevel($level), 404);
 
         return response()->json(['data' => $this->engine->resolve($level, $this->ref($request))])
-            ->header('Cache-Control', 'public, max-age=60');
+            ->header('Cache-Control', 'no-cache, private'); // admin edits apply at once
     }
 
     public function page(Request $request, string $level)

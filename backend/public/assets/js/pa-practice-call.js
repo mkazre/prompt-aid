@@ -113,7 +113,7 @@
   function buildStage(cfg) {
     stageBuilt = true;
     var box = $('pa-pc-stage');
-    box.innerHTML = '<div class="pa-call" data-pa-call data-mode="' + esc(cfg.mode) + '"><script type="application/json" data-call-config>' + JSON.stringify(cfg).replace(/</g, '\\u003c') + '<\/script>' +
+    box.innerHTML = '<div class="pa-call pa-call--compact" data-pa-call data-mode="' + esc(cfg.mode) + '"><script type="application/json" data-call-config>' + JSON.stringify(cfg).replace(/</g, '\\u003c') + '<\/script>' +
       '<header class="pa-call__top"><div class="pa-call__who"><span class="pa-call__dot"></span><div style="min-width:0"><span class="pa-call__name">' + esc(cfg.counterpart) + '</span><span class="pa-call__status" data-call-status role="status" aria-live="polite">Connecting…</span></div></div><span class="pa-call__timer" data-call-timer>00:00</span></header>' +
       '<div class="pa-call__body"><div class="pa-call__stage" data-call-stage></div><div class="pa-call__overlay" data-call-overlay><div class="pa-call__spinner" data-call-overlay-spin></div><p data-call-overlay-msg>Connecting securely…</p><div class="pa-call__overlay-actions" data-call-overlay-actions></div></div></div>' +
       '<footer class="pa-call__controls" role="toolbar"><button type="button" class="pa-call__btn" data-call-mic aria-label="Mute microphone" title="Mute"><svg class="ico-on" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg><svg class="ico-off" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg></button></footer></div>';

@@ -193,6 +193,10 @@ export interface Appointment {
   // Only present when the backend eager-loads the `encounter` relation —
   // GET /doctor/appointments/{id}/encounter does (used by EncounterScreen).
   encounter?: Encounter | null;
+  /** Shuttle to this appointment (booked by the patient or on the practice call). Empty object/array when none. */
+  ride?: Ride | null;
+  return_ride?: Ride | null;
+  ride_requested?: boolean;
 }
 
 export interface DoctorStats {

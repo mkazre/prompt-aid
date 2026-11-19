@@ -32,10 +32,17 @@ export function PaLiveStatus({ status, label }: { status?: 'green' | 'orange' | 
 export function navigateForEmergencyAction(navigation: any, action: EmergencyScaleAction) {
   const tabs = navigation.getParent?.() ?? navigation;
   // Switched-off services (Staff → System → Features) fall back to Find care.
-  if (action === 'doctorNow' && isFeatureOn('doctor_now')) tabs.navigate('Home', { screen: 'InstantConsult' });
+  if (action === 'doctorNow' && isFeatureOn('doctor_now')) tabs.navigate('Home', { screen: 'InstantConsult', params: { level: 'orange', auto: true } });
   // Blue "Virtual / video consult" button: the "speak to a doctor now" page (choose video or call back first,
   // then the request goes to the available doctors) — scenario level 'virtual', no payment.
-  else if (action === 'video' && isFeatureOn('video') && isFeatureOn('doctor_now')) tabs.navigate('Home', { screen: 'InstantConsult', params: { level: 'virtual', auto: false } });
+  else if (action === 'video' && isFeatureOn('video') && isFeatureOn('doctor_now')) {
+    // Follows the admin's Blue button scenario; built-in page when it can't be loaded.
+    openScenarioEntry(navigation, 'virtual')
+      .then((ok) => {
+        if (!ok) tabs.navigate('Home', { screen: 'InstantConsult', params: { level: 'virtual', auto: false } });
+      })
+      .catch(() => tabs.navigate('Home', { screen: 'InstantConsult', params: { level: 'virtual', auto: false } }));
+  }
   else if (action === 'video' && isFeatureOn('video')) tabs.navigate('Care', { screen: 'FindCare', params: { group: 'video' } });
   else tabs.navigate('Care', { screen: 'FindCare', params: { group: 'gp' } });
 }

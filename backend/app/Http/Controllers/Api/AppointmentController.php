@@ -17,7 +17,7 @@ class AppointmentController extends Controller
         $patient = $request->user()->patientProfile;
 
         $appointments = $patient->appointments()
-            ->with(['doctor.user', 'clinic', 'service', 'invoice', 'ride'])
+            ->with(['doctor.user', 'clinic', 'service', 'invoice', 'ride', 'returnRide'])
             ->orderByDesc('date')
             ->paginate(15);
 
@@ -27,7 +27,7 @@ class AppointmentController extends Controller
     public function show(Request $request, int $id)
     {
         $appointment = $request->user()->patientProfile->appointments()
-            ->with(['doctor.user', 'clinic', 'service', 'encounter.prescription.items', 'invoice.items', 'invoice.payments', 'ride'])
+            ->with(['doctor.user', 'clinic', 'service', 'encounter.prescription.items', 'invoice.items', 'invoice.payments', 'ride', 'returnRide'])
             ->findOrFail($id);
 
         return new AppointmentResource($appointment);

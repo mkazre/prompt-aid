@@ -3,7 +3,7 @@
   $pcCfgJson = json_encode($pcCfg, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES);
   $pcIsPractice = $pcRole === 'practice';
 @endphp
-<link rel="stylesheet" href="{{ asset('assets/css/pa-practice-call.css') }}?v=1">
+<link rel="stylesheet" href="{{ asset('assets/css/pa-practice-call.css') }}?v=2">
 <div id="pa-pcall" data-role="{{ $pcRole }}">
   <section class="pa-pc-card">
     <span id="pa-pc-status" class="pa-pc-status">Loading…</span>
@@ -34,4 +34,4 @@
   <div id="pa-pc-toast" class="pa-pc-toast" hidden role="status"></div>
 </div>
 <script>window.PA_PCALL = {!! $pcCfgJson !!};</script>
-<script src="{{ asset('assets/js/pa-practice-call.js') }}?v=1" defer></script>
+<script src="{{ asset('assets/js/pa-practice-call.js') }}?v=2" defer></script>

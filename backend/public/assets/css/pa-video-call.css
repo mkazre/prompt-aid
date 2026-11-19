@@ -126,3 +126,25 @@ html.pa-call-page .pa-call { height: 100vh; height: 100dvh; }
 /* Consult hub (website patient page + staff hub page). */
 .pa-call--hub { height: 60vh; height: 60dvh; min-height: 380px; border-radius: 16px; }
 @media (max-width: 700px) { .pa-call--hub { height: 56vh; height: 56dvh; min-height: 340px; border-radius: 12px; } }
+
+/* Compact voice call (practice call: website box, staff panel box, app embed).
+   The full-size avatar card was taller than these boxes, so the avatar, name
+   and status spilled over the top bar and the controls. Everything here is
+   sized to fit a ~200px-tall stage and wraps instead of overlapping. */
+.pa-call--compact .pa-call__top { min-height: 44px; padding-top: 6px; padding-bottom: 6px; }
+.pa-call--compact .pa-call__controls { padding-top: 8px; padding-bottom: 8px; }
+.pa-call--compact .pa-call__btn { width: 44px; height: 44px; }
+.pa-call--compact .pa-call__btn--end { width: 60px; }
+.pa-call--compact .pa-call__voice { gap: 4px; padding: 10px 12px; overflow: hidden; }
+.pa-call--compact .pa-call__avatar { width: 64px; height: 64px; font-size: 24px; flex: 0 0 auto; box-shadow: 0 0 0 6px rgba(52, 194, 122, .16); }
+.pa-call--compact.is-live .pa-call__avatar { box-shadow: 0 0 0 6px rgba(52, 194, 122, .35); }
+.pa-call--compact .pa-call__voice-name { font-size: 16px; margin-top: 6px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pa-call--compact .pa-call__voice-sub { font-size: 12px; max-width: 100%; }
+.pa-call--compact .pa-call__overlay { gap: 8px; padding: 12px; }
+.pa-call--compact .pa-call__overlay p { font-size: 13px; }
+.pa-call--compact .pa-call__spinner { width: 26px; height: 26px; }
+
+/* App embed with a recording notice: the notice sits above the call, not over it. */
+html.pa-call-page body.has-notice { display: flex; flex-direction: column; }
+html.pa-call-page body.has-notice .pa-call { flex: 1 1 auto; height: auto; min-height: 0; }
+.pa-call-notice { flex: 0 0 auto; background: #7C2D12; color: #fff; font: 600 12px/1.35 system-ui, sans-serif; padding: 6px 10px; }

@@ -188,12 +188,13 @@ export function PaVerdictBanner({
   title,
   message,
 }: {
-  level: TriageLevel;
+  level: TriageLevel | 'virtual';
   eyebrow: string;
   title: string;
   message: string;
 }) {
-  const bg = pa.sats[level];
+  // 'virtual' = the blue "Virtual / video consult" button's flow.
+  const bg = level === 'virtual' ? '#1F5FBF' : pa.sats[level] ?? pa.ink;
   return (
     <View style={[verdictStyles.wrap, { backgroundColor: bg }]}>
       <Text style={verdictStyles.eyebrow}>{eyebrow}</Text>

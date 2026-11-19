@@ -1,5 +1,5 @@
 @php
-  $cssUrl = asset('assets/css/pa-video-call.css').'?v=2';
+  $cssUrl = asset('assets/css/pa-video-call.css').'?v=3';
   $jsUrl = asset('assets/js/pa-video-call.js').'?v=2';
 @endphp
 <!doctype html>
@@ -12,11 +12,11 @@
   <title>Practice call · Prompt Aid</title>
   <link rel="stylesheet" href="{{ $cssUrl }}">
 </head>
-<body>
+<body @if ($notice) class="has-notice" @endif>
   @if ($notice)
-    <div style="position:fixed;top:0;left:0;right:0;z-index:5;background:#7C2D12;color:#fff;font:600 12px/1.35 system-ui,sans-serif;padding:6px 10px">● REC — {{ $notice }}</div>
+    <div class="pa-call-notice">● REC — {{ $notice }}</div>
   @endif
-  @include('video.partials.stage', ['config' => $config, 'appointmentId' => null])
+  @include('video.partials.stage', ['config' => $config, 'appointmentId' => null, 'extraClass' => 'pa-call--compact'])
   <script src="{{ $jsUrl }}"></script>
 </body>
 </html>

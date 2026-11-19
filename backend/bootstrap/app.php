@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
             'feature' => \App\Http\Middleware\FeatureGate::class,
+            // One rate-limit counter per route (stock throttle shares one per user → "Too Many Attempts").
+            'throttle' => \App\Http\Middleware\ThrottlePerRoute::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

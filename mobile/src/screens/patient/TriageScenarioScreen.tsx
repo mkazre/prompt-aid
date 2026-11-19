@@ -8,7 +8,8 @@ import { useEmergencyContacts } from '../../services/emergencyContacts';
 import type { TriageLevel } from '../../services/triage';
 import { pa, paFonts } from '../../theme';
 
-const TITLES: Record<TriageLevel, string> = {
+const TITLES: Record<TriageLevel | 'virtual', string> = {
+  virtual: 'Virtual / video consult',
   red: 'Get emergency care now',
   orange: 'Very urgent',
   yellow: 'Be seen today',
@@ -22,7 +23,7 @@ const TITLES: Record<TriageLevel, string> = {
  * pharmacy / advice — in the admin-defined order.
  */
 export default function TriageScenarioScreen({ navigation, route }: any) {
-  const level: TriageLevel = route?.params?.level ?? 'yellow';
+  const level: TriageLevel | 'virtual' = route?.params?.level ?? 'yellow';
   const triageReference: string | undefined = route?.params?.triageReference;
   const { primary } = useEmergencyContacts();
   const [scenario, setScenario] = useState<Scenario | null>(null);

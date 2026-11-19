@@ -15,7 +15,7 @@ class AppointmentsController extends Controller
 
         return view('account.appointments', [
             'appointments' => $patient->appointments()
-                ->with(['doctor.user', 'clinic', 'invoice'])
+                ->with(['doctor.user', 'clinic', 'invoice', 'ride', 'returnRide'])
                 ->orderByDesc('date')->orderByDesc('start_time')
                 ->get(),
         ]);

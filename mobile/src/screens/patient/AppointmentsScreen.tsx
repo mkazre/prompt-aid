@@ -3,9 +3,10 @@ import { Alert, FlatList, Linking, Pressable, RefreshControl, StyleSheet, Text, 
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { api, apiErrorMessage } from '../../api/client';
-import { Appointment } from '../../api/types';
+import { Appointment, Ride } from '../../api/types';
 import { PaAvatar, PaEmptyState } from '../../components/pa';
 import WidgetHost from '../../widgets/WidgetHost';
+import PaymentSheet from '../../components/payments/PaymentSheet';
 import { pa, paFonts } from '../../theme';
 
 const ACTIVE = ['pending', 'confirmed', 'checked_in', 'matching'];
@@ -35,6 +36,7 @@ export default function AppointmentsScreen() {
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [pay, setPay] = useState<{ id: number; amount: number } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,6 +117,8 @@ export default function AppointmentsScreen() {
         renderItem={({ item: a }) => {
           const st = STATUS[a.status] ?? STATUS.pending;
           const active = ACTIVE.includes(a.status);
+          const ride = liveRide(a.ride);
+          const back = liveRide(a.return_ride);
           return (
             <View style={styles.card}>
               <View style={[styles.stripe, { backgroundColor: st.fg }]} />
@@ -132,6 +136,21 @@ export default function AppointmentsScreen() {
                   <Text style={styles.whenText}>{new Date(a.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })} · {a.start_time?.slice(0, 5)}</Text>
                   {a.booking_ref ? <Text style={styles.ref}>{a.booking_ref}</Text> : null}
                 </View>
+                {ride ? (
+                  <Pressable onPress={() => navigation.navigate('Rides', { screen: 'RideTrack', params: { rideId: ride.id } })} style={({ pressed }) => [styles.shuttle, pressed && { opacity: 0.8 }]}>
+                    <Feather name="truck" size={16} color={pa.ink} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.shuttleTitle}>Shuttle · {vehicleLabel(ride.vehicle_type)} · {ride.status_label ?? ride.status}</Text>
+                      <Text style={styles.shuttleMeta} numberOfLines={2}>
+                        {ride.scheduled_for ? `Pickup ${new Date(ride.scheduled_for).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Pickup when the trip starts'}
+                        {(ride.fare_final ?? ride.fare_estimate) ? ` · R ${Number(ride.fare_final ?? ride.fare_estimate).toFixed(2)}` : ''}
+                        {back ? ' · return trip booked' : ''}
+                      </Text>
+                      <Text style={styles.shuttleMeta} numberOfLines={1}>From {ride.pickup_address}</Text>
+                    </View>
+                    <Feather name="chevron-right" size={16} color={pa.muted} />
+                  </Pressable>
+                ) : null}
                 <View style={styles.actions}>
                   {a.is_video && active ? (
                     <Chip icon="video" label={a.can_join_video ? 'Join video' : 'Video room'} live={!!a.can_join_video} onPress={() => navigation.navigate('Home', { screen: 'ConsultRoom', params: { appointment: a } })} />
@@ -139,7 +158,10 @@ export default function AppointmentsScreen() {
                   {a.doctor && a.status !== 'matching' ? (
                     <Chip icon="message-circle" label="Message" onPress={() => navigation.navigate('Chat', { appointmentId: a.id, title: a.doctor?.name ?? 'Doctor' })} />
                   ) : null}
-                  {active && !a.is_video ? (
+                  {ride && (ride as any).payment?.required ? (
+                    <Chip icon="credit-card" label="Pay for shuttle" live onPress={() => setPay({ id: ride.id, amount: Number((ride as any).payment.amount) || 0 })} />
+                  ) : null}
+                  {active && !a.is_video && !ride ? (
                     <Chip icon="navigation" label="Add shuttle" onPress={() => navigation.navigate('Rides', { screen: 'ShuttleRequest', params: { to: a.clinic?.name } })} />
                   ) : null}
                   {active && a.status !== 'matching' && a.doctor ? (
@@ -160,8 +182,31 @@ export default function AppointmentsScreen() {
           );
         }}
       />
+      {pay ? (
+        <PaymentSheet
+          visible
+          payable={{ type: 'ride', id: pay.id }}
+          amount={pay.amount}
+          title="Pay for your shuttle"
+          onPaid={() => {
+            setPay(null);
+            load();
+          }}
+          onClose={() => setPay(null)}
+        />
+      ) : null}
     </View>
   );
+}
+
+/** The ride when there is a real, not-cancelled one (the API sends {} / [] when there is none). */
+function liveRide(r: any): Ride | null {
+  if (!r || typeof r !== 'object' || !r.id) return null;
+  return r.status === 'cancelled' ? null : (r as Ride);
+}
+
+function vehicleLabel(v?: string) {
+  return (v ?? 'shuttle').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function Chip({ icon, label, onPress, danger, live }: { icon: keyof typeof Feather.glyphMap; label: string; onPress: () => void; danger?: boolean; live?: boolean }) {
@@ -191,6 +236,9 @@ const styles = StyleSheet.create({
   whenText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
   ref: { marginLeft: 'auto', fontFamily: paFonts.regular, fontSize: 11, color: pa.muted },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  shuttle: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: pa.line, backgroundColor: pa.paper },
+  shuttleTitle: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
+  shuttleMeta: { fontFamily: paFonts.regular, fontSize: 12, color: pa.muted, marginTop: 2 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: pa.line, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
   chipText: { fontFamily: paFonts.bold, fontSize: 12 },
   bookBtn: { alignSelf: 'center', backgroundColor: pa.signal, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 12, marginTop: 8 },

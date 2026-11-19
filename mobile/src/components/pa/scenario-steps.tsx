@@ -68,7 +68,9 @@ function StepCard({ step, scenario, navigation, triageReference, autoDial, hideC
         <PaCard style={{ borderWidth: 2, borderColor: pa.sats.orange }}>
           <Text style={styles.cardTitle}>{st.optional ? 'Also need a doctor?' : 'Speak to a doctor now'}</Text>
           <Text style={styles.body}>
-            Your request goes to every available doctor at once — the first to accept takes your consult.
+            {scenario.plan.flow === 'practice'
+              ? 'Your request goes to every available GP practice at once — the first to accept calls you in the app and books your visit.'
+              : 'Your request goes to every available doctor at once — the first to accept takes your consult.'}
             {scenario.plan.channel_timing === 'after' ? ' You choose video, voice or WhatsApp once a doctor has accepted.' : ''}
           </Text>
           <PaButton

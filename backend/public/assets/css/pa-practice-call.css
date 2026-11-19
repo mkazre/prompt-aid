@@ -11,7 +11,7 @@
 .pa-pc-notice b{color:#C2410C}
 .pa-pc-who .sub,.pa-pc-booked .sub{color:#57534E;font-size:13px;margin-top:2px}
 .pa-pc-brief{margin:6px 0 0 18px;padding:0;color:#44403C;font-size:13px}
-.pa-pc-stage{min-height:300px;background:#0b0b0d;border-radius:12px;overflow:hidden;position:relative;margin-top:10px}
+.pa-pc-stage{min-height:260px;background:#0b0b0d;border-radius:12px;overflow:hidden;position:relative;margin-top:10px}
 .pa-pc-stage .pa-call{height:300px}
 .pa-pc-stage.is-ended{opacity:.6}
 #pa-pc-stage-msg{color:#fff;padding:16px;font-size:13px}

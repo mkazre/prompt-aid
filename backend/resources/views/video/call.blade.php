@@ -1,5 +1,5 @@
 @php
-  $cssUrl = asset('assets/css/pa-video-call.css').'?v=2';
+  $cssUrl = asset('assets/css/pa-video-call.css').'?v=3';
   $jsUrl = asset('assets/js/pa-video-call.js').'?v=2';
   $pageTitle = 'Video consult · Prompt Aid';
 @endphp

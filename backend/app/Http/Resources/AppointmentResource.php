@@ -44,6 +44,7 @@ class AppointmentResource extends JsonResource
             'encounter' => new EncounterResource($this->whenLoaded('encounter')),
             'invoice' => new InvoiceResource($this->whenLoaded('invoice')),
             'ride' => new RideResource($this->whenLoaded('ride')),
+            'return_ride' => new RideResource($this->whenLoaded('returnRide')),
         ];
     }
 }

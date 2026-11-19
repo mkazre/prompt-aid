@@ -27,7 +27,7 @@
   $outcomes = $hub['outcomes'] ?? [];
   $emergency = $hub['emergency'] ?? null;
   $cssUrl = asset('assets/css/pa-consult-hub.css').'?v=1';
-  $videoCssUrl = asset('assets/css/pa-video-call.css').'?v=2';
+  $videoCssUrl = asset('assets/css/pa-video-call.css').'?v=3';
   $requestUrl = $hub['urls']['request'] ?? null;
 @endphp
 <link rel="stylesheet" href="{{ $videoCssUrl }}">

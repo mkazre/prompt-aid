@@ -1,5 +1,5 @@
 @php
-  $pcCfg = $cfg + ['videoJs' => asset('assets/js/pa-video-call.js').'?v=2', 'videoCss' => asset('assets/css/pa-video-call.css').'?v=2'];
+  $pcCfg = $cfg + ['videoJs' => asset('assets/js/pa-video-call.js').'?v=2', 'videoCss' => asset('assets/css/pa-video-call.css').'?v=3'];
 @endphp
 <x-layout title="Call with your practice · Prompt Aid">
 <div class="pa-container" style="padding-top:28px;padding-bottom:64px">

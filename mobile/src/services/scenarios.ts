@@ -83,7 +83,8 @@ export interface Scenario {
 }
 
 const cache: Partial<Record<ScenarioLevel, { at: number; data: Scenario }>> = {};
-const TTL = 60_000;
+// Short: admin changes (Staff → Triage → Patient request scenarios) reach the app within seconds.
+const TTL = 15_000;
 
 export async function getScenario(level: ScenarioLevel, opts: { fresh?: boolean; timeoutMs?: number } = {}): Promise<Scenario | null> {
   const hit = cache[level];
@@ -101,10 +102,10 @@ export async function getScenario(level: ScenarioLevel, opts: { fresh?: boolean;
   return hit?.data ?? null;
 }
 
-/** Warm the cache when the emergency sheet opens so a tap acts instantly. */
+/** Re-load the live flows whenever the emergency sheet opens (picks up admin changes) so a tap acts instantly. */
 export function prefetchScenarios() {
-  (['red', 'orange', 'yellow', 'green'] as TriageLevel[]).forEach((l) => {
-    getScenario(l).catch(() => undefined);
+  (['red', 'orange', 'yellow', 'green', 'virtual'] as ScenarioLevel[]).forEach((l) => {
+    getScenario(l, { fresh: true }).catch(() => undefined);
   });
 }
 

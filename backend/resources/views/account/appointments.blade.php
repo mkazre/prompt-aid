@@ -25,7 +25,22 @@
         <tr>
           <td><div class="t-main">{{ $appt->date->format('d M Y') }} {{ \Illuminate\Support\Carbon::parse($appt->start_time)->format('H:i') }}</div><div class="t-sub">{{ $appt->booking_ref }}</div></td>
           <td>{{ $appt->doctor?->user?->name ?? 'Matching…' }}</td>
-          <td>{{ $appt->isVideo() ? 'Video consultation' : ($appt->isCallback() ? 'Call back' : 'In person') }}{{ $appt->clinic ? ' · '.$appt->clinic->name : '' }}</td>
+          <td>{{ $appt->isVideo() ? 'Video consultation' : ($appt->isCallback() ? 'Call back' : 'In person') }}{{ $appt->clinic ? ' · '.$appt->clinic->name : '' }}
+            @php
+              // Shuttle linked to this appointment (booked by the patient or on the practice call).
+              $paRide = $appt->ride && $appt->ride->status !== 'cancelled' ? $appt->ride : null;
+              $paBack = $appt->returnRide && $appt->returnRide->status !== 'cancelled' ? $appt->returnRide : null;
+              $paRideAt = $paRide?->scheduled_for ? $paRide->scheduled_for->copy()->timezone(\App\Models\Appointment::CLINIC_TIMEZONE)->format('d M H:i') : null;
+            @endphp
+            @if ($paRide)
+              <div class="t-sub" style="margin-top:6px">
+                <strong>Shuttle:</strong> {{ str($paRide->vehicle_type)->replace('_', ' ')->headline() }} · {{ app(\App\Services\Rides\RideStatusPresenter::class)->statusLabel($paRide) }}
+                {{ $paRideAt ? '· pickup '.$paRideAt : '' }}
+                {{ ($paRide->fare_final ?? $paRide->fare_estimate) ? '· R'.number_format((float) ($paRide->fare_final ?? $paRide->fare_estimate), 2) : '' }}
+                {{ $paBack ? '· return trip booked' : '' }}
+              </div>
+            @endif
+          </td>
           <td><span class="pa-badge {{ in_array($appt->status, ['completed', 'confirmed', 'checked_in']) ? 'is-go' : (in_array($appt->status, ['cancelled', 'no_show']) ? 'is-stop' : 'is-wait') }}">{{ str($appt->status)->headline() }}</span>
             @php
               // Consult evidence summary (video / voice consults that took place).
@@ -60,6 +75,11 @@
                 @csrf
                 <button class="pa-btn-ghost pa-btn-sm" type="submit">Cancel</button>
               </form>
+            @endif
+            @if ($paRide)
+              <a class="pa-btn-ghost pa-btn-sm" href="{{ route('rides.track', $paRide) }}">Track shuttle</a>
+            @elseif (! $appt->isVideo() && in_array($appt->status, ['pending', 'confirmed']) && \App\Support\Features::on('shuttle'))
+              <a class="pa-btn-ghost pa-btn-sm" href="{{ route('shuttle') }}">Add shuttle</a>
             @endif
             @if ($appt->invoice)
               <a class="pa-btn-ghost pa-btn-sm" href="{{ route('account.invoices') }}">Invoice</a>

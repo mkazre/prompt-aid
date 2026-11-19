@@ -299,7 +299,7 @@ export default function PracticeCallScreen() {
             {slots && !slots.sessions.length && !slots.time_off ? <Text style={styles.muted}>No sessions this day.</Text> : null}
           </View>
           <View style={[styles.rowBetween, { marginTop: 8 }]}>
-            <Text style={styles.body}>Outside the doctor’s sessions</Text>
+            <Text style={[styles.body, { flex: 1, paddingRight: 8 }]}>Outside the doctor’s sessions</Text>
             <Switch value={outside} onValueChange={setOutside} />
           </View>
           {outside ? <TextInput value={outsideTime} onChangeText={setOutsideTime} placeholder="HH:MM" style={styles.input} keyboardType="numbers-and-punctuation" maxLength={5} /> : null}
@@ -320,7 +320,7 @@ export default function PracticeCallScreen() {
             <>
               <Text style={styles.muted}>Pickup: {s.patient.location ? `${s.patient.location.label} (shared from the call)` : 'the patient’s saved address'} → your practice.</Text>
               <View style={[styles.rowBetween, { marginTop: 6 }]}>
-                <Text style={styles.body}>Include the return trip</Text>
+                <Text style={[styles.body, { flex: 1, paddingRight: 8 }]}>Include the return trip</Text>
                 <Switch value={returnLeg} onValueChange={setReturnLeg} />
               </View>
               <PaButton title={sh ? 'Re-price & resend options' : 'Book a shuttle for the patient'} variant="ghost" onPress={() => act(() => offerShuttle(callId, returnLeg), 'Shuttle options sent to the patient.')} style={{ marginTop: 8 }} />
@@ -418,6 +418,6 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: pa.info, borderColor: pa.info },
   chipText: { fontFamily: paFonts.bold, fontSize: 13, color: pa.ink },
   input: { borderWidth: 1, borderColor: pa.line, backgroundColor: pa.surface, padding: 10, marginTop: 8, fontFamily: paFonts.regular, fontSize: 15, color: pa.ink },
-  webWrap: { height: 170, marginTop: 12, backgroundColor: '#0b0b0d', overflow: 'hidden' },
+  webWrap: { height: 220, marginTop: 12, backgroundColor: '#0b0b0d', overflow: 'hidden' },
   quote: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', borderWidth: 1, borderColor: pa.line, padding: 12, marginTop: 8, backgroundColor: pa.surface },
 });

@@ -95,6 +95,9 @@ export default function InstantConsultScreen({ navigation, route }: any) {
   const [plan, setPlan] = useState<ScenarioPlan | null>(null);
   const [planLoaded, setPlanLoaded] = useState(!level);
   const loadedOnce = useRef(false);
+  // State (not only a ref) so the auto-start effect re-runs once the first status check is back,
+  // even when it returns 'no request' (setMatch(null) alone would not re-render).
+  const [matchLoaded, setMatchLoaded] = useState(false);
   const autoDone = useRef(false);
   const [payFor, setPayFor] = useState<MatchPayload | null>(null);
   const payShown = useRef<Record<number, true>>({});
@@ -107,6 +110,7 @@ export default function InstantConsultScreen({ navigation, route }: any) {
       const m: MatchPayload | null = data.data ?? null;
       setMatch(m);
       loadedOnce.current = true;
+      setMatchLoaded(true);
       if (m?.ring) showIncomingCall(m.ring);
       // Upfront payment: doctors are only alerted once it is paid.
       if (m && m.status === 'searching' && m.payment?.required && !payShown.current[m.id]) {
@@ -129,6 +133,7 @@ export default function InstantConsultScreen({ navigation, route }: any) {
       }
       return m;
     } catch {
+      setMatchLoaded(true);
       return undefined; /* keep last state */
     }
   }, []);
@@ -169,9 +174,14 @@ export default function InstantConsultScreen({ navigation, route }: any) {
     };
   }, [level]);
 
+  // Tapping the colour again (screen still in the stack) must start a new request too.
+  useEffect(() => {
+    if (route?.params?.auto) autoDone.current = false;
+  }, [route?.params?.auto]);
+
   // Tapping the colour starts the request straight away (no channel question first).
   useEffect(() => {
-    if (!route?.params?.auto || autoDone.current || !planLoaded || !findFirst || !loadedOnce.current) return;
+    if (!route?.params?.auto || autoDone.current || !planLoaded || !findFirst || !matchLoaded) return;
     if (match && (match.status === 'searching' || match.status === 'matched')) {
       autoDone.current = true;
       return;
@@ -180,7 +190,7 @@ export default function InstantConsultScreen({ navigation, route }: any) {
     navigation.setParams?.({ auto: undefined });
     submit({ mode: 'any', level, ...(triageReference ? { triage_reference: triageReference } : {}), ...(plan?.specialty ? { specialty: plan.specialty } : {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [route?.params?.auto, planLoaded, findFirst, match]);
+  }, [route?.params?.auto, planLoaded, findFirst, match, matchLoaded]);
 
   // Faster while searching / waiting for the doctor to ring; slower otherwise.
   useFocusEffect(

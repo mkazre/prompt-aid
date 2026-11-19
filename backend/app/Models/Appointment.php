@@ -197,8 +197,15 @@ class Appointment extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    /** The shuttle TO this appointment (latest outbound trip; a cancelled one lets the patient book again). */
     public function ride(): HasOne
     {
-        return $this->hasOne(Ride::class);
+        return $this->hasOne(Ride::class)->ofMany(['id' => 'max'], fn ($q) => $q->where('is_return', false));
+    }
+
+    /** The trip home after this appointment, when one was booked. */
+    public function returnRide(): HasOne
+    {
+        return $this->hasOne(Ride::class)->ofMany(['id' => 'max'], fn ($q) => $q->where('is_return', true));
     }
 }

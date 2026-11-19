@@ -48,7 +48,7 @@ class PracticeCallPage extends Page
             'role' => 'practice',
             'soundUrl' => asset('assets/sounds/request-alert.mp3'),
             'videoJs' => asset('assets/js/pa-video-call.js').'?v=2',
-            'videoCss' => asset('assets/css/pa-video-call.css').'?v=2',
+            'videoCss' => asset('assets/css/pa-video-call.css').'?v=3',
         ];
     }
 }
