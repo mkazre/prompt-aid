@@ -4,9 +4,14 @@ namespace App\Filament\Pages;
 
 use App\Support\SiteContent;
 use BackedEnum;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -158,6 +163,61 @@ class SiteContentSettings extends Page
                                         TextInput::make('whatsapp_button.label')->label('Tooltip / label')->maxLength(60),
                                         Textarea::make('whatsapp_button.message')->label('Prefilled message')->rows(2)->maxLength(500),
                                     ])->columns(2),
+                            ]),
+                        Tab::make('Sign up & sign in')
+                            ->schema([
+                                Section::make('App sign-in screen background')
+                                    ->description('Changes show in the app the next time the sign-in screen opens — no app update needed.')
+                                    ->schema([
+                                        FileUpload::make('login_screen.image')
+                                            ->label('Background image')
+                                            ->helperText('A portrait photo works best (e.g. 1080 × 1920). JPG or PNG, up to 4 MB. Leave empty for the plain background.')
+                                            ->image()->disk('public')->directory('app-login')->visibility('public')
+                                            ->maxSize(4096)->columnSpanFull(),
+                                        TextInput::make('login_screen.image_opacity')->label('Image opacity (%)')->numeric()->minValue(0)->maxValue(100)
+                                            ->helperText('100 = solid photo; lower fades it into the background colour.'),
+                                        TextInput::make('login_screen.blur')->label('Blur (0–20)')->numeric()->minValue(0)->maxValue(20),
+                                        Select::make('login_screen.overlay')->label('Overlay')
+                                            ->options(['none' => 'None', 'solid' => 'Solid colour', 'gradient' => 'Gradient'])->native(false)->live(),
+                                        Select::make('login_screen.text_theme')->label('Text colour')
+                                            ->options(['light' => 'Light text (dark photos / overlays)', 'dark' => 'Dark text (light photos)'])->native(false),
+                                        ColorPicker::make('login_screen.overlay_color')->label('Overlay colour')
+                                            ->visible(fn (Get $get) => $get('login_screen.overlay') === 'solid'),
+                                        TextInput::make('login_screen.overlay_opacity')->label('Overlay opacity (%)')->numeric()->minValue(0)->maxValue(100)
+                                            ->visible(fn (Get $get) => $get('login_screen.overlay') === 'solid'),
+                                        ColorPicker::make('login_screen.gradient_from')->label('Gradient start colour')
+                                            ->visible(fn (Get $get) => $get('login_screen.overlay') === 'gradient'),
+                                        TextInput::make('login_screen.gradient_from_opacity')->label('Start opacity (%)')->numeric()->minValue(0)->maxValue(100)
+                                            ->visible(fn (Get $get) => $get('login_screen.overlay') === 'gradient'),
+                                        ColorPicker::make('login_screen.gradient_to')->label('Gradient end colour')
+                                            ->visible(fn (Get $get) => $get('login_screen.overlay') === 'gradient'),
+                                        TextInput::make('login_screen.gradient_to_opacity')->label('End opacity (%)')->numeric()->minValue(0)->maxValue(100)
+                                            ->visible(fn (Get $get) => $get('login_screen.overlay') === 'gradient'),
+                                        Select::make('login_screen.gradient_direction')->label('Gradient direction')
+                                            ->options(['vertical' => 'Top → bottom', 'vertical_reverse' => 'Bottom → top', 'horizontal' => 'Left → right', 'diagonal' => 'Diagonal'])
+                                            ->native(false)
+                                            ->visible(fn (Get $get) => $get('login_screen.overlay') === 'gradient'),
+                                        TextInput::make('login_screen.title')->label('Heading')->maxLength(60),
+                                        TextInput::make('login_screen.subtitle')->label('Sub-heading')->maxLength(160),
+                                        Toggle::make('login_screen.form_card')->label('Put the sign-in form on a white card')
+                                            ->helperText('Keeps the fields easy to read over any photo.'),
+                                        Toggle::make('login_screen.apply_to_signup')->label('Use the same background on the sign-up screens'),
+                                    ])->columns(2),
+                                Section::make('Who can sign up in the app')
+                                    ->description('Switched-off types disappear from "Create an account" in the app. Provider sign-ups wait under Provider applications; approving one activates the login the provider created.')
+                                    ->schema([
+                                        Toggle::make('signup.types.patient')->label('Patients'),
+                                        Toggle::make('signup.types.driver')->label('Shuttle drivers'),
+                                        Toggle::make('signup.types.doctor')->label('Doctors'),
+                                        Toggle::make('signup.types.clinic')->label('Practices / clinics'),
+                                        Toggle::make('signup.types.pharmacy')->label('Pharmacies'),
+                                        Toggle::make('signup.types.laboratory')->label('Laboratories'),
+                                        Toggle::make('signup.types.radiology')->label('Radiology / imaging'),
+                                        Toggle::make('signup.types.allied')->label('Allied health & other'),
+                                        Textarea::make('signup.provider_intro')->label('Provider sign-up intro')->rows(2)->maxLength(400)->columnSpanFull(),
+                                        Textarea::make('signup.review_note')->label('Message after a provider applies (optional)')->rows(2)->maxLength(400)->columnSpanFull()
+                                            ->placeholder('Thanks — we received your application. Our team checks your registration and documents, usually within two working days…'),
+                                    ])->columns(4),
                             ]),
                         Tab::make('App downloads')
                             ->schema([

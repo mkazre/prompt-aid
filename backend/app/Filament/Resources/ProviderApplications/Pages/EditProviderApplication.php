@@ -9,6 +9,7 @@ use App\Models\DoctorProfile;
 use App\Models\Pharmacy;
 use App\Models\ProviderApplication;
 use App\Models\User;
+use App\Services\Onboarding\ProviderSignup;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Textarea;
@@ -75,6 +76,12 @@ class EditProviderApplication extends EditRecord
                         "Hi {$record->contact_name}, your application for {$record->business_name} was not approved.\n\nReason: {$data['rejection_reason']}\n\nYou're welcome to re-apply once this is addressed.",
                     );
 
+                    // App sign-up: the login stays inactive; the sign-in screen shows the reason.
+                    if ($record->user_id && ($u = User::query()->find($record->user_id))) {
+                        $u->forceFill(['status' => 'inactive'])->save();
+                        $u->tokens()->delete();
+                    }
+
                     $this->refreshFormData(['status', 'rejection_reason', 'reviewed_by', 'reviewed_at']);
                     Notification::make()->title('Application rejected')->success()->send();
                 }),
@@ -110,12 +117,15 @@ class EditProviderApplication extends EditRecord
 
     protected function approveClinic(ProviderApplication $record): void
     {
+        $admin = $record->user_id ? app(ProviderSignup::class)->activateLinkedUser($record, User::ROLE_CLINIC_ADMIN) : null;
+        $meta = (array) $record->meta;
         $clinic = Clinic::create([
+            'clinic_admin_id' => $admin?->id,
             'name' => $record->business_name,
             'slug' => $this->uniqueSlug(Clinic::class, $record->business_name),
             'phone' => $record->phone,
             'email' => $record->email,
-            'address' => 'To be confirmed',
+            'address' => trim(($meta['address'] ?? '').(! empty($meta['city']) ? ', '.$meta['city'] : '')) ?: 'To be confirmed',
             'status' => 'active',
         ]);
 
@@ -142,7 +152,7 @@ class EditProviderApplication extends EditRecord
 
         DoctorProfile::create([
             'user_id' => $user->id,
-            'specialization' => 'General practice',
+            'specialization' => ((array) $record->meta)['specialization'] ?? 'General practice',
             'registration_no' => $record->hpcsa_sapc_no ?: $record->registration_no,
             'status' => 'active',
             'is_accepting_appointments' => false,
@@ -150,7 +160,7 @@ class EditProviderApplication extends EditRecord
 
         Notification::make()
             ->title('Doctor profile created')
-            ->body("A login was created for {$record->email} and a temporary password was emailed to them. Visit their profile to fill in specialization, fees and availability before they start accepting bookings.")
+            ->body(($record->user_id ? "{$record->email} can now sign in with the password they chose. " : "A login was created for {$record->email} and a temporary password was emailed to them. ")."Visit their profile to fill in specialization, fees and availability before they start accepting bookings.")
             ->success()
             ->send();
     }
@@ -165,18 +175,34 @@ class EditProviderApplication extends EditRecord
             'slug' => $this->uniqueSlug(Pharmacy::class, $record->business_name),
             'phone' => $record->phone,
             'email' => $record->email,
+            'address' => ((array) $record->meta)['address'] ?? null,
+            'city' => ((array) $record->meta)['city'] ?? null,
             'status' => 'active',
         ]);
 
         Notification::make()
             ->title('Pharmacy created')
-            ->body("\"{$pharmacy->name}\" is now live with placeholder details, and a login was emailed to {$record->email}. Visit its profile to fill in the address, delivery fee and product catalogue.")
+            ->body("\"{$pharmacy->name}\" is now live with placeholder details".($record->user_id ? ". Its owner ({$record->email}) can now sign in with the password they chose." : ", and a login was emailed to {$record->email}.")." Visit its profile to fill in the address, delivery fee and product catalogue.")
             ->success()
             ->send();
     }
 
     protected function approveManually(ProviderApplication $record): void
     {
+        // App sign-up (lab / radiology / allied): activate their login + create the partner profile.
+        if ($record->type === ProviderApplication::TYPE_THIRD_PARTY && $record->user_id) {
+            $signup = app(ProviderSignup::class);
+            $user = $signup->activateLinkedUser($record, User::ROLE_THIRD_PARTY);
+            $signup->partnerProfile($record, $user);
+            Notification::make()
+                ->title('Partner approved')
+                ->body("{$record->email} can now sign in (app or /partner) with the password they chose. Fill in the rest of their profile under Partners.")
+                ->success()
+                ->send();
+
+            return;
+        }
+
         Notification::make()
             ->title('Marked approved')
             ->body("This provider type needs a manual record — create it via the matching resource, using {$record->business_name} / {$record->email} as a starting point.")
@@ -197,6 +223,11 @@ class EditProviderApplication extends EditRecord
      */
     protected function createOrReuseUser(ProviderApplication $record, string $role): User
     {
+        // App sign-up: the applicant already has a login with their own password — just activate it.
+        if ($linked = app(ProviderSignup::class)->activateLinkedUser($record, $role)) {
+            return $linked;
+        }
+
         $existing = User::query()->where('email', $record->email)->first();
 
         if ($existing) {

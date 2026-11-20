@@ -61,6 +61,9 @@ class AuthController extends Controller
         }
 
         $data = $validator->validated();
+        if (! \App\Services\Onboarding\ProviderSignup::roleOpen($data['role'])) {
+            return response()->json(['message' => 'New '.$data['role'].' sign-ups are closed at the moment.'], 422);
+        }
 
         if ($data['role'] === User::ROLE_PATIENT) {
             $user = $registrar->register(
@@ -125,7 +128,10 @@ class AuthController extends Controller
         $user = Auth::user();
 
         if ($user->status !== 'active') {
-            return response()->json(['message' => 'Your account is not active. Please contact support.'], 403);
+            // Provider self sign-up: "being reviewed" / "not approved" instead of a generic message.
+            $why = \App\Services\Onboarding\ProviderSignup::inactiveMessage($user);
+
+            return response()->json(['message' => $why ?? 'Your account is not active. Please contact support.', 'code' => $why ? 'pending_approval' : 'inactive'], 403);
         }
 
         $newToken = $user->createToken('mobile');

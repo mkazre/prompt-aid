@@ -33,9 +33,16 @@
         "RECORD_AUDIO",
         "MODIFY_AUDIO_SETTINGS",
         "POST_NOTIFICATIONS",
-        "VIBRATE"
+        "VIBRATE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MICROPHONE"
       ],
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -91,6 +98,9 @@
       "eas": {
         "projectId": "a51ae5e2-ab74-4eac-8ee6-a2183c3f0a9f"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a51ae5e2-ab74-4eac-8ee6-a2183c3f0a9f"
     }
   }
 }

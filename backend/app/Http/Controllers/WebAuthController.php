@@ -28,10 +28,17 @@ class WebAuthController extends Controller
             return back()->withErrors(['email' => 'These credentials do not match our records.'])->onlyInput('email');
         }
 
-        $request->session()->regenerate();
-
         /** @var User $user */
         $user = Auth::user();
+        if ($user->status !== 'active') {
+            // Provider sign-ups wait for approval; suspended accounts stay out.
+            $why = \App\Services\Onboarding\ProviderSignup::inactiveMessage($user);
+            Auth::logout();
+
+            return back()->withErrors(['email' => $why ?? 'Your account is not active. Please contact support.'])->onlyInput('email');
+        }
+
+        $request->session()->regenerate();
 
         // Staff accounts don't have a patient dashboard — send each role to
         // its own Filament panel instead of crashing on a null

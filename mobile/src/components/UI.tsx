@@ -50,10 +50,10 @@ export function PrimaryButton({
   );
 }
 
-export function Input(props: TextInputProps & { label?: string }) {
+export function Input(props: TextInputProps & { label?: string; labelColor?: string }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      {props.label ? <Text style={styles.label}>{props.label}</Text> : null}
+      {props.label ? <Text style={[styles.label, props.labelColor ? { color: props.labelColor } : null]}>{props.label}</Text> : null}
       <TextInput
         placeholderTextColor={colors.gray500}
         {...props}

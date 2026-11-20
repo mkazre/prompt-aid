@@ -34,7 +34,7 @@ Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
 Route::get('/map-config', \App\Http\Controllers\Api\MapConfigController::class);
 Route::get('/app-links', fn () => response()->json(['data' => \App\Support\SiteLinks::forJs()]));
 // Admin-editable copy + links for the mobile app (see App\Support\SiteContent).
-Route::get('/site-content', fn () => response()->json(['data' => \App\Support\SiteContent::all() + [
+Route::get('/site-content', fn () => response()->json(['data' => array_replace(\App\Support\SiteContent::all(), [
     'topic' => [
         'title' => \App\Models\HealthTopic::current()?->title,
         'url' => route('topic.show'),
@@ -42,7 +42,16 @@ Route::get('/site-content', fn () => response()->json(['data' => \App\Support\Si
     ],
     // Feature switches (Staff → System → Features); the app hides switched-off services.
     'features' => \App\Support\Features::all(),
-]]));
+    // Sign-in screen look (Staff → Site content → Sign up & sign in), with the image as a full URL.
+    'login_screen' => (function () {
+        $ls = (array) \App\Support\SiteContent::get('login_screen', []);
+        $img = $ls['image'] ?? '';
+        $img = is_array($img) ? (string) (array_values($img)[0] ?? '') : (string) $img;
+        $ls['image_url'] = $img !== '' ? (str_starts_with($img, 'http') ? $img : \Illuminate\Support\Facades\Storage::disk('public')->url($img)) : null;
+
+        return $ls;
+    })(),
+])]));
 // Feature switches, login activity (see routes/api_platform.php for its own auth groups).
 require __DIR__.'/api_platform.php';
 Route::get('/health-articles', [HealthArticleController::class, 'index']);
@@ -51,6 +60,9 @@ Route::get('/health-articles/{slug}', [HealthArticleController::class, 'show']);
 // --- Public ---
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+// Provider self sign-up (doctors, practices, pharmacies, labs, radiology, allied) — reviewed in Staff → Provider applications.
+Route::middleware('throttle:60,1')->get('/auth/signup-options', [\App\Http\Controllers\Api\ProviderSignupController::class, 'options']);
+Route::middleware('throttle:10,1')->post('/auth/register-provider', [\App\Http\Controllers\Api\ProviderSignupController::class, 'store']);
 Route::get('/medical-schemes', [MedicalSchemeController::class, 'index']);
 
 Route::get('/clinics', [ClinicController::class, 'index']);

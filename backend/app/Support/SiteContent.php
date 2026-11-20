@@ -71,6 +71,34 @@ class SiteContent
             'label' => 'Chat with us on WhatsApp',
             'message' => 'Hi PromptAid, I need some help with ',
         ],
+        // App sign-in screen look (Staff → Site content → Sign up & sign in).
+        'login_screen' => [
+            'image' => '',
+            'image_opacity' => 100,
+            'blur' => 0,
+            'overlay' => 'gradient',
+            'overlay_color' => '#0B0B0D',
+            'overlay_opacity' => 45,
+            'gradient_from' => '#0B0B0D',
+            'gradient_from_opacity' => 10,
+            'gradient_to' => '#0B0B0D',
+            'gradient_to_opacity' => 85,
+            'gradient_direction' => 'vertical',
+            'text_theme' => 'light',
+            'form_card' => true,
+            'title' => 'Welcome back',
+            'subtitle' => 'Sign in to manage your appointments and rides.',
+            'apply_to_signup' => true,
+        ],
+        // Who can sign up from the app (all open by default) + provider copy.
+        'signup' => [
+            'types' => [
+                'patient' => true, 'driver' => true, 'doctor' => true, 'clinic' => true,
+                'pharmacy' => true, 'laboratory' => true, 'radiology' => true, 'allied' => true,
+            ],
+            'provider_intro' => 'Join Prompt Aid as a healthcare provider. Tell us about your practice — our team verifies your registration before your profile goes live.',
+            'review_note' => '',
+        ],
         // App download badges in the website footer. A badge only shows when its link is set.
         'app_downloads' => [
             'heading' => 'Get the app',

@@ -31,18 +31,26 @@ class ProviderApplication extends Model
         'type', 'business_name', 'contact_name', 'email', 'phone',
         'registration_no', 'hpcsa_sapc_no', 'status', 'rejection_reason',
         'reviewed_by', 'reviewed_at', 'notes',
+        'user_id', 'source', 'meta',
     ];
 
     protected function casts(): array
     {
         return [
             'reviewed_at' => 'datetime',
+            'meta' => 'array',
         ];
     }
 
     public function documents(): HasMany
     {
         return $this->hasMany(ProviderDocument::class);
+    }
+
+    /** The applicant's own login (app self sign-up): inactive until approved. */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function reviewer(): BelongsTo

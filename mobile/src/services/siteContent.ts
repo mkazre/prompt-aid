@@ -47,6 +47,27 @@ export interface SiteContent {
   topic?: { title: string | null; url: string; testimonial_url: string };
   /** Feature switches (Staff → System → Features). Missing = on. */
   features?: Partial<Record<FeatureKey, boolean>>;
+  /** Sign-in screen look (Staff → Site content → Sign up & sign in). */
+  login_screen?: LoginLook;
+}
+
+export interface LoginLook {
+  image_url?: string | null;
+  image_opacity?: number | string;
+  blur?: number | string;
+  overlay?: 'none' | 'solid' | 'gradient';
+  overlay_color?: string;
+  overlay_opacity?: number | string;
+  gradient_from?: string;
+  gradient_from_opacity?: number | string;
+  gradient_to?: string;
+  gradient_to_opacity?: number | string;
+  gradient_direction?: 'vertical' | 'vertical_reverse' | 'horizontal' | 'diagonal';
+  text_theme?: 'light' | 'dark';
+  form_card?: boolean;
+  title?: string;
+  subtitle?: string;
+  apply_to_signup?: boolean;
 }
 
 export type FeatureKey = 'shop' | 'shuttle' | 'video' | 'doctor_now' | 'testimonials' | 'articles' | 'topic' | 'labs';

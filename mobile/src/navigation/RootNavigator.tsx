@@ -18,6 +18,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import RegisterMedicalScreen from '../screens/RegisterMedicalScreen';
 import RegisterSchemeScreen from '../screens/RegisterSchemeScreen';
 import RegisterDocumentScreen from '../screens/RegisterDocumentScreen';
+import ProviderSignupScreen from '../screens/ProviderSignupScreen';
 import PatientTabs from './PatientTabs';
 import DriverTabs from './DriverTabs';
 import ThirdPartyTabs from './ThirdPartyTabs';
@@ -48,6 +49,7 @@ function AuthStack() {
       <Stack.Screen name="RegisterMedical" component={RegisterMedicalScreen} />
       <Stack.Screen name="RegisterScheme" component={RegisterSchemeScreen} />
       <Stack.Screen name="RegisterDocument" component={RegisterDocumentScreen} />
+      <Stack.Screen name="ProviderSignup" component={ProviderSignupScreen} />
     </Stack.Navigator>
   );
 }
@@ -167,7 +169,7 @@ export default function RootNavigator() {
           ? DoctorTabs
           : user?.role === 'pharmacy_admin'
             ? PharmacyTabs
-            : user?.role === 'practice_reception'
+            : user?.role === 'practice_reception' || user?.role === 'clinic_admin'
               ? PracticeTabs
               : PatientTabs;
 

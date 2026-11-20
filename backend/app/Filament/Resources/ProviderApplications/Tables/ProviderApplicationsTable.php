@@ -17,6 +17,10 @@ class ProviderApplicationsTable
             ->columns([
                 TextColumn::make('business_name')->searchable()->weight('bold'),
                 TextColumn::make('type')->badge()->formatStateUsing(fn (string $state): string => ucfirst(str_replace('_', ' ', $state))),
+                TextColumn::make('notes')->label('Kind')->limit(40)->placeholder('—')->toggleable(),
+                TextColumn::make('source')->label('From')->badge()
+                    ->formatStateUsing(fn (?string $state): string => $state === 'app' ? 'App sign-up (own login)' : 'Website form')
+                    ->color(fn (?string $state): string => $state === 'app' ? 'info' : 'gray'),
                 TextColumn::make('contact_name')->label('Contact'),
                 TextColumn::make('email')->searchable()->copyable(),
                 TextColumn::make('phone'),
