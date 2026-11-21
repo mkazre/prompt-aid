@@ -56,6 +56,7 @@ class ClinicResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RelationManagers\DoctorsRelationManager::class,
             RelationManagers\ReceptionTeamRelationManager::class,
         ];
     }

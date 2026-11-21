@@ -20,6 +20,18 @@ class DoctorProfileForm
                     ->required(),
                 TextInput::make('specialization')
                     ->required(),
+                // Practices this doctor works at (clinic_doctor). Same link as Clinics → [practice] → Doctors.
+                // Super admins only: a clinic admin manages their own practice's doctors on that tab,
+                // so they can't drop a doctor from someone else's practice here.
+                Select::make('clinics')
+                    ->label('Practices')
+                    ->relationship('clinics', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->helperText('Decides which practices\' urgent requests this doctor receives and where reception can book them. Add their weekly hours per practice below so patients can book.')
+                    ->visible(fn () => (bool) \Illuminate\Support\Facades\Auth::user()?->isSuperAdmin())
+                    ->columnSpanFull(),
                 TextInput::make('qualification'),
                 TextInput::make('experience_years')
                     ->required()
